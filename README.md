@@ -13,12 +13,14 @@ So that the CLaSH git submodule is completely instantiated.
 
 ### Pre-requisites:
 
-Required tools:
+Required tools for installation:
 
 * The GHC Haskell compiler, version 7.10.3: [https://www.haskell.org/ghc/download_ghc_7_10_3](https://www.haskell.org/ghc/download_ghc_7_10_3)
 * The [cabal-install](https://www.haskell.org/cabal/download.html) tool, version 1.24 or higher
 
-* For development/hacking: the [stack](https://docs.haskellstack.org/en/stable/README/) tool
+Required tools for development/hacking of the CLaSH compiler:
+
+* The [stack](https://docs.haskellstack.org/en/stable/README/) tool
 
 ### Installation/Usage
 
