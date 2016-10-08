@@ -1,10 +1,9 @@
 #ifndef LIBEMOHH_H
 #define LIBEMOHH_H
 
-uint64_t sTime;
-uint64_t sEnergy;
+#include <stdint.h>
 
-uint64_t EHHReset();
+void     EHHReset();
 uint64_t EHHGetEnergyNow();
 uint64_t EHHGetTimeNow();
 uint64_t EHHGetEnergy();
