@@ -1,7 +1,17 @@
 #include "libemohh.h"
 #include <stdlib.h>
+#include <iostream>
+#include <unistd.h>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <sys/time.h>
 
-uint64_t EHHReset() {
+uint64_t sTime;
+uint64_t sEnergy;
+
+
+void EHHReset() {
   sTime = EHHGetTimeNow();
   sEnergy = EHHGetEnergyNow();
 }
@@ -11,7 +21,7 @@ uint64_t EHHGetEnergyNow() {
   uint64_t energy;
 
   f = fopen("/sys/cray/pm_counters/energy", "r");
-  fscanf(f, "%llu", &energy);
+  fscanf(f, "%lu", &energy);
   fclose(f);
 
   return energy;
