@@ -13,9 +13,17 @@ scopes = []
 cLinesASM = []
 scopesNamesFuncLines = []
 cLinesASMCode = []
+
+_VERSION = "0.1.0"
+_DATE    = "13.10.16"
 ########################
 
-
+def addSpaces(level):
+    ss = ""
+    for i in range(level):
+        ss = ss + "   "
+    return ss
+    
 class Scope:
     lstart = 0
     lend   = 0
@@ -28,8 +36,53 @@ class Scope:
         if(len(self.name)>0):
             nstr = self.name
         return str(self.lstart) + "\t\t" + str(self.lend) + "\t" + str(self.work) + "\t\t" + nstr
+    
+    def toJson(self, s, level):
+        nstr = "*"
+        if(len(self.name)>0):
+            nstr = self.name
+        
+        print addSpaces(level) + '{ "name" : "' + nstr + '",'
+        print addSpaces(level) + '  "count" : ' +  str(self.work)
+        print addSpaces(level) + '  "lstart" : ' +  str(self.lstart)
+        print addSpaces(level) + '  "lend" : ' +  str(self.lend)
+        print addSpaces(level) + '  "scopes" : ['
+        while(len(s) > 0):
+            sm = s.pop(0)
+            sc = []
+            si = []
+            for i in range(len(s)):
+                if(s[i].lstart >= sm.lstart and s[i].lend <= sm.lend):
+                    sc.append(s[i])
+                    si.insert(0, i)
+            sm.toJson(sc, level+1)
+            for i in si:
+                s.pop(i)
+        print addSpaces(level) + ']},'
 
+def printJson(s):
+    level = 1
+    s.sort(key=lambda x: x.lstart, reverse=False)
+    print '{'
+    print addSpaces(level) + ' "scopes" : ['
 
+    while(len(s) > 0):
+        sm = s.pop(0)
+        sc = []
+        si = []
+        for i in range(len(s)):
+            if(s[i].lstart >= sm.lstart and s[i].lend <= sm.lend):
+                sc.append(s[i])
+                si.insert(0, i)
+
+        sm.toJson(sc, 2)
+        for i in si:
+            s.pop(i)
+
+    print addSpaces(level) + ']'
+    print '}'
+    
+    
 def isFourHex(s):
     if(len(s)==4):
         r = True
@@ -176,10 +229,18 @@ def processScopes(lines):
         
         
 if __name__ == "__main__":
-    if(len(sys.argv) != 2):
+    if(len(sys.argv) != 2 and len(sys.argv) != 3):
         print 'Usage: ' + sys.argv[0] + ' file_to_process.c'
         sys.exit(1)
-    fname = sys.argv[1]
+
+    fname  = ""
+    cflags = []
+    if(len(sys.argv) == 2):
+        fname = sys.argv[1]
+    if(len(sys.argv) == 3):
+        fname  = sys.argv[1]
+        cflags = sys.argv[2].split()
+
     if(not os.path.isfile(fname)):
         print 'File: ' + fname + ' does not exist'
         sys.exit(2)
@@ -193,7 +254,7 @@ if __name__ == "__main__":
     
     fout = fname + '_asm'
     f = open(fout, 'w')
-    gresult = call(['gcc', '-w', '-c', '-g', '-O2', '-march=native', '-Wa,-a,-ad', fname], stdout=f)
+    gresult = call(['gcc', '-w', '-c', '-g'] + cflags + ['-Wa,-a,-ad', fname], stdout=f)
     f.close()
     if(gresult != 0):
         print 'Error executing GCC'
@@ -211,11 +272,13 @@ if __name__ == "__main__":
     matchScopesAndASM()
     matchScopesAndNames()
 
-    print "StartLine\tEndLine\tASM Ins\tName"
-    for i in range(len(scopes)):
-        print scopes[i].toStr()
-    
-    print "\nLine\tASM Ins\tCode"
-    for i in range(len(cLinesASM)):
-        print str(i) + "\t" + str(cLinesASM[i]) + "\t" + cLinesASMCode[i]
+    # print "StartLine\tEndLine\tASM Ins\tName"
+    # for i in range(len(scopes)):
+    #     print scopes[i].toStr()
+
+    printJson(scopes)
         
+    # print "\nLine\tASM Ins\tCode"
+    # for i in range(len(cLinesASM)):
+    #     print str(i) + "\t" + str(cLinesASM[i]) + "\t" + cLinesASMCode[i]
+    
