@@ -1,3 +1,6 @@
 [submodule "clash"]
 	path = clash
 	url = https://github.com/clash-lang/clash-compiler.git
+[submodule "POROTO"]
+	path = POROTO
+	url = https://github.com/cetic/poroto.git
