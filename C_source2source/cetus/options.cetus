@@ -1,0 +1,207 @@
+#Option: alias
+#alias=N
+#Specify level of alias analysis
+#      =0 assume all locations are aliased
+#      =1 advanced interprocedural analysis (default)
+#         Uses interprocedural points-to analysis
+#      =2 assume no alias exists when points-to analysis is too conservative
+#      =3 assume no alias exists
+alias=1
+#Option: callgraph
+#callgraph
+#Print the static call graph to stdout
+callgraph=1
+#Option: ddt
+#ddt=N
+#Perform Data Dependence Testing (ON=2)
+#      =0 force to disable
+#      =1 banerjee-wolfe test
+#      =2 range test
+# TODO: If disabled some STML annotations are lost
+ddt=1
+#Option: debug_parser_input
+#debug_parser_input
+#Print a single preprocessed input file before sending to parser and exit
+#debug_parser_input
+#Option: debug_preprocessor_input
+#debug_preprocessor_input
+#Print a single pre-annotated input file before sending to preprocessor and exit
+#debug_preprocessor_input
+#Option: dump-options
+#dump-options
+#Create file options.cetus with default options
+#dump-options
+#Option: dump-system-options
+#dump-system-options
+#Create system wide file options.cetus with default options
+#dump-system-options
+#Option: expand-all-header
+#expand-all-header
+#Expand all header file #includes into code
+#expand-all-header
+#Option: expand-user-header
+#expand-user-header
+#Expand user (non-standard) header file #includes into code
+#expand-user-header
+#Option: help
+#help
+#Print this message
+#help
+#Option: induction
+#induction=N
+#Perform induction variable substitution (ON=3)
+#      =0 force to disable
+#      =1 enable substitution of linear induction variables
+#      =2 enable substitution of generalized induction variables
+#      =3 enable insertion of runtime test for zero-trip loops
+induction=2
+#Option: load-options
+#load-options
+#Load options from file options.cetus
+load-options
+#Option: macro
+#macro
+#Sets macros for the specified names with comma-separated list (no space is allowed)
+#e.g., -macro=ARCH=i686,OS=linux
+macro
+#Option: normalize-loops
+#normalize-loops
+#Normalize for loops so they begin at 0 and have a step of 1
+#normalize-loops
+#Option: normalize-return-stmt
+#normalize-return-stmt
+#Normalize return statements for all procedures
+#normalize-return-stmt
+#Option: ompGen
+#ompGen=N
+#Generate new OpenMP pragma and handle existing OpenMP pragrams (ON=1)
+#      =0 force to disable
+#      =1 comment out existing OpenMP pragmas
+#      =2 remove existing OpenMP pragmas
+#      =3 remove existing OpenMP and Cetus pragmas
+#      =4 keep all pragmas
+ompGen=0
+#Option: outdir
+#outdir=dirname
+#Set the output directory name (default is cetus_output)
+outdir=cetus_output
+#Option: parallelize-loops
+#parallelize-loops=N
+#Annotate loops with Parallelization decisions (ON=1)
+#      =0 do not parallelize
+#      =1 parallelizes outermost loops
+#      =2 parallelizes all loops in nests
+#      =3 parallelizes outermost loops with report
+#      =4 parallelizes all loops with report
+parallelize-loops=0
+#Option: parser
+#parser=parsername
+#Name of parser to be used for parsing source file
+parser=cetus.base.grammars.CetusCParser
+#Option: preprocessor
+#preprocessor=command
+#Set the preprocessor command to use
+preprocessor=cpp -C -I.
+#Option: preserve-KR-function
+#preserve-KR-function
+#Preserves K&R-style function declaration
+preserve-KR-function
+#Option: privatize
+#privatize=N
+#Perform scalar/array privatization analysis (ON=2)
+#      =0 force to disable
+#      =1 enable only scalar privatization
+#      =2 enable scalar and array privatization
+privatize=0
+#Option: profile-loops
+#profile-loops=N
+#Inserts loop-profiling calls (ON=4), =5|6 may be unsafe
+#      =1 every loop          =2 outermost loop
+#      =3 every omp parallel  =4 outermost omp parallel
+#      =5 every omp for       =6 outermost omp for
+#profile-loops
+#Option: profitable-omp
+#profitable-omp=N
+#Inserts runtime for selecting profitable omp parallel region (ON=1) (See the API documentation for more details)
+#      =0 disable
+#      =1 Model-based loop selection
+#      =2 Profile-based loop selection
+profitable-omp=0
+#Option: range
+#range=N
+#Specify the accuracy of symbolic analysis with value ranges
+#      =0 disable range computation (minimal symbolic analysis)
+#      =1 enable local range computation (default)
+#      =2 enable inter-procedural computation (experimental)
+range=0
+#Option: reduction
+#reduction=N
+#Perform reduction variable analysis (ON=2)
+#      =0 force to disable
+#      =1 enable only scalar reduction analysis
+#      =2 enable array reduction analysis and transformation
+reduction=0
+#Option: skip-procedures
+#skip-procedures=proc1,proc2,...
+#Causes all passes that observe this flag to skip the listed procedures
+skip-procedures
+#Option: stml
+#stml
+#Add STML annotations to the given code
+stml=1
+#Option: teliminate-branch
+#teliminate-branch=N
+#Eliminates unreachable branch targets (ON=1)
+#      =0 disable
+#      =1 enable
+#      =2 leave old statements as comments
+teliminate-branch=0
+#Option: tinline
+#tinline=mode=0|1|2|3|4:depth=0|1:pragma=0|1:debug=0|1:foronly=0|1:complement=0|1:functions=foo,bar,...
+#(Experimental) Perform simple subroutine inline expansion tranformation
+#   mode
+#      =0 inline inside main function (default)
+#      =1 inline inside selected functions provided in the "functions" sub-option
+#      =2 inline selected functions provided in the "functions" sub-option, when invoked
+#      =3 inline according to the "inlinein" pragmas
+#      =4 inline according to both "inlinein" and "inline" pragmas
+#   depth
+#      =0 perform inlining recursively i.e. within callees (and their callees) as well (default)
+#      =1 perform 1-level inlining 
+#   pragma
+#      =0 do not honor "noinlinein" and "noinline" pragmas
+#      =1 honor "noinlinein" and "noinline" pragmas (default)
+#   debug
+#      =0 remove inlined (and other) functions if they are no longer executed (default)
+#      =1 do not remove the inlined (and other) functions even if they are no longer executed
+#   foronly
+#      =0 try to inline all function calls depending on other options (default)
+#      =1 try to inline function calls inside for loops only 
+#   complement
+#      =0 consider the functions provided in the command line with "functions" sub-option (default)
+#      =1 consider all functions except the ones provided in the command line with "functions" sub-option
+#   functions
+#      =[comma-separated list] consider the provided functions. 
+#      (Note 1: This sub-option is meaningful for modes 1 and 2 only) 
+#      (Note 2: It is used with "complement" sub-option to determine which functions should be considered.)
+#tinline
+#Option: tsingle-call
+#tsingle-call
+#Transform all statements so they contain at most one function call
+#tsingle-call
+#Option: tsingle-declarator
+#tsingle-declarator
+#Transform all variable declarations so they contain at most one declarator
+#tsingle-declarator
+#Option: tsingle-return
+#tsingle-return
+#Transform all procedures so they have a single return statement
+#tsingle-return
+#Option: verbosity
+#verbosity=N
+#Degree of status messages (0-4) that you wish to see (ON=1)
+verbosity=0
+#Option: version
+#version
+#Print the version information
+version

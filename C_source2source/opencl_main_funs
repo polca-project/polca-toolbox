@@ -1,0 +1,195 @@
+char *GetPlatformName (cl_platform_id id)
+{
+	size_t size = 0;
+	clGetPlatformInfo (id, CL_PLATFORM_NAME, 0, NULL, &size);
+
+	/* std::string result; */
+	/* result.resize (size); */
+	char *name = (char*)malloc(sizeof(char)*size);
+	clGetPlatformInfo (id, CL_PLATFORM_NAME, size, name, NULL);
+
+	return name;
+}
+
+char *GetDeviceName (cl_device_id id)
+{
+	size_t size = 0;
+	clGetDeviceInfo (id, CL_DEVICE_NAME, 0, NULL, &size);
+
+	/* std::string result; */
+	/* result.resize (size); */
+	char *name = (char*)malloc(sizeof(char)*size);
+	clGetDeviceInfo (id, CL_DEVICE_NAME, size,name, NULL);
+
+	return name;
+}
+
+void CheckError (cl_int error)
+{
+	if (error != CL_SUCCESS) {
+	  printf("OpenCL call failed with error %d\n",error);
+	  exit (1);
+	}
+}
+
+char *LoadKernel (const char* name, long *sourceSize)
+{
+
+char *source = NULL;
+FILE *fp = fopen(name, "r");
+if (fp != NULL) {
+    /* Go to the end of the file. */
+    if (fseek(fp, 0L, SEEK_END) == 0) {
+        /* Get the size of the file. */
+        long bufsize = ftell(fp);
+        if (bufsize == -1) { /* Error */ }
+
+        /* Allocate our buffer to that size. */
+        source = malloc(sizeof(char) * (bufsize + 1));
+	*sourceSize = (bufsize + 1);
+
+        /* Go back to the start of the file. */
+        if (fseek(fp, 0L, SEEK_SET) != 0) { /* Error */ }
+
+        /* Read the entire file into memory. */
+        size_t newLen = fread(source, sizeof(char), bufsize, fp);
+        if (newLen == 0) {
+            fputs("Error reading file", stderr);
+        } else {
+            source[newLen] = '\0'; /* Just to be safe. */
+        }
+    }
+    fclose(fp);
+}
+ return source;
+
+}
+
+cl_program CreateProgram (long sourceSize,char *source,
+	cl_context context)
+{
+  //http://www.khronos.org/registry/cl/sdk/1.1/docs/man/xhtml/clCreateProgramWithSource.html
+  size_t *lengths = NULL;
+  if(sourceSize!=0) {
+    lengths = (size_t*)malloc(sizeof(size_t) * 1);
+    lengths[0] = sourceSize;
+  }
+  const char* sources [1] = { source };
+
+  cl_int error = 0;
+  cl_program program = clCreateProgramWithSource (context, 1, sources, lengths, &error);
+  CheckError (error);
+
+  return program;
+}
+
+
+void BuildProgram(cl_program program,cl_device_id device_id)
+{
+  cl_int err;
+  err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+    CheckError(err);
+    printf("OpenCL program built successfully!!\n");
+
+    if (err != CL_SUCCESS)
+    {
+        size_t len;
+        char buffer[2048];
+
+        printf("Error: Failed to build program executable!\n");
+        clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
+        printf("%s\n", buffer);
+        exit(1);
+    }
+
+}
+
+void selectOpenCLDevice(cl_uint *platformIdCount,cl_platform_id **platformIds,cl_uint *deviceIdCount,cl_device_id **deviceIds)
+{
+    clGetPlatformIDs (0, NULL, platformIdCount);
+
+    if ((*platformIdCount) == 0) {
+      printf("No OpenCL platform found\n");
+      exit(1);
+    } else {
+      printf("Found %d platform(s)\n",(*platformIdCount));
+    }
+
+    *platformIds = (cl_platform_id*)malloc(sizeof(cl_platform_id)*(*platformIdCount));
+    clGetPlatformIDs ((*platformIdCount), *platformIds, NULL);
+
+    for (cl_uint i = 0; i < (*platformIdCount); ++i) {
+      printf("\t (%d) : %s\n",i+1,GetPlatformName((*platformIds)[i]));
+    }
+
+    // Just query for GPU devices
+    clGetDeviceIDs ((*platformIds)[0], CL_DEVICE_TYPE_GPU, 0, NULL,deviceIdCount);
+
+    if ((*deviceIdCount) == 0) {
+      printf("No OpenCL devices found\n");
+      exit(1);
+    } else {
+      printf("Found %d GPU device(s)\n",(*deviceIdCount));
+    }
+
+    *deviceIds = (cl_device_id*)malloc(sizeof(cl_device_id)*(*deviceIdCount));
+    clGetDeviceIDs ((*platformIds)[0], CL_DEVICE_TYPE_GPU, *deviceIdCount,
+		    *deviceIds, NULL);
+
+    for (cl_uint i = 0; i < (*deviceIdCount); ++i) {
+      printf("\t (%d) : %s\n",i+1,GetDeviceName((*deviceIds)[i]));
+    }
+}
+
+void createOpenCLContext(cl_platform_id *platformIds,cl_uint deviceIdCount,cl_device_id *deviceIds,cl_context *context)
+{
+    cl_int error = CL_SUCCESS; 
+    const cl_context_properties contextProperties [] =
+      {
+	CL_CONTEXT_PLATFORM,
+	(cl_context_properties)platformIds[0],
+	0,
+	0
+      };
+
+    *context = clCreateContext (contextProperties, deviceIdCount,
+					  deviceIds, NULL, NULL, &error);
+    CheckError (error);
+
+    printf("Context created successfully!!\n");
+}
+
+void createOpenCLKernel(cl_device_id *deviceIds,cl_context context,cl_program *program,cl_kernel *kernel, char* kernel_name)
+{
+    cl_int error = CL_SUCCESS; 
+    /* // Create a program from source */
+    /* long sourceSize; */
+    /* char *KernelSource = LoadKernel ("kernels/image.cl",&sourceSize); */
+    *program = CreateProgram (0,(char*)KernelSource,
+		context);
+    printf("OpenCL program created successfully!!\n");
+
+    BuildProgram(*program,deviceIds[0]);
+
+    // Create the compute kernel in the program we wish to run
+    //
+    *kernel = clCreateKernel(*program, kernel_name, &error);
+    if (!(*kernel) || error != CL_SUCCESS)
+    {
+        printf("Error: Failed to create compute kernel!\n");
+        exit(1);
+    }
+    printf("OpenCL kernel created successfully!!\n");
+}
+
+
+void createOpenCLQueue(cl_device_id *deviceIds,cl_context context,cl_command_queue *queue)
+{
+    cl_int error = CL_SUCCESS; 
+
+    *queue = clCreateCommandQueue (context, deviceIds[0],
+    						   0, &error);
+    CheckError (error);
+
+    printf("OpenCL command queue created successfully!!\n");
+}
