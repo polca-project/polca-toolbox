@@ -1,8 +1,8 @@
-Polca Source-to-source transformation tool
+The C source to source transformation tool
 ==========================================
 
-The C source to source transformation tool is a program transformation
-environment, implemented in Haskell, where architecture-agnostic
+The **C source to source transformation tool** is a program transformation
+environment, implemented in [Haskell](https://www.haskell.org/), where architecture-agnostic
 scientific C code with semantic annotations is transformed into
 functionally equivalent code better suited for a given platform.  The
 transformation steps are represented as rules which can be fired when
@@ -14,7 +14,7 @@ their own rules or to provide sets of rules which are adapted to
 certain specific domains or purposes.
 
 The C source transformation toolchain has been contributed by the
-IMDEA SW Institute and the Technical University of Madrid.
+[IMDEA SW Institute](http://software.imdea.org/es/) and the [Technical University of Madrid](http://www.upm.es/internacional).
 
 Installation
 ------------
@@ -173,8 +173,8 @@ not(Cond) ->
 ```
 
 
-6. TRANSFORMING YOUR CODE
-=========================
+Transforming Your Code
+----------------------
 
 When the Rules.hs file has been created starting from the desired
 STML rule file, you can compile the main module of the tool:
@@ -194,18 +194,7 @@ $
 
 The system now is ready to transform a given C code.  
 
-Caveats:
-
-- Heuristic-based generation is not yet fully working, so there is not
-  support for it in the distributed version.
-
-- Some rules do not have the whole set of the necessary semantic
-  preconditions and therefore the tool may apply them without ensuring
-  that a sound result will be obtained.
-
-
-There are currently two ways of obtaining translated code: randomly
-or interactively.  Random generation does that: from all the possible
+There are currently three ways of obtaining translated code: randomly, interactively or oracle-based.  Random generation does that: from all the possible
 rules and program points where they can be applied, a random selection
 is made.  Since the rules are selected without any real goal and some
 rules are as of now unsound, the result of this random application is
@@ -221,6 +210,7 @@ transformation.
 
 The interactive session is started by running the created executable,
 which receive as argument the target C file:
+
 
 ```
 $ ./polca_s2s vec_mult.c
@@ -257,6 +247,7 @@ f -> Finalise transformation session
 -----------------------------------------------------------------
 
 Press ENTER to continue...
+```
 
 After selecting one of the rule numbers, the tool would show the
 effects of applying one of them and wait for confirmation to commit
@@ -264,6 +255,7 @@ the transformation, or discard applying the rle.
 
 Let us assume the user wants to apply rule number 4.
 
+```
 ? [1/2/3/4/5/6/7/8/h/r/s/c/ec/dc/p/f]: 4
 Do you want to apply rule for_loop_fusion_mapmap to this piece of code:
 
@@ -297,12 +289,13 @@ resulting in this new code:
     }
     _ret_val_0 = 0;
     return _ret_val_0;
-
+```
 
 The user can accept the transformation or not (returning to previous
 question). He/she can also to stop the rule application or finish the
 transformation process.
 
+```
 ? [y/n/a/c/d/v/s/h/f]: h
 ---------------------------------------------------------------
 Polca S2S Tool help.
@@ -320,11 +313,12 @@ f -> Finalise transformation session
 ---------------------------------------------------------------
 
 Press ENTER to continue...
-
+```
 
 If accepted, a new question is shown with the currently
 applicable rules.
 
+```
 ? [y/n/a/c/d/v/s/h/f]: y
 7
 What rule do you want to apply
@@ -336,9 +330,11 @@ What rule do you want to apply
 6.- remove_ternary
 
 ? [1/2/3/4/5/6/h/r/s/c/ec/dc/p/f]: 
+```
 
 The fifth transformation can improve the previous code.
 
+```
 ? [1/2/3/4/5/6/h/r/s/c/ec/dc/p/f]: 5
 Do you want to apply rule split_addition_assign to this piece of code:
 
@@ -437,10 +433,12 @@ What rule do you want to apply
 5.- remove_ternary
 
 ? [1/2/3/4/5/h/r/s/c/ec/dc/p/f]: f
+```
 
 After deciding to finalize the transformation process, the user
 has to choose the output platform.
 
+```
 To what platform do you want to generate current code:
 1.- opencl
 2.- mpi
@@ -459,6 +457,24 @@ $
 
 Note that the resulting code is stored in a file called as the
 original but with selected platform as suffix.
+
+The oracle-based mode works completely automatic using and oracle which in our case is a command. Therefore, it needs as an input a support command that reads JSON expressions and returns the transformation step that should be applied. The usage of this tool is as following:
+
+```
+$ ./polca_s2s_ext 
+Usage:
+          polca_s2s_ext command filename [polca_block]
+The command and the source file are needed.
+The name of a defined block is optional.
+```
+
+For instance, if one wants to run an oracle-based session using the [Machine Learning module](https://github.com/polca-project/polca-toolbox/tree/master/Machine%20learning%20component), the following command should be used:
+
+```
+$ ./polca_s2s_ext "py polca_ml" vec_mult.c
+...
+```
+
 
 In case of doubt or for further information, please do not hesitate to
 contact us.
