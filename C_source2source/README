@@ -302,18 +302,7 @@ $
 
 The system now is ready to transform a given C code.  
 
-Caveats:
-
-- Heuristic-based generation is not yet fully working, so there is not
-  support for it in the distributed version.
-
-- Some rules do not have the whole set of the necessary semantic
-  preconditions and therefore the tool may apply them without ensuring
-  that a sound result will be obtained.
-
-
-There are currently two ways of obtaining translated code: randomly
-or interactively.  Random generation does that: from all the possible
+There are currently three ways of obtaining translated code: randomly, interactively or oracle-based.  Random generation does that: from all the possible
 rules and program points where they can be applied, a random selection
 is made.  Since the rules are selected without any real goal and some
 rules are as of now unsound, the result of this random application is
@@ -565,6 +554,21 @@ $
 
 Note that the resulting code is stored in a file called as the
 original but with selected platform as suffix.
+
+The oracle-based mode works completely automatic using and oracle which in our case is a command. Therefore, it needs as an input a support command that reads JSON expressions and returns the transformation step that should be applied. The usage of this tool is as following:
+
+
+$ ./polca_s2s_ext 
+Usage:
+          polca_s2s_ext command filename [polca_block]
+The command and the source file are needed.
+The name of a defined block is optional.
+
+For instance, if one wants to run an oracle-based session using the Machine Learning module, the following command should be used:
+
+
+$ ./polca_s2s_ext "py polca_ml" vec_mult.c
+@\ldots@
 
 In case of doubt or for further information, please do not hesitate to
 contact us.
