@@ -1,0 +1,221 @@
+/* This program uses the discrete cosine transform to compress a 128 x 128
+   pixel image by a factor of 4:1 while preserving its information content.
+   Block encoding is used with a block size of 8 x 8.
+
+   This program is based on the routines and algorithms found in the book
+   "C Language Algorithms for Digital Signal Processing" By P. M. Embree
+   and B. Kimble.
+
+   Copyright (c) 1992 -- Mazen A.R. Saghir -- University of Toronto  */
+/* Modified to use arrays - SMP */
+
+// Added just for measure time
+#include <sys/time.h>
+
+#include "traps.h"
+
+#define         ROUND(f)        (((f)<0.0) ? (int)((f)-0.5) : (int)((f)+0.5))
+#define         N               128
+#define         B               8
+#define         P               1024
+
+int image[N*N];                /* 2D array that stores the original image. */
+int block[B*B];                /* 2D array that stores an image block. */
+float cos1[B*B];               /* 2D array that stores cosine coefficients. */
+float cos2[B*B];               /* 2D array that is the transpose of cos1. */
+float temp2d[B*B];             /* Temporary 2D array. */
+int result[16][16*4];          /* Result array */
+
+void dct(int block[B][B]);
+
+main()
+{
+  float factor1;
+  float factor2;
+  float temp_cos;
+
+  int k;
+  int l;
+  /* int m; */
+  /* int n; */
+
+  int pack2in8();
+  int pack4in32();
+
+  int t1,t2;
+
+  /* Read the image */
+
+  input_dsp(image, 16384, 1);
+
+  /* Each image is assumed to have a resolution of 128 x 128, with 256 gray
+     levels. Since each block is 8 x 8, 256 iterations are needed to compress
+     the image. This is the main loop. */
+
+  struct timeval tvalBefore, tvalAfter;
+  long total;
+  int SAMPLES = 30;
+ for(int i=0;i<SAMPLES;i++){
+	  gettimeofday(&tvalBefore,NULL);
+
+
+  int z;
+  for (z = 0; z < 16 * 16; z++) {
+  /* for (m = 0; m < 16; m++) { */
+
+  /*   for(n = 0; n < 16; n++) { */
+
+    	  /* Initialize the cosine matrices. "cos2" is the transpose of "cos1" */
+    	  factor1 = 2.0 * atan(1.0) / B;
+    	  factor2 = 0.0;
+    	  for (t1 = 0; t1 < B; ++t1) {
+    		for (t2 = 0; t2 < B; ++t2) {
+    		  temp_cos = cos(factor2 * (2*t2 + 1)) / B;
+    		  cos1[t1*B+t2] = temp_cos;
+    		  cos2[t2*B+t1] = temp_cos;
+
+		  block[t1*B+t2] = image[((B*(z/16)+t1)*128)+(B*(z%16)+t2)];
+    		}
+    		factor2 += factor1;
+    	  }
+
+
+      /* Read next image block. */
+
+//      for (k = 0; k < B; k++) {
+//        for (l = 0; l < B; l++) {
+//          block[k][l] = image[B*m+k][B*n+l];
+//        }
+//      }
+
+
+      /* Find its DCT */
+    	  int i;
+    	  int j;
+//    	  int k;
+    	  float sum;
+
+    	  /* Multiply the input image block with the cos2 matrix; store the result
+    	     in the temporary matrix "temp2d". */
+
+    	  for (i = 0; i < B; i++) {
+    	    for (j = 0; j < B; j++) {
+    	      sum = 0.0;
+    	      for (k = 0; k < B; k++) {
+    	        sum += block[i*B+k] * cos2[k*B+j];
+    	      }
+    	      temp2d[i*B+j] = sum;
+    	    }
+    	  }
+
+
+    	  /* Multiply the cosine matrix by the temporary matrix; store the
+    	     result back in the original matrix.  */
+
+    	  for (i = 0; i < B; i++) {  /* advances cos1 row */
+    	    for (j = 0; j < B; j++) {  /* no change */
+    	      sum = 0.0;
+    	      for (k = 0; k < B; k++) {  /* advances cos1 col */
+    	        sum += cos1[i*B+k] * temp2d[k*B+j] ;
+    	      }
+    	      /* round the result */
+    	      block[i*B+j] = ROUND(sum);
+    	    }
+    	  }
+
+      /* Select coefficients, scale, and pack */
+
+      result[(z/16)][((z%16)*4)+0] = pack4in32(block[0*B+0],block[0*B+1],
+      				  pack2in8(block[0*B+2] / 3, block[0*B+3] / 3),
+      				  pack2in8(block[0*B+4] / 2, block[0*B+5] / 2));
+
+      result[(z/16)][((z%16)*4)+1] = pack4in32(pack2in8(block[0*B+6],block[0*B+7]),
+				  block[1*B+0],block[1*B+1],
+				  pack2in8(block[1*B+2] / 2,block[1*B+3]));
+
+      result[(z/16)][((z%16)*4)+2] = pack4in32(pack2in8(block[1*B+4], block[1*B+5]),
+				  pack2in8(block[2*B+0] / 3, block[2*B+1] / 2),
+				  pack2in8(block[2*B+2] / 2, block[2*B+3]),
+				  pack2in8(block[3*B+0] / 3, block[3*B+1]));
+
+      result[(z/16)][((z%16)*4)+3] = pack4in32(pack2in8(block[3*B+2], block[3*B+3]),
+				  pack2in8(block[4*B+0] / 2, block[4*B+1]),
+				  pack2in8(block[5*B+0] / 2, block[5*B+1]),
+				  pack2in8(block[6*B+0] , block[7*B+0]));
+    /* } */
+
+  }
+
+	  gettimeofday(&tvalAfter,NULL);
+	  total = ((tvalAfter.tv_sec - tvalBefore.tv_sec)*1000000L+tvalAfter.tv_usec) - tvalBefore.tv_usec;
+	  printf("it: %i, time: %ld microseconds\n",i,total);
+ } // End of loop for time samples
+
+
+  output_dsp(result,1024,1);
+}
+
+
+
+
+/* This function calculates the discrete cosine transform of an image block.
+   The result is returned in the same matrix as the original block. */
+
+void dct(int block[B][B])
+{
+  int i;
+  int j;
+  int k;
+  float sum;
+
+  /* Multiply the input image block with the cos2 matrix; store the result
+     in the temporary matrix "temp2d". */
+
+  for (i = 0; i < B; i++) {
+    for (j = 0; j < B; j++) {
+      sum = 0.0;
+      for (k = 0; k < B; k++) {
+        sum += block[i][k] * cos2[k*B+j];
+      }
+      temp2d[i*B+j] = sum;
+    }
+  }
+
+
+  /* Multiply the cosine matrix by the temporary matrix; store the
+     result back in the original matrix.  */
+
+  for (i = 0; i < B; i++) {  /* advances cos1 row */
+    for (j = 0; j < B; j++) {  /* no change */
+      sum = 0.0;
+      for (k = 0; k < B; k++) {  /* advances cos1 col */
+        sum += cos1[i*B+k] * temp2d[k*B+j] ;
+      }
+      /* round the result */
+      block[i][j] = ROUND(sum);
+    }
+  }
+
+}
+
+
+int pack2in8(int a, int b)
+{
+  /* limit to signed 4 bits */
+
+  a &= 0x0f;
+  b &= 0x0f;
+  return((a << 4) | (b));
+}
+
+int pack4in32(int a,int b,int c,int d)
+{
+  /* limit to signed 8 bits */
+
+  a &= 0xff;
+  b &= 0xff;
+  c &= 0xff;
+  d &= 0xff;
+
+  return((a << 24) | (b << 16) | (c << 8) | (d));
+}

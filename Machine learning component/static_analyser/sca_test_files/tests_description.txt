@@ -1,0 +1,211 @@
+* test1.c
+  - Proposito:
+  - Elementos:
+    - 1 variable global
+    - 1 llamada a funcion
+    - 1 if estatement
+    - 1 bucle for con limites staticos
+
+* test2.c
+  - Proposito: saber distinguir entre una definicion de variable
+  global y local
+  - Elementos:
+    - 1 variable global al principio (antes de la definicion de funciones)
+    - 1 variable global a mitad del codigo (entre definicion de funciones)
+    - 1 definicion de funcion
+    - 1 definicion de variable local dentro de funcion no main
+
+* test3.c
+  - Proposito: saber calcular la maxima profundidad de anidacion de
+  bucles 
+  - Elementos:
+    - 2 bulces anidados
+    - 3 bucles anidados
+    - 2 bucles for no anidado
+
+* test4.c
+  - Proposito: detectar bucles irregulares
+
+* test5.c
+  - Proposito: detectar bucles for con limite no estatico
+  - Devuelve:  0 bucles con limites no estaticos
+
+* test6.c
+  - Proposito: detectar bucles for con limite no estatico
+  - Devuelve:  1 bucles con limites no estaticos
+
+* test7.c
+  - Proposito: detectar bucles for con limite no estatico
+  - Devuelve:  1 bucles con limites no estaticos
+
+* test8.c
+  - Proposito: detectar bucles for con alguna escritura en array con
+  offset (negativo o positivo) en cada iteracion
+  - Devuelve: No hay escrituras con offset (0)
+
+* test9.c
+  - Proposito: detectar bucles for con alguna escritura en array con
+  offset (negativo o positivo) en cada iteracion
+  - Devuelve:  Si hay escrituras con offset (1)
+
+* test10.c
+  - Proposito: detectar bucles for con alguna escritura en array con
+  offset (negativo o positivo) en cada iteracion
+  - Devuelve:  Si hay escrituras con offset (1)
+
+* test11.c
+  - Proposito: codigo de la funcion rgbImageFilter del program de ejemplo rgb_filter_9_8.c
+
+* test12.c
+  - Proposito: codigo de la funcion rgbImageFilter del program de ejemplo rgb_filter_9_9.c
+
+* test13.c
+  - Proposito: codigo de la funcion rgbImageFilter del program de ejemplo rgb_filter_9_10.c
+
+* test14.c
+  - Proposito: codigo de la funcion rgbImageFilter del program de ejemplo rgb_filter_9_11.c
+
+* test15.c
+  - Proposito: 
+
+* test16.c
+  - Purpose: check that loop_schedule pragma is properly processed
+
+* test17.c
+  - Purpose: code that anySIMDloop should return yes
+
+* test18.c
+  - Purpose: code that anySIMDloop should return no because it has the code properties
+    but two nested loops
+
+* test19.c
+  - Purpose: code that anySIMDloop should return yes because it has at least one for loop with the code properties without any nested loops inside
+
+* test20.c
+  - Purpose: code with loop inviariant variables to measure the feature that counts the number of these variables
+
+* test21.c
+  - Purpose: code with loop inviariant variables and loop hoisted vars to measure the feature that counts the number of these variables
+
+* test21a.c
+  - Purpose: test with access to 1D and 2D arrays indexed with aux variables
+
+* test22.c
+  - Purpose: all for loops are normalized
+
+* test23.c
+  - Purpose: there are non-normalized for loops
+
+* test24.c
+  - Purpose: test with loops without static limit
+
+* test_rollUp_1.c
+  - Purpose: check if roll-up pattern is  captured properly
+  - Elements ('_' represents a willcard):
+    It has 6 stmts with rollUp pattern:
+    - The 3: F_ = 0.0f;
+    - The 3: d_ = pos[j+_] - pos[i+_];
+
+* test_rollUp_2.c
+  - Purpose: check if roll-up pattern is  captured properly
+  - Elements ('_' represents a willcard):
+    It has 6 stmts with rollUp pattern:
+    - 3 stmts: F_ = 0.0f;
+    - 3 stmts: d_ = pos[j+_] - pos[i+_];
+
+* test_rollUp_3.c
+  - Purpose: check if roll-up pattern is  captured properly
+  - Elements ('_' represents a willcard):
+    It has 12 stmts with rollUp pattern:
+    - 3 stmts: F[_] = 0.0f;
+    - 3 stmts: d[_] = pos[j_] - pos[i_];
+    - 3 stmts: F[_] = F[_] + d[_] * invDist3;
+    - 3 stmts: vel[i_] = vel[i_] + dt*F[_];
+
+* test_rollUp_4.c
+  - Purpose: check if roll-up pattern is  captured properly
+  - Elements ('_' represents a willcard):
+    It has 11 stmts with rollUp pattern:
+    - 2 stmts: F[_] = 0.0f;
+    - 3 stmts: d[_] = pos[j_] - pos[i_];
+    - 3 stmts: F[_] = F[_] + d[_] * invDist3;
+    - 3 stmts: vel[i_] = vel[i_] + dt*F[_];
+
+* test_rollUp_5.c
+  - Purpose: check if roll-up pattern is  captured properly
+  - Elements ('_' represents a willcard):
+    It has 10 stmts with rollUp pattern:
+    - 1 stmts: F[_] = 0.0f;
+    - 3 stmts: d[_] = pos[j_] - pos[i_];
+    - 3 stmts: F[_] = F[_] + d[_] * invDist3;
+    - 3 stmts: vel[i_] = vel[i_] + dt*F[_];
+
+* test_rollUp_6.c
+  - Purpose: check if roll-up pattern is  captured properly
+  - Elements ('_' represents a willcard):
+    It has 9 stmts with rollUp pattern:
+    - 3 stmts: d[_] = pos[j_] - pos[i_];
+    - 3 stmts: F[_] = F[_] + d[_] * invDist3;
+    - 3 stmts: vel[i_] = vel[i_] + dt*F[_];
+
+* test_rollUp_7.c
+  - Purpose: check if roll-up pattern is  captured properly
+  - Elements ('_' represents a willcard):
+    It has 8 stmts with rollUp pattern:
+    - 3 stmts: d[_] = pos[j_] - pos[i_];
+    - 3 stmts: F[_] = F[_] + d[_] * invDist3;
+    - 2 stmts: vel[i_] = vel[i_] + dt*F[_];
+
+* test_rollUp_8.c
+  - Purpose: check if roll-up pattern is  captured properly
+  - Elements ('_' represents a willcard):
+    It has 7 stmts with rollUp pattern:
+    - 3 stmts: d[_] = pos[j_] - pos[i_];
+    - 3 stmts: F[_] = F[_] + d[_] * invDist3;
+    - 1 stmts: vel[i_] = vel[i_] + dt*F[_];
+
+* test_rollUp_9.c
+  - Purpose: check if roll-up pattern is  captured properly
+  - Elements ('_' represents a willcard):
+    It has 6 stmts with rollUp pattern:
+    - 3 stmts: d[_] = pos[j_] - pos[i_];
+    - 3 stmts: F[_] = F[_] + d[_] * invDist3;
+
+* test_abstBlock_1.c
+  - Purpose: two purposes
+    - Check if features are only computed within the scope of function and block specified
+    - Count correctly the number of compound statements within the scope mentioned above
+
+* test_abstBlock_2.c
+  - Purpose: two purposes
+    - Check if features are only computed within the scope of function and block specified
+    - Count correctly the number of compound statements within the scope mentioned above
+
+* test_abstBlock_3.c
+  - Purpose: two purposes
+    - Check if features are only computed within the scope of function and block specified
+    - Count correctly the number of compound statements within the scope mentioned above
+
+* test_uselessStmt_1.c
+  - Purpose: test that useless statement inside the analysis scope (function and block) is 
+    correctly detected
+
+* test_uselessStmt_2.c
+  - Purpose: test that useless statement outside the analysis scope (function and block) is 
+    not counted
+
+* test_uselessStmt_3.c
+  - Purpose: test that useless statement inside the analysis scope (function and block) and
+    inside a for loop is correctly detected
+
+* test_uselessStmt_4.c
+  - Purpose: test that useless statement inside the analysis scope (function and block) and
+    inside an if statement is correctly detected
+
+* test_uselessStmt_5.c
+  - Purpose: test that useless statement inside the analysis scope (function and block) and
+    right inside the POLCA block to analyze is correctly detected
+
+* test_uselessStmt_6.c
+  - Purpose: test that useless statement outside the analysis scope (function and block) is 
+    not counted

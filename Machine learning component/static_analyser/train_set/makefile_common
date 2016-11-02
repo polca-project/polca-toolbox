@@ -1,0 +1,63 @@
+CC = gcc
+FLAGS = -std=gnu99 -w -lm
+
+UTILSRC = util_src
+
+UNAME_S := $(shell uname -s)
+
+GPUSRC = 
+ifeq ($(ARCH),gpu)
+        ifeq ($(UNAME_S),Linux)
+		FLAGS += -lOpenCL
+    	endif
+	ifeq ($(UNAME_S),Darwin)
+		FLAGS += -framework OpenCL
+     	endif
+	GPUSRC = $(ROOT_PATH)/$(UTILSRC)/common_OpenCL.c
+endif
+
+ifeq ($(ARCH),omp)
+	FLAGS += -fopenmp
+endif
+
+INCLUDE += -I $(ROOT_PATH)/$(UTILSRC)
+IO_PATH = $(ROOT_PATH)/$(UTILSRC)
+IOSRC = $(IO_PATH)/IO.c
+
+all:  	$(EXECS)
+
+
+%.o: %.c
+	$(CC) -c $(INCLUDE) -D DATA_PATH=\"$(OUT_PATH)\" $< -o $@ $(FLAGS)
+
+$(EXECS) : % : %.o
+	$(CC) $(EXTRASRC) $(IOSRC) $(GPUSRC) $< -o $@.x $(FLAGS)
+
+trans:
+	$(CC) $(FLAGS) -c $(INCLUDE) $(TRANS).c -o $(TRANS).o
+	$(CC) $(FLAGS) $(IOSRC) $(TRANS).o -o $(TRANS).x
+
+clean:
+	-rm -f *.o
+	-rm -f *.x
+	-rm -f *~
+	make clean_out
+	make clean_s2s
+
+clean_out:
+	-rm -f $(OUT_PATH)/$(OUT_FILES)
+
+clean_s2s:
+	-rm -f *.ast	
+	-rm -f *cetus*
+	-rm -f *transformed*.c
+	-rm -f *_temp.c
+
+run:
+ifdef EXEC
+	make clean_out
+	$(EXEC)
+	./check_output.x
+else
+	@echo "ERROR: Need to provide name of executable, e.g.: make run EXEC=path/fileName"
+endif
