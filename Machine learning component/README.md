@@ -26,19 +26,19 @@ Developer information
 
 The functionality to use Reinforcement Learning as a guide for the source-to-source transformation tool has been implemented in a modular way using different files and extending the PyBrain classes when needed.
 * main.py: This files is the main interface with the s2s engine. During the learning phase it calls the reinforcement learning classes to fill in the action-value table. During the predict phase it queries the action-value table in order to guide the transformation process.
-* S2Senv.py: This class implements functionality required to store and manipu- late the reinforcement learning environment. Thus, it stores the current state, the transition matrix used during the learning phase and defines methods to per- form actions and to reset the environment for starting a new iteration during the learning phase.
+* S2Senv.py: This class implements functionality required to store and manipulate the reinforcement learning environment. Thus, it stores the current state, the transition matrix used during the learning phase and defines methods to perform actions and to reset the environment for starting a new iteration during the learning phase.
 * S2Smdp.py: This class provides the functionality to model the reinforcement learning environment as a fully observable MDP problem. It interacts with the previous class (i.e. S2Senv.py) providing observation and rewards obtained as a result of performing actions.
 
 ### Classification tree
 
-The functionality to learn final states for the source-to-source engine, has been im- plemented in a single file. During the learning phase the program basically reads an input file with pairs (Abstraction, Label) to train the classification method calling the Scikit-learn API. Later during the prediction phase the classification method is queried to decide if a given abstraction is a final state for the transformation engine or not.
+The functionality to learn final states for the source-to-source engine, has been implemented in a single file. During the learning phase the program basically reads an input file with pairs (Abstraction, Label) to train the classification method calling the Scikit-learn API. Later during the prediction phase the classification method is queried to decide if a given abstraction is a final state for the transformation engine or not.
 The program implementing the classification method also allows to dump the learned classification tree to a file. In this way the process of building a fitting the tree is avoided if the file containing the training (Abstraction, Label) pairs has not changed.
 
 ### Code Abstraction
-The functionality to obtain the abstraction associated to a given code has been imple- mented in a single file. This file calls the Pycparser API in order to parse the C code and obtain the abstractions. The parsing has been implemented in the ASTVisitor class that extends the Pycparser class c ast.NodeVisitor.
+The functionality to obtain the abstraction associated to a given code has been implemented in a single file. This file calls the Pycparser API in order to parse the C code and obtain the abstractions. The parsing has been implemented in the ASTVisitor class that extends the Pycparser class c ast.NodeVisitor.
 There are two methods that can be called to obtain the abstraction of a given code:
 * analyzeCode(filename): This function computes the code abstraction by reading first the content of the file located in the string argument filename. The argument must be a valid path in the machine, either relative of absolute. This function is left for debug purposes.
-* analyzeCodeFromStr(strCode): This function computes the code ab- straction by directly parsing the code stored in the string argument. This is the function called by the Machine Learning methods when used to guide the trans- formation engine.
+* analyzeCodeFromStr(strCode): This function computes the code abstraction by directly parsing the code stored in the string argument. This is the function called by the Machine Learning methods when used to guide the transformation engine.
 
 
 Error Reports
