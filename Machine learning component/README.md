@@ -26,8 +26,8 @@ Developer information
 
 The functionality to use Reinforcement Learning as a guide for the source-to-source transformation tool has been implemented in a modular way using different files and extending the PyBrain classes when needed.
 * main.py: This files is the main interface with the s2s engine. During the learning phase it calls the reinforcement learning classes to fill in the action-value table. During the predict phase it queries the action-value table in order to guide the transformation process.
-* S2Senv.py: This class implements functionality required to store and manipulate the reinforcement learning environment. Thus, it stores the current state, the transition matrix used during the learning phase and defines methods to perform actions and to reset the environment for starting a new iteration during the learning phase.
-* S2Smdp.py: This class provides the functionality to model the reinforcement learning environment as a fully observable MDP problem. It interacts with the previous class (i.e. S2Senv.py) providing observation and rewards obtained as a result of performing actions.
+* POLCAenv.py: This class implements functionality required to store and manipulate the reinforcement learning environment. Thus, it stores the current state, the transition matrix used during the learning phase and defines methods to perform actions and to reset the environment for starting a new iteration during the learning phase.
+* POLCAmdp.py: This class provides the functionality to model the reinforcement learning environment as a fully observable MDP problem. It interacts with the previous class (i.e. S2Senv.py) providing observation and rewards obtained as a result of performing actions.
 
 ### Classification tree
 
