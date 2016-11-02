@@ -1,5 +1,5 @@
-The C source to source transformation tool
-==========================================
+The machine learning module
+===========================
 
 The machine learning module has been developed for tackling the two main problems faced by the source-to-source transformation engine developed within the POLCA project. The first problem consists of efficiently and smartly searching in a very large (even infinite) state space where non-functional properties of the codes, in the search space, present a non-monotonic behavior. The second problem consist of deciding when to stop the search process, since there is no a-priori general way to determine that an optimum (in the sense of the most efficient possible code) state has been reached. These problems have been tackled using classification trees to solve the latter and re- inforcement learning to solve the former.
 
