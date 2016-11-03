@@ -26,6 +26,7 @@ run the tool:
 | ------------- |:-------------:| -----:|
 | GHC      | The Glasgow Haskell Compiler.  | https://www.haskell.org/ghc/ |
 | GCC      | GNU Compiler Collection      |   https://gcc.gnu.org/ |
+| Cabal   | Common Architecture for Building Applications and Libraries | https://www.haskell.org/cabal/ |
 | JDK | Java Development Kit (used by Cetus).      |    http://www.oracle.com/technetwork/java/javase/downloads/index.html |
 | Antlr | ANother Tool for Language Recognition (used by Cetus).      |    http://www.antlr.org/ |
 | Alex | Alex is a tool for generating lexical analysers in Haskell.      |    https://hackage.haskell.org/package/alex |

@@ -758,7 +758,7 @@ getApplicableChangesForGivenAst state ast =
 		(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) rulesForStmts, 
 		 filter (\(_,((_,o,n),_,_)) -> not (geq o n)) rulesForExprs)
 
--- extractRulesForGivenAst :: (Data t, Typeable b) => [TransState -> b -> [t]] -> CStatAnn -> TransState -> [(String, t)]
+extractRulesForGivenAst :: (Data t) => [TransState -> t -> [((String, t, t), TransState,[(String, CStatAnn)])]] -> CStatAnn -> TransState -> [(String, ((String, t, t), TransState,[(String, CStatAnn)]))]
 extractRulesForGivenAst listRules astApplicable state = 
 	(nubBy geq 
 		(concat 
@@ -1076,7 +1076,7 @@ getApplicableChangesWOPrevious state =
 		(filter (fst filterFuns) rulesForStmts, 
 		 filter (snd filterFuns) rulesForExprs)
 
--- extractRulesWOPrevious :: (Data t, Typeable b) => [TransState -> b -> [t]] -> TransState -> [(String, t)]
+extractRulesWOPrevious :: (Data t) => [TransState -> t -> [((String, t, t), TransState,[(String, CStatAnn)])]] -> TransState -> [(String, ((String, t, t), TransState,[(String, CStatAnn)]))]
 extractRulesWOPrevious listRules state = 
 	let 
 		astToTransform = 
