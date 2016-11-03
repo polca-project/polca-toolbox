@@ -30,7 +30,7 @@ run the tool:
 | Antlr | ANother Tool for Language Recognition (used by Cetus).      |    http://www.antlr.org/ |
 | Alex | Alex is a tool for generating lexical analysers in Haskell.      |    https://hackage.haskell.org/package/alex |
 | Happy | The Haskell Parser Generator.       |    http://hackage.haskell.org/package/happy |
-| Meld | [Optional] Meld is a visual diff and merge tool targeted at developers     |    http://meldmerge.org/ |
+| Meld | [Optional] Meld is a visual diff and merge tool targeted at developers     |    http://meldmerge.org/ |
 
 
 Getting Started

@@ -661,7 +661,7 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 			[(rule_name, searchMinMaxLine old, (printMyASTBlock old state), (printMyASTBlock old state), newBlockPrinterE (fun,old, new)) 
 			 | (fun, ((rule_name,old,new), _, [])) <- listChangesExprs]
 		let allChanges = 
-			cS ++ cE 
+			cE ++ cS 
 		let idedChanges = 
 			zip [0..((length allChanges) - 1)] allChanges
 		let strProg = printWithPragmas state
@@ -1361,6 +1361,10 @@ applyruleInt state filename steps recalculate =
 									do 
 										putStrLn "Oracle chose to finalize the transformation."
 										return state
+								(-2) ->
+									do 
+										putStrLn "The transformation has been stopped due to an error."
+										return state
 								_ ->
 									applyruleIntAux state{previous_changes = changes} preselected rules changes filename (Just [selected])
 
@@ -1387,7 +1391,7 @@ applyRuleWithOracle state jsonChanges =
 			_ ->
 				do 
 					putStrLn "Error while using the external oracle."
-					return (-1)
+					return (-2)
 
 
 intoString ('\\':'\"':rest)= 
