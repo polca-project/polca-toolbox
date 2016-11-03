@@ -22,8 +22,8 @@ main = do
 		1 ->
 			errorMsg	
 		2 ->
-			callFun args (Nothing)
+			callFun args ""
 		_ ->
-			callFun (init args) (Just (args!!2))
+			callFun (init args) (args!!2)
 
 			 

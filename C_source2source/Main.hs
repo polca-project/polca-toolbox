@@ -29,11 +29,6 @@ import Translator
 import Language.C
 import Language.C.Analysis
 
-import System.IO 
-import System.IO.Unsafe
-import System.Random 
-import System.Process
-
 import Data.Generics
 --import Data.Generics.Serialization.SExp
 --import Data.Generics.Serialization.Streams
@@ -64,8 +59,12 @@ import System.Process
 import System.FilePath.Posix
 import System.Exit
 import System.Directory
+import System.IO 
+import System.IO.Unsafe
+import System.Random 
 
 import qualified Text.Groom as Gr
+import Text.Read as TR
 
 
 
@@ -79,7 +78,7 @@ main = return ()
 
 transWithExt command filename polca_block = 
 	do 
-		state <- getTransInt filename "int" 0 (-1) 0 polca_block
+		state <- getTransInt filename "int" 0 (-1) 0 polca_block command
 		to_platform filename state
 
 trans_to_platform name = 
@@ -94,7 +93,7 @@ trans_to_platformInt name seq_id print_id polca_block =
 					"int"
 				_ -> 
 					"aut"
-		state <- getTransInt name mode 0 seq_id print_id polca_block
+		state <- getTransInt name mode 0 seq_id print_id polca_block ""
 		to_platform name state
 
 to_platform name state = 
@@ -219,7 +218,8 @@ expandAnns name =
 				ast_to_transform = Nothing,
 				print_id = 0,
 				seq_id = -1,
-				acc_steps = []
+				acc_steps = [],
+				oracle = ""
 			}
 		--writeFile (filename ++ "_transformed.c") (prettyMyASTIncludes ast)
 		writeFileWithPragmas (name ++ ".ann.c") state
@@ -247,7 +247,8 @@ pretty_program name =
 				ast_to_transform = Nothing,
 				print_id = 0,
 				seq_id = -1,
-				acc_steps = []
+				acc_steps = [],
+				oracle = ""
 			}
 		-- writeFileWithPragmas (name ++ ".ann.c") state
 		putStrLn (printWithoutPragmas state)
@@ -277,7 +278,8 @@ only_translate name =
 				ast_to_transform = Nothing,
 				print_id = 0,
 				seq_id = -1,
-				acc_steps = []
+				acc_steps = [],
+				oracle = ""
 			}
 		--writeFile (filename ++ "_transformed.c") (prettyMyASTIncludes ast)
 		to_platform name state
@@ -517,14 +519,15 @@ data ChangeCode =
 		ruleName :: String,
 		line :: Int,
 		oldCode  :: String,
-		newCode :: String
+		newCode :: String,
+		newCodeBlock :: String
 	} deriving Show
 
 data CodeAndChanges = 
 	CodeAndChanges
 	{ 
 		code :: String,
-		code_block :: String,
+		codeBlock :: String,
 		changes :: [ChangeCode]
 	} deriving Show
 
@@ -534,27 +537,30 @@ instance FromJSON ChangeCode where
                            v .: DT.pack "ruleName" <*>
                            v .: DT.pack "line" <*>
                            v .: DT.pack "oldCode" <*>
-                           v .: DT.pack "newCode" 
+                           v .: DT.pack "newCode" <*>
+                           v .: DT.pack "newCodeBlock" 
     -- A non-Object value is of the wrong type, so fail.
     parseJSON _          = mzero
 
 instance FromJSON CodeAndChanges where
     parseJSON (Object v) = CodeAndChanges <$>
     					   v .: DT.pack "code" <*>
-    					   v .: DT.pack "code_block" <*>
+    					   v .: DT.pack "codeBlock" <*>
                            v .: DT.pack "changes"
     -- A non-Object value is of the wrong type, so fail.
     parseJSON _          = mzero
 
 instance ToJSON ChangeCode where
-    toJSON (ChangeCode idChange ruleName line oldCode newCode) = 
+    toJSON (ChangeCode idChange ruleName line oldCode newCode newCodeBlock) = 
     	object [DT.pack "idChange" .= idChange, DT.pack "ruleName" .= ruleName, 
     			DT.pack "line" .= line,
-    			DT.pack "oldCode" .= oldCode, DT.pack "newCode" .= newCode]
+    			DT.pack "oldCode" .= oldCode, 
+    			DT.pack "newCode" .= newCode,
+    			DT.pack "newCodeBlock" .= newCodeBlock]
 
 instance ToJSON CodeAndChanges where
-    toJSON (CodeAndChanges code code_block changes) = 
-    	object [DT.pack "code" .= code, DT.pack "code_block" .= code_block, DT.pack "changes" .= changes]
+    toJSON (CodeAndChanges code codeBlock changes) = 
+    	object [DT.pack "code" .= code, DT.pack "codeBlock" .= codeBlock, DT.pack "changes" .= changes]
 
 
 init_trans name defM =
@@ -570,7 +576,7 @@ init_trans name defM =
 			[] ->
 				init_trans_int name iniState (getApplicableChangesWOPrevious iniState)
 			(astDef:_) ->
-				init_trans_int name iniState{ast_to_transform = Just (nameDef, astDef)} (getApplicableChangesForGivenAst iniState astDef)
+				init_trans_int name iniState{ast_to_transform = Just (nameDef, astDef, searchASTFun astDef (fun_defs iniState))} (getApplicableChangesForGivenAst iniState astDef)
 		
 
 search_def :: String -> CStatAnn -> [CStatAnn]
@@ -605,14 +611,55 @@ appTrans name selected rule defM =
 app_trans_int name modState changes = 
 	putStrLn (buildJSON modState changes) 
 
-buildJSON state (listChangesStmts,listChangesExprs) = 
+printMyASTBlock astToPrint state = 
+	case (ast_to_transform state) of 
+		Nothing ->
+			prettyMyASTAnn astToPrint
+		(Just (polca_block, _ , _)) ->
+			
+				case (applyRulesGeneral (search_def polca_block) astToPrint) of 
+					[] ->
+						prettyMyASTAnn astToPrint
+					(astBlock:_) ->
+						prettyMyASTAnn astBlock
+
+buildJSON state0 (listChangesStmts,listChangesExprs) = 
 	do
+		let state = updateASTToTransform state0
+		let newBlockPrinterS = 
+			\(fun,old, new) ->
+				case (ast_to_transform state) of 
+					Nothing -> 
+						""
+					(Just  (polca_block, _, _)) ->
+						let 
+							nstate = state{fun_defs = (changeASTFun (fun,old, new) state)}
+						in 
+							case (applyRulesGeneral (search_def polca_block) (rebuildAst nstate)) of 
+								[] ->
+									""
+								(newBlock:_) ->
+									(printMyASTBlock newBlock nstate)
+		let newBlockPrinterE = 
+			\(fun,old, new) ->
+				case (ast_to_transform state) of 
+					Nothing -> 
+						""
+					(Just  (polca_block, _, _)) ->
+						let 
+							nstate = state{fun_defs = (changeASTFun (fun,old, new) state)}
+						in 
+							case (applyRulesGeneral (search_def polca_block) (rebuildAst nstate)) of 
+								[] ->
+									""
+								(newBlock:_) ->
+									(printMyASTBlock newBlock nstate)
 		let cS = 
-			[(rule_name, searchMinMaxLine old, prettyMyASTAnn old, prettyMyASTAnn new) 
-			 | (_, ((rule_name,old,new), _, [])) <- listChangesStmts]
+			[(rule_name, searchMinMaxLine old, (printMyASTBlock old state), (printMyASTBlock new state), newBlockPrinterS (fun,old, new)) 
+			 | (fun, ((rule_name,old,new), _, [])) <- listChangesStmts]
 		let cE = 
-			[(rule_name, searchMinMaxLine old, prettyMyASTAnn old, prettyMyASTAnn new) 
-			 | (_, ((rule_name,old,new), _, [])) <- listChangesExprs]
+			[(rule_name, searchMinMaxLine old, (printMyASTBlock old state), (printMyASTBlock old state), newBlockPrinterE (fun,old, new)) 
+			 | (fun, ((rule_name,old,new), _, [])) <- listChangesExprs]
 		let allChanges = 
 			cS ++ cE 
 		let idedChanges = 
@@ -622,7 +669,7 @@ buildJSON state (listChangesStmts,listChangesExprs) =
 			case (ast_to_transform state) of 
 				Nothing ->
 					""
-				(Just (_,astBlock)) ->
+				(Just (_,astBlock,_)) ->
 					-- "{\n" ++ (printChangeWithoutAnns astBlock) ++ "}" 
 					prettyMyASTAnn astBlock
 		let jsonContent = 
@@ -630,11 +677,11 @@ buildJSON state (listChangesStmts,listChangesExprs) =
 				{
 				 code = 
 				 	strProg,
-				 code_block = 
+				 codeBlock = 
 				 	strBlock,
 				 changes = 
-					[ChangeCode {idChange = id, ruleName = r, line = l, oldCode = o, newCode = n} 
-					 | (id, (r, l, o, n)) <- idedChanges]}
+					[ChangeCode {idChange = id, ruleName = r, line = l, oldCode = o, newCode = n, newCodeBlock = nb} 
+					 | (id, (r, l, o, n, nb)) <- idedChanges]}
 		BSL.unpack (JSON.encode jsonContent)
 
 getModifiedState name selected = 
@@ -644,7 +691,7 @@ getModifiedState name selected =
 			case (ast_to_transform iniState) of 
 				Nothing ->
 					getApplicableChangesWOPrevious iniState
-				Just (_,astDef) ->
+				Just (_,astDef, _) ->
 					getApplicableChangesForGivenAst iniState astDef
 		let listChangesExprsToStmts = 
 			[(True, (fun, ((rule,(CExpr (Just old) undefNodeAnn),(CExpr (Just new) undefNodeAnn)),nstate, []))) 
@@ -737,48 +784,6 @@ astEqualTo astSearched ast =
 		False ->
 			[]
 
-getApplicableChangesWOPrevious state = 
-	let -- extractRules :: (Typeable a, Typeable b) => [a] -> [b]
-
-		rulesForStmts = extractRulesWOPrevious stmtRules state
-		rulesForExprs = extractRulesWOPrevious exprRules state
-	in 
-		(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) rulesForStmts, 
-		 filter (\(_,((_,o,n),_,_)) -> not (geq o n)) rulesForExprs)
-
--- extractRulesWOPrevious :: (Data t, Typeable b) => [TransState -> b -> [t]] -> TransState -> [(String, t)]
-extractRulesWOPrevious listRules state = 
-	let 
-		astToTransform = 
-			case (ast_to_transform state) of 
-				Nothing ->
-					Nothing 
-				(Just (polca_block,_)) ->
-					case (applyRulesGeneral (search_def polca_block) (rebuildAst state)) of 
-						[] ->
-							Nothing
-						(first:_) ->
-							(Just (polca_block, first))
-		filterAst _ Nothing = 
-			True 
-		filterAst ast (Just (_, astDef)) = 
-			containsAst ast astDef
-		chooseAST ast Nothing = 
-			ast 
-		chooseAST ast (Just (_, astDef)) = 
-			astDef
-	in 
-		(nubBy geq 
-			(concat 
-				[
-					concat
-					[
-						[(fun_name, change) 
-						| change <- (applyRulesGeneral (rule state) (chooseAST ast astToTransform) )] 
-					| (fun_name, _, ast) <- fun_defs state, filterAst ast astToTransform]  
-				| rule <- listRules]))
-
-
 initialStepsTrans verbose name = 
 	initialStepsTransInt verbose name (-1) 0
  
@@ -819,7 +824,8 @@ initialStepsTransInt verbose name seqId printId =
 				ast_to_transform = Nothing,
 				print_id = printId,
 				seq_id = seqId,
-				acc_steps = []
+				acc_steps = [],
+				oracle = ""
 			} 
 		writeFile (name ++ ".cetus") (printWithPragmasWithoutStdLib initialState00)
 		--writeFile (name ++ ".cetus") ((unlines includes0) ++ "\n\n" ++ (prettyMyAST ast00) ++ "\n")
@@ -867,7 +873,8 @@ initialStepsTransInt verbose name seqId printId =
 				ast_to_transform = Nothing,
 				print_id = printId,
 				seq_id = seqId,
-				acc_steps = []
+				acc_steps = [],
+				oracle = ""
 			} 
 		--DBin.encodeFile "temp" initialState0
 		--initialState <- DBin.decodeFile "temp" 
@@ -875,12 +882,12 @@ initialStepsTransInt verbose name seqId printId =
 		return initialState0
 
 getTrans name mode iter =
-	getTransInt name mode iter (-1) 0 ""
+	getTransInt name mode iter (-1) 0 "" ""
 
-getTransInt name mode iter seq_id print_id polca_block = 
+getTransInt name mode iter seq_id print_id polca_block command = 
 	do
 		initialState0 <- initialStepsTransInt True name seq_id print_id
-		let initialState = 
+		let initialState1 = 
 			case polca_block of 
 				"" ->
 					initialState0
@@ -891,8 +898,10 @@ getTransInt name mode iter seq_id print_id polca_block =
 								[] ->
 									Nothing
 								(first:_) ->
-									(Just (polca_block, first))
+									(Just (polca_block, first, searchASTFun first (fun_defs initialState0)))
 						initialState0{ast_to_transform = astDef}
+		let initialState = 
+			initialState1{oracle = command}
 		nstate <- 
 			--case (trace (show (geq ast1 ast0)) mode) of 
 			--case (trace (show ast1) mode) of 
@@ -910,26 +919,106 @@ getTransInt name mode iter seq_id print_id polca_block =
 		--let ast3 = rebuild_ast nstate
 		return nstate
 
+searchASTFun ast funDefs =
+	let 
+		body = 
+			-- [fun_body | (_, _, fun_body) <- funDefs, containsAst ast fun_body]  
+			[fun_body | (_, _, fun_body) <- funDefs, containsAst fun_body ast]  
+	in 
+		-- head  $ trace (show $ length body) body
+		head body
+
+updateASTToTransform state = 
+	let nast_to_transform = 
+		case (ast_to_transform state) of 
+			Nothing ->
+				Nothing 
+			(Just (polca_block, _, _)) ->
+				case (applyRulesGeneral (search_def polca_block) (rebuildAst state)) of 
+					[] ->
+						Nothing
+					(first:_) ->
+						let 
+							funAST = searchASTFun first (fun_defs state)
+						in 
+							(Just (polca_block, first, funAST))
+	in 
+		state{ast_to_transform = nast_to_transform}
+
+--getApplicableChanges :: TransState -> ([(String, ((String,CStatAnn,CStatAnn), TransState))], [(String, ((String,CExprAnn,CExprAnn), TransState))])
+getApplicableChanges :: [Either 
+							(TransState -> CExprAnn -> [((String, CExprAnn, CExprAnn), TransState,[(String, CStatAnn)])])
+							(TransState -> CStatAnn -> [((String, CStatAnn, CStatAnn), TransState,[(String, CStatAnn)])]) ] 
+						-> TransState 
+						-> ([(String,
+	                          ((String, CStatAnn, CStatAnn), TransState, [(String, CStatAnn)]))],
+	                        [(String,
+	                          ((String, CExprAnn, CExprAnn), TransState, [(String, CStatAnn)]))])
+getApplicableChanges funs state =
+	case funs of 
+		[Left fun] ->
+			([], filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state))
+		[Right fun] ->
+			(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state), [])
+		[] ->
+			let 
+				nstate = updateASTToTransform state
+				rulesForStmts = extractRules stmtRules nstate
+				--rulesForStmts = []
+				rulesForExprs = extractRules exprRules nstate
+				(prevRulesForStmts0, prevRulesForExprs0) = 
+					-- trace ((show (length rulesForStmts)) ++ " " ++ (show (length rulesForExprs))) 
+					previous_changes nstate
+				--(prevRulesForStmts0, prevRulesForExprs0) = ([],[])
+				prevRulesForStmts = 
+					[item | item@(fun_name, _) <- prevRulesForStmts0, fun_name /= (last_changed nstate)]
+				prevRulesForExprs = 
+					[item | item@(fun_name, _) <- prevRulesForExprs0, fun_name /= (last_changed nstate)]
+				filterFuns = 
+					case (ast_to_transform nstate) of 
+						Nothing ->
+							((\(_,((_,o,n),_,_)) -> not (geq o n)),
+							 (\(_,((_,o,n),_,_)) -> not (geq o n)))
+						(Just (polca_block, oldBlock, _)) ->
+							((\(_,((_,o,n),_,_)) -> 
+								let 
+									newAST = changeAST (o, n) (rebuildAst state)
+								in 
+									case (applyRulesGeneral (search_def polca_block) newAST) of 
+										[] ->
+											False
+										(newBlock:_) ->
+											not (geq oldBlock newBlock)
+							 ),
+							 (\(_,((_,o,n),_,_)) -> 
+								let 
+									newAST = changeAST (o, n) (rebuildAst state)
+								in 
+									case (applyRulesGeneral (search_def polca_block) newAST) of 
+										[] ->
+											False
+										(newBlock:_) ->
+											not (geq oldBlock newBlock)
+							 ))
+				changes = 
+					(filter (fst filterFuns) (rulesForStmts ++ prevRulesForStmts),
+					 filter (snd filterFuns) (rulesForExprs ++ prevRulesForExprs))
+					--((rulesForStmts ++ prevRulesForStmts),
+					-- (rulesForExprs ++ prevRulesForExprs))
+			in 
+				changes
+
 extractRules :: (Data t, Typeable b) => [TransState -> b -> [t]] -> TransState -> [(String, t)]
 extractRules listRules state = 
 	let 
-		astToTransform = 
-			case (ast_to_transform state) of 
-				Nothing ->
-					Nothing 
-				(Just (polca_block,_)) ->
-					case (applyRulesGeneral (search_def polca_block) (rebuildAst state)) of 
-						[] ->
-							Nothing
-						(first:_) ->
-							(Just (polca_block, first))
+		astToTransform = ast_to_transform state
 		filterAst _ Nothing = 
 			True 
-		filterAst ast (Just (_,astDef)) = 
+		filterAst ast (Just (_, _, astDef)) = 
 			containsAst ast astDef
 		chooseAST ast Nothing = 
 			ast 
-		chooseAST ast (Just (_,astDef)) = 
+		chooseAST ast (Just (_, _, astDef)) = 
 			astDef
 	in 
 		(nubBy geq 
@@ -951,41 +1040,65 @@ extractRules listRules state =
 					  			False]  
 				| rule <- listRules]))
 
---getApplicableChanges :: TransState -> ([(String, ((String,CStatAnn,CStatAnn), TransState))], [(String, ((String,CExprAnn,CExprAnn), TransState))])
-getApplicableChanges :: [Either 
-							(TransState -> CExprAnn -> [((String, CExprAnn, CExprAnn), TransState,[(String, CStatAnn)])])
-							(TransState -> CStatAnn -> [((String, CStatAnn, CStatAnn), TransState,[(String, CStatAnn)])]) ] 
-						-> TransState 
-						-> ([(String,
-	                          ((String, CStatAnn, CStatAnn), TransState, [(String, CStatAnn)]))],
-	                        [(String,
-	                          ((String, CExprAnn, CExprAnn), TransState, [(String, CStatAnn)]))])
-getApplicableChanges funs state =
-	case funs of 
-		[Left fun] ->
-			([], filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state))
-		[Right fun] ->
-			(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state), [])
-		[] ->
-			let 
-				rulesForStmts = extractRules stmtRules state
-				--rulesForStmts = []
-				rulesForExprs = extractRules exprRules state
-				(prevRulesForStmts0, prevRulesForExprs0) = 
-					-- trace ((show (length rulesForStmts)) ++ " " ++ (show (length rulesForExprs))) 
-					previous_changes state
-				--(prevRulesForStmts0, prevRulesForExprs0) = ([],[])
-				prevRulesForStmts = 
-					[item | item@(fun_name, _) <- prevRulesForStmts0, fun_name /= (last_changed state)]
-				prevRulesForExprs = 
-					[item | item@(fun_name, _) <- prevRulesForExprs0, fun_name /= (last_changed state)]
-				changes = 
-					(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (rulesForStmts ++ prevRulesForStmts),
-					 filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (rulesForExprs ++ prevRulesForExprs))
-					--((rulesForStmts ++ prevRulesForStmts),
-					-- (rulesForExprs ++ prevRulesForExprs))
-			in 
-				changes
+getApplicableChangesWOPrevious state = 
+	let 
+		nstate = updateASTToTransform state
+		rulesForStmts = extractRulesWOPrevious stmtRules nstate
+		rulesForExprs = extractRulesWOPrevious exprRules nstate
+		filterFuns = 
+			case (ast_to_transform nstate) of 
+				Nothing ->
+					((\(_,((_,o,n),_,_)) -> not (geq o n)),
+					 (\(_,((_,o,n),_,_)) -> not (geq o n)))
+				(Just (polca_block, oldBlock, _)) ->
+					((\(_,((_,o,n),_,_)) -> 
+						let 
+							newAST = changeAST (o, n) (rebuildAst state)
+						in 
+							case (applyRulesGeneral (search_def polca_block) newAST) of 
+								[] ->
+									False
+								(newBlock:_) ->
+									not (geq oldBlock newBlock)
+					 ),
+					 (\(_,((_,o,n),_,_)) -> 
+						let 
+							newAST = changeAST (o, n) (rebuildAst state)
+						in 
+							case (applyRulesGeneral (search_def polca_block) newAST) of 
+								[] ->
+									False
+								(newBlock:_) ->
+									not (geq oldBlock newBlock)
+					 ))
+
+	in 
+		(filter (fst filterFuns) rulesForStmts, 
+		 filter (snd filterFuns) rulesForExprs)
+
+-- extractRulesWOPrevious :: (Data t, Typeable b) => [TransState -> b -> [t]] -> TransState -> [(String, t)]
+extractRulesWOPrevious listRules state = 
+	let 
+		astToTransform = 
+			ast_to_transform state
+		filterAst _ Nothing = 
+			True 
+		filterAst ast (Just (_, _, astDef)) = 
+			containsAst ast astDef
+		chooseAST ast Nothing = 
+			ast 
+		chooseAST ast (Just (_, _, astDef)) = 
+			astDef
+	in 
+		(nubBy geq 
+			(concat 
+				[
+					concat
+					[
+						[(fun_name, change) 
+						| change <- (applyRulesGeneral (rule state) (chooseAST ast astToTransform) )] 
+					| (fun_name, _, ast) <- fun_defs state, filterAst ast astToTransform]  
+				| rule <- listRules]))
 
 
 applyNrule :: TransState -> Int -> IO TransState
@@ -1200,6 +1313,8 @@ askNextRule state =
 		case answer0 of 
 			"n" ->
 				return $ (getApplicableChanges [] state, False)
+				-- return $ trace "executat" (getApplicableChanges [] (trace "entra" state), False)
+				-- return (([], []), False)
 			"y" ->
 				selectRuleToApply state
 
@@ -1211,25 +1326,78 @@ applyruleInt state filename steps recalculate =
 			-- 		getApplicableChangesWOPrevious iniState
 			-- 	Just astDef ->
 			-- 		getApplicableChangesForGivenAst iniState astDef
+		-- putStrLn "arriba1"
 		(changes@(listChangesStmts,listChangesExprs), preselected) <-
-			case (recalculate, steps) of 
-				(True, Nothing) -> 
+			case (recalculate, steps, oracle state) of 
+				(True, Nothing, "") -> 
 					askNextRule state
-				(True, _) -> 
+				(True, _, _) -> 
 					return $ (getApplicableChanges [] state, False)
-				(False, _) -> 
+				(False, _, "") -> 
 					return $ (previous_changes state, False)
-		writeFile (filename ++ (buildSuffix state ".json")) (buildJSON state changes)
-		let rules = nub 
-			([rule | (_,((rule,_,_),_,_)) <- listChangesStmts] 
-			++ [rule | (_,((rule,_,_),_,_)) <- listChangesExprs])
+		let jsonChanges = buildJSON state changes	
+		-- putStrLn "arriba2"	
+		writeFile (filename ++ (buildSuffix state ".json")) jsonChanges
+		writeFileFromOption 
+			"plain c (without STML annotations)" 
+			filename state (\() -> return ())
+		let rules = nub $
+				[rule | (_,((rule,_,_),_,_)) <- listChangesStmts] 
+			++ 	[rule | (_,((rule,_,_),_,_)) <- listChangesExprs]
 		case rules of 
 			[] -> 
 				do 
 					putStrLn "No more rules can be applied"
 					return state
 			_ -> 
-				applyruleIntAux state{previous_changes = changes} preselected rules changes filename steps
+				case (oracle state) of 
+					"" ->
+						applyruleIntAux state{previous_changes = changes} preselected rules changes filename steps
+					_ ->
+						do 
+							selected <- applyRuleWithOracle state jsonChanges
+							case selected of 
+								(-1) ->
+									do 
+										putStrLn "Oracle chose to finalize the transformation."
+										return state
+								_ ->
+									applyruleIntAux state{previous_changes = changes} preselected rules changes filename (Just [selected])
+
+
+applyRuleWithOracle state jsonChanges = 
+	do 
+		let cmd = 
+			(oracle state) ++ " \"" ++ (intoString jsonChanges) ++ "\" > oracle_choice.txt"
+		-- putStrLn cmd
+		checkResult <- system cmd
+		case checkResult of 
+			ExitSuccess ->
+				do 
+					contents <- readFile "oracle_choice.txt"
+					let mBAnswer = 
+						(TR.readMaybe contents)::(Maybe Int)
+					case mBAnswer of 
+						Nothing -> 
+							do 
+								putStrLn "Error while using the external oracle."
+								return (-1)
+						(Just v) ->
+							return v
+			_ ->
+				do 
+					putStrLn "Error while using the external oracle."
+					return (-1)
+
+
+intoString ('\\':'\"':rest)= 
+	('\\':'\\':'\\':'\"':(intoString rest))
+intoString ('\"':rest) = 
+	('\\':'\"':(intoString rest))
+intoString (other:rest) = 
+	(other:(intoString rest))
+intoString [] = 
+	[]
 
 applyruleIntAux state preselected rules changes filename steps =
 	do 
@@ -1390,6 +1558,12 @@ askWriteOptionsAndReturn filename state finalCall =
 		let (question, answers, dict) = prepareQuestionAnswerRule options 1
 		answer <- 
 			ask ("Select an output format\n" ++ question) answers
+		writeFileFromOption 
+			(head [option | (answer_,option) <- dict, answer_ == answer]) 
+			filename state finalCall
+
+writeFileFromOption option filename state finalCall = 
+	do
 		let header0 = 
 			case (applied_rules state) of 
 				[] ->
@@ -1400,7 +1574,7 @@ askWriteOptionsAndReturn filename state finalCall =
 			header0 ++ "// FUNC_ANALYZ: main BLOCK_ABS\n"	
 		let suffix = 
 			buildSuffix state ".c"
-		case (head [option | (answer_,option) <- dict, answer_ == answer]) of
+		case option of
 			"plain c (with all anotations)" ->
 				writeTransFileInt filename state header suffix
 			"plain c (without STML annotations)" ->
@@ -1508,16 +1682,16 @@ applyChangesStmt whole_list@(((isExpr, (fun, ((rule,old,new),nstate,unknownProps
 					-- TODO: Could be used to perform undo operation
 					putStrLn (show index)
 					--putStrLn (show (previous_changes state0))
-					let new_ast_to_transform = 
-						case (ast_to_transform nstate) of 
-							Nothing ->
-								Nothing 
-							(Just (polca_block,_)) ->
-								case (applyRulesGeneral (search_def polca_block) (rebuildAst nstate)) of 
-									[] ->
-										Nothing
-									(first:_) ->
-										(Just (polca_block, first))
+					-- let new_ast_to_transform = 
+					-- 	case (ast_to_transform nstate) of 
+					-- 		Nothing ->
+					-- 			Nothing 
+					-- 		(Just (polca_block,_)) ->
+					-- 			case (applyRulesGeneral (search_def polca_block) (rebuildAst nstate)) of 
+					-- 				[] ->
+					-- 					Nothing
+					-- 				(first:_) ->
+					-- 					(Just (polca_block, first))
 				 	return (True, True, 
 				 		nstate
 				 		{
@@ -1527,10 +1701,10 @@ applyChangesStmt whole_list@(((isExpr, (fun, ((rule,old,new),nstate,unknownProps
 				 			fun_defs = nfun_defs,
 				 			last_changed = fun,
 				 			print_id = (print_id nstate) + 1,
-				 			acc_steps = (index:(acc_steps nstate)),
-				 			ast_to_transform = 
-				 				-- trace (show new_ast_to_transform) 
-				 				new_ast_to_transform
+				 			acc_steps = (index:(acc_steps nstate))
+				 			-- ast_to_transform = 
+				 			-- 	-- trace (show new_ast_to_transform) 
+				 			-- 	new_ast_to_transform
 				 		})
 			"n" ->
 				applyChangesStmt tail_  state0 Nothing preselected

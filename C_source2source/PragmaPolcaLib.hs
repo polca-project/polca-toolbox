@@ -399,10 +399,11 @@ getPragmaPolca line =
 				stripPrefix "map " (trim rest) 
 			of
 				Just args ->
-					let
-						[input,output] = words args  
-					in 
-						[rest, "input " ++ input, "output " ++ output, "iteration_independent"]
+					case words args  of 
+						[input,output] ->
+							[rest, "input " ++ input, "output " ++ output, "iteration_independent"]
+						[_,input,output] ->
+							[rest, "input " ++ input, "output " ++ output, "iteration_independent"]
 				Nothing ->
 					[rest]
 	in 

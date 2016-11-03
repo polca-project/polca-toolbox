@@ -76,10 +76,17 @@ instance ToJSON ListPragmaPolca where
     toJSON (ListPragmaPolca pragmas) = 
     	object [DT.pack "pragmas" .= pragmas]
 
+detFileName args = 
+	case (Prelude.take 2 (Prelude.reverse (args!!0))) of 
+		('c':('.':_)) ->
+			(Prelude.reverse (Prelude.drop 2 (Prelude.reverse (args!!0)))) 
+		_ ->
+			(args!!0)
+
 main = 
 	do
 		args <- getArgs
-		let (filename':_) = args
+		let filename' =  detFileName args
 		let filename = filename' ++ ".c"
 		--handle <- openFile  filename ReadMode
 		polcaAnn' <- parsePolcaAnn filename

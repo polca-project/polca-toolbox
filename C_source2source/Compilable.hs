@@ -16,7 +16,7 @@ main = do
 	args <- getArgs
 	case length args of 
 		0 -> 
-			putStrLn "Usage:\n\tpolca_s2s filename ([chain_id] [seq_id] | [seq_id]) [polca_block]\nThe source file is needed.\nThere are three optional parameters, two integers and a string.\n\t- In case only one integer is provided:\n\t\t1st - Number of the inital transformation sequence.\n\t- In case two integer are provided:\n\t\t1st - Number of the transformation chain.\n\t\t2nd - Number of the inital transformation sequence.\n\t- The string is a polca block where the transformation will be done.\n\t  If it is not provided, then the transformation scope is the whole program."
+			putStrLn "Usage:\n\tpolca_s2s filename ([chain_id] [step_id] | [step_id]) [polca_block]\nThe source file is needed.\nThere are three optional parameters, two integers and a string.\n\t- In case only one integer is provided:\n\t\t1st - Number of the inital transformation step (default is 0).\n\t- In case two integer are provided:\n\t\t1st - Number of the transformation chain.\n\t\t2nd - Number of the inital transformation step (default is 0).\n\t- The string is a polca block where the transformation will be done.\n\t  If it is not provided, then the transformation scope is the whole program."
 		1 ->
 			case (take 2 (reverse (args!!0))) of 
 				('c':('.':_)) ->

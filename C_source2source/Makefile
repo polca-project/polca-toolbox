@@ -9,8 +9,9 @@ INIT = polca_init
 APPLY = polca_apply
 ROLLUP = polca_rollup
 PRETTY = polca_pretty
+RANORACLE = random_oracle
 
-FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README LICENSE rules.c vec_mult.c dps.c Translator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs
+FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README LICENSE rules.c vec_mult.c dps.c Translator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs RandomOracle.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs
 DEMOFILES = demo/rgb_filter_input.c demo/rgb_filter_input_maxjready.c demo/ppmImage.c demo/ppmImage.h demo/ppmImage.c demo/ppmImage.c demo/lodepng.h demo/lodepng.c 
 CETUSMODIFIED = ../cetus/src/cetus/analysis/CallGraph.java ../cetus/src/cetus/analysis/DDGraph.java ../cetus/src/cetus/analysis/LoopTools.java ../cetus/src/cetus/exec/Driver.java ../cetus/src/cetus/hir/STMLAnnotation.java ../cetus/src/cetus/hir/TranslationUnit.java
 CETUSFILES = ../cetus.tar.gz cetus/cetus.sh cetus/cetus_stml.sh cetus/options.cetus ../cetus/polca_changes.txt 
@@ -22,7 +23,7 @@ exe:
 	ghc -main-is Compilable Compilable.hs -o $(NAME) $(GHC_FLAGS)
 
 exe_ext: 
-	ghc -main-is CompilableExt CompilableExt.hs -o $(NAME_EXT) $(GHC_FLAGS)
+	ghc -main-is CompilableExt CompilableExt.hs -o $(NAME_EXT) $(GHC_FLAGS)		
 
 all:
 	make exe
@@ -32,6 +33,7 @@ all:
 	make expand_ann
 	make translator
 	make interface
+	make random_oracle
 
 # compile rules using a given file
 # Usage: make rules FILE=rules_source_file.c
@@ -77,6 +79,10 @@ expand_ann:
 # Build the translator direct access application
 translator:
 	ghc -main-is TransExe TransExe.hs -o $(TRANS) $(GHC_FLAGS)
+
+# A random oracle to be used as a testing oracle
+random_oracle:
+	ghc -main-is RandomOracle RandomOracle.hs -o $(RANORACLE) $(GHC_FLAGS)
 
 # Build the interface for external tools
 interface:
