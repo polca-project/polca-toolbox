@@ -39,10 +39,15 @@ data PragmaPolca =
 	PragmaPolca
 	{ 
 		pragma :: String,
-		code  :: String,
+		codePP  :: String,
 		pragmaLine :: Int,
 		start :: Int,
-		len :: Int
+		len :: Int,
+		startLine :: Int,
+		startCol :: Int,
+		endLine :: Int,
+		endCol :: Int,
+		code :: String
 	} deriving Show
 
 data ListPragmaPolca = 
@@ -54,10 +59,15 @@ data ListPragmaPolca =
 instance FromJSON PragmaPolca where
     parseJSON (Object v) = PragmaPolca <$>
                            v .: DT.pack "pragma" <*>
-                           v .: DT.pack "code" <*>
+                           v .: DT.pack "codePP" <*>
                            v .: DT.pack "pragmaLine" <*>
                            v .: DT.pack "start" <*>
-                           v .: DT.pack "len"
+                           v .: DT.pack "len" <*>
+                           v .: DT.pack "startLine" <*>
+                           v .: DT.pack "startCol" <*>
+                           v .: DT.pack "endLine" <*>
+                           v .: DT.pack "endCol" <*>
+                           v .: DT.pack "code" 
     -- A non-Object value is of the wrong type, so fail.
     parseJSON _          = mzero
 
@@ -68,9 +78,13 @@ instance FromJSON ListPragmaPolca where
     parseJSON _          = mzero
 
 instance ToJSON PragmaPolca where
-    toJSON (PragmaPolca pragma code pragmaLine start len) = 
-    	object [DT.pack "pragma" .= pragma, DT.pack "code" .= code, 
-    			DT.pack "pragmaLine" .= pragmaLine, DT.pack "start" .= start, DT.pack "len" .= len]
+    toJSON (PragmaPolca pragma codePP pragmaLine start len startLine startCol endLine endCol code) = 
+    	object [DT.pack "pragma" .= pragma, DT.pack "codePP" .= codePP, 
+    			DT.pack "pragmaLine" .= pragmaLine, 
+    			DT.pack "start" .= start, DT.pack "len" .= len,
+    			DT.pack "startLine" .= startLine, DT.pack "startCol" .= startCol,
+    			DT.pack "endLine" .= endLine, DT.pack "endCol" .= endCol,
+    			DT.pack "code" .= code]
 
 instance ToJSON ListPragmaPolca where
     toJSON (ListPragmaPolca pragmas) = 
@@ -89,10 +103,10 @@ main =
 		let filename' =  detFileName args
 		let filename = filename' ++ ".c"
 		--handle <- openFile  filename ReadMode
-		polcaAnn' <- parsePolcaAnn filename
+		polcaAnn' <- parsePolcaAnn filename False
 		ast <- parseMyFile filename
 		let (errors,polcaAnn) = (errorsNclean polcaAnn') 
-		let linkedPolcaAnn = linkPolcaAnnAst ast polcaAnn
+		linkedPolcaAnn <- linkPolcaAnnAst ast polcaAnn filename
 		if errors /= [] 
 		then error (Prelude.unlines errors)
 		else putStr ""
@@ -100,8 +114,20 @@ main =
 		-- putStrLn ("AST successfully read from " ++ filename)
 		--putStrLn (show [(pp,(prettyMyAST ast_node)) | (ast_node, pp) <- linkedPolcaAnn])
 		let jsonContent = 
-			(ListPragmaPolca [(PragmaPolca {pragma = pp, code = (prettyMyAST ast_node), pragmaLine = line, start = minCodeLine, len = (Prelude.length (Prelude.lines (prettyMyAST ast_node))) }) 
-							  | (ast_node, pp, line, minCodeLine) <- linkedPolcaAnn])
+			(ListPragmaPolca 
+				[(PragmaPolca{
+					pragma = pp, 
+					codePP = (prettyMyAST ast_node), 
+					pragmaLine = line, 
+					start = minCodeLine, 
+					len = (Prelude.length (Prelude.lines (prettyMyAST ast_node))),
+					startLine = sL,
+					startCol = sC,
+					endLine = eL,
+					endCol = eC,
+					code = codeOri
+				}) 
+				| (ast_node, pp, line, minCodeLine, (sL, sC), (eL, eC), codeOri) <- linkedPolcaAnn])
 		--let res = decode "{\"pragma\":\"zip\",\"code\":\"Some C code\"}" :: Maybe PragmaPolca
 		-- let jsonFilename = filename' ++ ".json"
 		let jsonStr = BSL.unpack (encode jsonContent)

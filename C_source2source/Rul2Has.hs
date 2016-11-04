@@ -119,7 +119,7 @@ stml2Has name =
 		--ast <- parseMyFile filename
 		--let (errors,polcaAnn) = (errorsNclean polcaAnn') 
 		--let linkedPolcaAnn = linkPolcaAnn ast polcaAnn
-		(ast0, linkedPolcaAnn,includes) <- readFileInfo True name
+		(ast0, linkedPolcaAnn,includes) <- readFileInfo True name True
 
 		let annAST = fmap (\nI -> Ann nI nodePropertiesDefault) ast0
 		let ast = changeAnnAST linkedPolcaAnn annAST

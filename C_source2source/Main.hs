@@ -183,7 +183,7 @@ ast name =
 ast2 name = 
 	do
 		--ast <- parseMyFile (name ++ ".c")
-		(ast, linkedPolcaAnn,includes) <- readFileInfo True name
+		(ast, linkedPolcaAnn,includes) <- readFileInfo True name True
 		--putStrLn $ show $ linkedPolcaAnn
 		-- The fmap remove (all but Ident) nodeInfo to make a clearer AST output
 		let annAST = fmap (\nI -> Ann nI nodePropertiesDefault) ast
@@ -195,7 +195,7 @@ ast2 name =
 
 expandAnns name = 
 	do
-		(ast, linkedPolcaAnn,includes) <- readFileInfo True name
+		(ast, linkedPolcaAnn,includes) <- readFileInfo True name True
 		let lastNode = getLastNode ast
 		let annAST = fmap (\nI -> Ann nI nodePropertiesDefault) ast
 		let changedAnnAST = changeAnnAST linkedPolcaAnn annAST
@@ -227,7 +227,7 @@ expandAnns name =
 
 pretty_program name = 
 	do
-		(ast, linkedPolcaAnn,includes) <- readFileInfo False name
+		(ast, linkedPolcaAnn,includes) <- readFileInfo False name False
 		let lastNode = getLastNode ast
 		let annAST = fmap (\nI -> Ann nI nodePropertiesDefault) ast
 		-- let changedAnnAST = changeAnnAST linkedPolcaAnn annAST
@@ -255,7 +255,7 @@ pretty_program name =
 
 only_translate name = 
 	do
-		(ast, linkedPolcaAnn,includes) <- readFileInfo True name
+		(ast, linkedPolcaAnn,includes) <- readFileInfo True name True
 		let lastNode = getLastNode ast
 		let annAST = fmap (\nI -> Ann nI nodePropertiesDefault) ast
 		let changedAnnAST = changeAnnAST linkedPolcaAnn annAST
@@ -792,7 +792,7 @@ initialStepsTransInt verbose name seqId printId =
 		-- TODO: Delete .cetus.c previous file OR delete it after use
 		-- TODO: Treat problems with Cetus and show the output of cetus when some arises
 		putStrLnCond verbose ("Annotating the code using Cetus...")
-		(ast00, linkedPolcaAnn, includes0) <- readFileInfo verbose name
+		(ast00, linkedPolcaAnn, includes0) <- readFileInfo verbose name True
 		let normAST = normalize ast00
 		let annAST00 = fmap (\nI -> Ann nI nodePropertiesDefault) normAST
 		let ast000 = changeAnnAST linkedPolcaAnn annAST00
@@ -845,7 +845,7 @@ initialStepsTransInt verbose name seqId printId =
 					contents <- readFile "cetus/output.txt"
 					--return (error contents)
 					fail (contents ++ "\n\n\nError while annotating using Cetus.")
-		(ast0, linkedPolcaAnn,_) <- readFileInfo verbose annotatedFile
+		(ast0, linkedPolcaAnn,_) <- readFileInfo verbose annotatedFile True
 		let lastNode = getLastNode ast0
 
 		let annAST = fmap (\nI -> Ann nI nodePropertiesDefault) ast0

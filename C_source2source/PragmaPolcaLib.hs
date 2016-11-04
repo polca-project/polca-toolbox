@@ -37,6 +37,7 @@ import Data.List
 import Data.List.Split
 import Data.Either
 import Data.Maybe
+import Data.Map as DM (fromList, (!), Map, member)
 --import Data.Text (strip, unpack )
 
 import Control.Lens
@@ -52,13 +53,13 @@ import Debug.Trace
 pragma_limit_per_stmt = 20
 
 
-parsePolcaAnn filename =
+parsePolcaAnn filename derive =
   do  
     --handle <- openFile input_file ReadMode
     contents <- readFile filename
     let linesFile = lines contents
     let numberedLines = zip [1..(length linesFile)] linesFile
-    let pragmas = foldl readPolcaAnn [] numberedLines
+    let pragmas = foldl (readPolcaAnn derive) [] numberedLines
     return pragmas
 
 
@@ -67,7 +68,7 @@ putStrLnCond True str =
 putStrLnCond False str = 
 	return ()
 
-readFileInfo verbose name = 
+readFileInfo verbose name derive = 
  	do 
  		let filename0 = name ++ ".c"
 		(includes, rest) <- separateIncludes filename0
@@ -75,7 +76,7 @@ readFileInfo verbose name =
 		let filename1 = name ++ "_temp.c"
 		writeFile filename1 (concat (intersperse "\n" rest))
 		ast0 <- parseMyFile filename1
-		polcaAnn' <- parsePolcaAnn filename1
+		polcaAnn' <- parsePolcaAnn filename1 derive
 		--removeFile filename
 		let (errors,polcaAnn) = errorsNclean  polcaAnn'
 		putStrLnCond verbose ("AST successfully read from " ++ filename0 ++ " and stored in " ++ name ++ ".ast")
@@ -374,7 +375,7 @@ errorsNclean polcaAnn =
 	([l | (-1,l) <- polcaAnn],
 	 [i | i@(n,_) <- polcaAnn, n /= -1])
 
-readPolcaAnn acc (numLine, line)
+readPolcaAnn derive acc (numLine, line)
 	| pragmasPolca /= [] =
 		--case (validPragma (head parsedPolcaAnn)) of 
 		--	True ->
@@ -385,12 +386,12 @@ readPolcaAnn acc (numLine, line)
 		acc
 	where 
 		pragmasPolca = 
-			getPragmaPolca (trim line)
+			getPragmaPolca derive (trim line)
 		--parsedPolcaAnn = 
 		--	--words pragmaPolca
 		--	pragmaPolca
 
-getPragmaPolca line =
+getPragmaPolca derive line =
 	let 
 		polca_ann rest = 
 			case 
@@ -414,11 +415,15 @@ getPragmaPolca line =
 			--	stripPrefix "#pragma stml " (trim line))
 			--)
 			(stripPrefix "#pragma polca " (trim line), 
-			stripPrefix "#pragma stml " (trim line))
+			 stripPrefix "#pragma stml " (trim line))
 		of
 			(Just rest,_) ->
 			-- Is polca ann
-				polca_ann rest 
+				case derive of 
+					True ->
+						polca_ann rest
+					False ->
+						[rest] 
 			-- Is stml ann
 			(_,Just rest) ->
 				[rest]
@@ -429,7 +434,11 @@ getPragmaPolca line =
 				of
 					(Just rest,_) ->
 					-- Is polca ann
-						polca_ann rest 
+						case derive of 
+							True ->
+								polca_ann rest
+							False ->
+								[rest] 
 					-- Is stml ann
 					(_,Just rest) ->
 						[rest]
@@ -501,9 +510,99 @@ buildLineName n =
 				Just name -> [(line, name)]
 				Nothing -> []
 
-linkPolcaAnnAst ast polcaAnn = 
-	[let pragmaAst = linkOnePolcaAnnAst (line + 1) ast
-	 in (pragmaAst,ann,line,searchMinMaxLine pragmaAst) | (line,ann) <- polcaAnn]
+linkPolcaAnnAst ast polcaAnn filename =
+	do 
+		let fromAST =  
+			[let 
+				pragmaAst = linkOnePolcaAnnAst (line + 1) ast
+			 in 
+			 	(pragmaAst, ann, line, searchMinMaxLine pragmaAst) 
+			| (line,ann) <- polcaAnn]
+		contents <- readFile filename
+		let linesFile = lines contents
+		let numberedLines = zip [1..(length linesFile)] linesFile
+		let mapProgram = (DM.fromList numberedLines) -- :: (DM.Map Int String)
+		let pragmas = map (readInfoOriCode mapProgram) fromAST
+		return pragmas
+
+readInfoOriCode mapProgram (pragmaAst, ann, line, minLine) = 
+	let 
+		(start, end, code) = 
+			-- trace ("ANN: " ++ (show ann)) 
+			(searchBlockFromPoint line mapProgram (Nothing, [], 0))
+	in 
+		(pragmaAst, ann, line, minLine, start, end, code)
+
+searchBlockFromPoint current mapProgram (iS, iPrev, iN) = 
+	case DM.member current mapProgram of 
+		False ->
+			let 
+				(lastStartLine, lastStartCol) = fromMaybe (0, 0) iS
+			in 
+				case (lastStartLine, lastStartCol) of 
+					(0,0) ->
+						((0,0), (0,0), "")
+					_ ->
+						let 
+							lastLine = 
+								-- trace (show (lastStartLine, lastStartCol)) 
+								(mapProgram!lastStartLine)
+						in 
+							((lastStartLine, lastStartCol), (lastStartLine, length lastLine), lastLine)
+		True -> 
+			let 
+				line = 
+					-- trace (show $ reverse iPrev) 
+					(mapProgram!current)
+			in 
+				case (stripPrefix "#pragma " (trim line)) of 
+					(Just _) ->
+						case (iN, iPrev) of 
+							(0, (_:_)) ->
+								let 
+									prevLine = 
+										-- trace (show (current - 1))  
+										(mapProgram!(current - 1))
+								in 
+									case appearsSCBefCB (reverse prevLine) of 
+										True -> 
+											(fromMaybe (0, 0) iS, (current - 1, length prevLine), init $ reverse iPrev)
+										False ->
+											searchBlockFromPoint (current + 1) mapProgram (iS, iPrev, iN)			
+							_ ->
+								searchBlockFromPoint (current + 1) mapProgram (iS, iPrev, iN)
+					Nothing -> 
+						case (searchCB current line iN 1 iPrev iS) of 
+							(Just s, Just e, code, 0) ->
+								(s, e, reverse code)
+							(mbs, _, prev, n) ->
+								searchBlockFromPoint (current + 1) mapProgram (mbs, prev, n)
+
+appearsSCBefCB (';':_) = 
+	True
+appearsSCBefCB (')':_) = 
+	False
+appearsSCBefCB (_:rest) = 
+	appearsSCBefCB rest
+appearsSCBefCB [] = 
+	False
+
+searchCB line ('{':rest) 0 c prev Nothing = 
+	searchCB line rest 1 (c + 1) ('{':prev) (Just (line, c))
+searchCB line (other:rest) 0 c prev Nothing = 
+	searchCB line rest 0 (c + 1) (other:prev) (Just (line, c))
+searchCB line ('{':rest) n c prev start = 
+	searchCB line rest (n + 1) (c + 1) ('{':prev) start
+searchCB line ('}':rest) 1 c prev start = 
+	(start, Just (line, c + 1), ('}':prev), 0)
+searchCB line ('}':rest) n c prev start = 
+	searchCB line rest (if n > 0 then (n - 1) else 0) (c + 1) ('}':prev) start
+searchCB line (other:rest) n c prev start = 
+	searchCB line rest n (c + 1) (other:prev) start
+searchCB line [] n c prev start = 
+	(start, Nothing, ('\n':prev), n)
+-- searchCB line other1 other2 other3 other4 other5 other6 = 
+-- 	trace (show (line, other1, other2, other3, other4, other5, other6)) (Nothing, Nothing, [], 0)
 
 -- TODO: Replace the way it is calculated as in linkPolcaAnnAst
 linkOnePolcaAnnAst line ast 
@@ -553,7 +652,6 @@ searchMinMaxLine ast =
 	let 
 		listLines = 
 			applyRulesGeneral storeLine ast
-			--(everything (++) ( [] `mkQ` storeLine) ast)
 	in 
 		case listLines of 
 			[] ->
