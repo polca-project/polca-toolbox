@@ -1,0 +1,6 @@
+The software under this folder has been authored by:
+
+    Salvador Tamarit Muñoz
+    Guillermo Vigueras González
+    Manuel Carro Liñares
+    Julio Mariño Carballo

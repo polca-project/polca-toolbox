@@ -1,24 +1,9 @@
+-- Copyright (c) 2013-2016, The IMDEA Software Institute and
+-- Copyright (c) 2013-2016, Universidad Politécnica de Madrid
+
+-- See LICENSE.txt and AUTHORS.txt for licensing and authorship
+
 module PragmaPolcaReader where 
-
--- # LANGUAGE OverloadedStrings, ScopedTypeVariables #
---  Copyright (C) 2015 The IMDEA Software Institute 
--- 	            and the Technical University of Madrid
-
--- All rights reserved.
--- For additional copyright information see below.
-
--- This file is part of the polca-transformation-rules package
-
--- License: This work is licensed under the Creative Commons
--- Attribution-NonCommercial-NoDerivatives 4.0 International
--- License. To view a copy of this license, visit
--- http://creativecommons.org/licenses/by-nc-nd/4.0/ or send a letter
--- to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
---
--- Main author: Salvador Tamarit
--- Please address questions, etc. to: <polca-project-madrid@software.imdea.org>
-
-
 
 import PragmaPolcaLib
 import RulesLib

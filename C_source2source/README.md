@@ -480,6 +480,12 @@ $ ./polca_s2s_ext "py polca_ml" vec_mult.c
 In case of doubt or for further information, please do not hesitate to
 contact us.
 
+License and Autorship
+---------------------
+
+[License](./LICENSE.txt)
+[Authors](./AUTHORS.txt)
+
 Error Reports
 -------------
 
