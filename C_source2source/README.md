@@ -484,6 +484,7 @@ License and Autorship
 ---------------------
 
 [License](./LICENSE.txt)
+
 [Authors](./AUTHORS.txt)
 
 Error Reports
