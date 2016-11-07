@@ -24,10 +24,10 @@ data PragmaPolca =
 	PragmaPolca
 	{ 
 		pragma :: String,
-		codePP  :: String,
+		-- codePP  :: String,
 		pragmaLine :: Int,
-		start :: Int,
-		len :: Int,
+		-- start :: Int,
+		-- len :: Int,
 		startLine :: Int,
 		startCol :: Int,
 		endLine :: Int,
@@ -44,10 +44,10 @@ data ListPragmaPolca =
 instance FromJSON PragmaPolca where
     parseJSON (Object v) = PragmaPolca <$>
                            v .: DT.pack "pragma" <*>
-                           v .: DT.pack "codePP" <*>
+                           -- v .: DT.pack "codePP" <*>
                            v .: DT.pack "pragmaLine" <*>
-                           v .: DT.pack "start" <*>
-                           v .: DT.pack "len" <*>
+                           -- v .: DT.pack "start" <*>
+                           -- v .: DT.pack "len" <*>
                            v .: DT.pack "startLine" <*>
                            v .: DT.pack "startCol" <*>
                            v .: DT.pack "endLine" <*>
@@ -63,12 +63,16 @@ instance FromJSON ListPragmaPolca where
     parseJSON _          = mzero
 
 instance ToJSON PragmaPolca where
-    toJSON (PragmaPolca pragma codePP pragmaLine start len startLine startCol endLine endCol code) = 
-    	object [DT.pack "pragma" .= pragma, DT.pack "codePP" .= codePP, 
+    toJSON (PragmaPolca pragma pragmaLine startLine startCol endLine endCol code) = 
+    	object [DT.pack "pragma" .= pragma, 
+    			-- DT.pack "codePP" .= codePP, 
     			DT.pack "pragmaLine" .= pragmaLine, 
-    			DT.pack "start" .= start, DT.pack "len" .= len,
-    			DT.pack "startLine" .= startLine, DT.pack "startCol" .= startCol,
-    			DT.pack "endLine" .= endLine, DT.pack "endCol" .= endCol,
+    			-- DT.pack "start" .= start, 
+    			-- DT.pack "len" .= len,
+    			DT.pack "startLine" .= startLine, 
+    			DT.pack "startCol" .= startCol,
+    			DT.pack "endLine" .= endLine, 
+    			DT.pack "endCol" .= endCol,
     			DT.pack "code" .= code]
 
 instance ToJSON ListPragmaPolca where
@@ -102,10 +106,10 @@ main =
 			(ListPragmaPolca 
 				[(PragmaPolca{
 					pragma = pp, 
-					codePP = (prettyMyAST ast_node), 
+					-- codePP = (prettyMyAST ast_node), 
 					pragmaLine = line, 
-					start = minCodeLine, 
-					len = (Prelude.length (Prelude.lines (prettyMyAST ast_node))),
+					-- start = minCodeLine, 
+					-- len = (Prelude.length (Prelude.lines (prettyMyAST ast_node))),
 					startLine = sL,
 					startCol = sC,
 					endLine = eL,
