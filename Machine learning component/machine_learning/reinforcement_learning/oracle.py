@@ -1,11 +1,10 @@
 #!/opt/local/bin/python
 # /usr/bin/env python
-__author__ = 'Thomas Rueckstiess, ruecksti@in.tum.de'
 
-""" This example demonstrates how to use the discrete Temporal Difference
-Reinforcement Learning algorithms (SARSA, Q, Q(lambda)) in a classical
-fully observable MDP maze task. The goal point is the top right free
-field. """
+# Copyright (c) 2013-2016, The IMDEA Software Institute and
+# Copyright (c) 2013-2016, Universidad Politécnica de Madrid
+
+# See LICENSE.txt and AUTHORS.txt for licensing and authorship
 
 from scipy import *
 import sys, time, re
@@ -21,7 +20,8 @@ from pybrain.rl.environments import Task
 from polcamdp import MDPPolcaTask
 from PolcaEnv import PolcaEnv
 
-trainDataPath = './utils/'
+trainDataPath = '../machine_learning/reinforcement_learning/utils/'
+# trainDataPath = './utils/'
 trainDataFile = 'trainingData.txt'
 
 tableFile = 'actionValueTable.txt'
@@ -47,14 +47,19 @@ def parseList(listStr,dataType):
 
     if dataType == 0:
         newStr = [int(num) for num in listStr.split(',')]
-    else:
+    elif dataType == 1:
         newStr = [float(num) for num in listStr.split(',')]
+    else: # 2 = Str
+        newStr = [str(num) for num in listStr.split(',')]
 
     if newStr == None:
         if dataType == 0:
             newStr = [int(listStr)]
-        else:
+        elif dataType == 1:
             newStr = [float(listStr)]
+        else:
+            newStr = [str(listStr)]
+
 
     return newStr
 
@@ -62,7 +67,7 @@ def parseList(listStr,dataType):
 def readTrainData(trainDataFile):
     global initStates,goalStates,transitionTable,ruleNames,abst2State
 
-    print("Loading train data from file %s ..." % (trainDataFile))
+    # print("Loading train data from file %s ..." % (trainDataFile))
     f = open(trainDataFile,'r')
 
     tableData = None
@@ -125,7 +130,7 @@ def readTrainData(trainDataFile):
 def readActionValueTable(tableFile):
     global actionValueTable
 
-    print("Loading train data from file %s ..." % (tableFile))
+    # print("Loading train data from file %s ..." % (tableFile))
     f = open(tableFile,'r')
 
     for line in f:
@@ -137,6 +142,7 @@ def readActionValueTable(tableFile):
 def getRuleId(ruleName):
     global ruleNames
 
+    # print("#### %s" % (ruleName))
     ruleId = -1
     for rule in ruleNames:
         ruleId += 1
@@ -148,7 +154,11 @@ def getRuleId(ruleName):
 def getRuleName(ruleId):
     global ruleNames
 
-    return ruleNames[ruleId]
+    ruleName = ""
+    if ruleId != -1:
+        ruleName = ruleNames[ruleId]
+
+    return ruleName
 
 def initData():
     global numActions,numStates,table
@@ -221,35 +231,48 @@ def transformationStep(codeAbstraction,ruleIdList):
 
     state = abst2State[codeAbstraction]
 
-    # values = table.params.reshape(numStates, numActions)[state, :].flatten()
-    values = table.params.reshape(numStates, numActions)[state, ruleIdList].flatten()
-    localAction = where(values == max(values))[0]
-    # localAction is of type numpy.ndarray -> get the first value since it is the max
-    globalAction = ruleIdList[localAction[0]]
-    newState = transitionTable[state,globalAction]
+    globalAction = -1
+    if not state in goalStates:
+        # values = table.params.reshape(numStates, numActions)[state, :].flatten()
+        # sys.stderr.write("\n"+str(ruleIdList)+"\n")
+        values = table.params.reshape(numStates, numActions)[state, ruleIdList].flatten()
+        localAction = where(values == max(values))[0]
+        # sys.stderr.write(str(localAction)+"\n")
+        # localAction is of type numpy.ndarray -> get the first value since it is the max
+        globalAction = ruleIdList[localAction[0]]
+        # sys.stderr.write(str(getRuleName(globalAction))+"\n")
+        newState = transitionTable[state,globalAction]
 
-    # print type(table.params)
-    sys.stdout.write("Transition [%2d" % (state))
-    sys.stdout.write(",%2d] ->" % (globalAction))
-    sys.stdout.write(" %2d\n" % (newState))
+        # # print type(table.params)
+        # sys.stdout.write("Transition [%2d" % (state))
+        # sys.stdout.write(",%2d] ->" % (globalAction))
+        # sys.stdout.write(" %2d\n" % (newState))
 
     return globalAction
 
 
+def convertStr2IdList(ruleNameList):
+    ruleIdList = []
+
+    for ruleName in ruleNameList:
+        # print("%s" % ruleName)
+        ruleIdList.append(getRuleId(ruleName))
+
+    return ruleIdList
+
 ############################################################################
 
-if __name__ == "__main__":
+def predict(codeAbstraction,ruleNameList):
 
-    codeAbstraction = None
-    ruleIdList      = None
+    if isinstance(codeAbstraction, (list)):
+        aux = codeAbstraction
+        codeAbstraction = "".join(str(x) for x in aux)
 
-    if len(sys.argv) < 3:
-        print("ERROR: usage -> %s <code_abstraction> <rule_id_list>" % (sys.argv[0]))
-    else:
-        codeAbstraction = sys.argv[1]
-        ruleIdList = eval(sys.argv[2])
-        #'-1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0'
-        #ruleIdList = [0,4,6,41,45]
+
+    # ruleIdList = eval(sys.argv[2])
+    #'-1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0'
+    #ruleIdList = [0,4,6,41,45]
+
 
     initData()
 
@@ -257,10 +280,27 @@ if __name__ == "__main__":
     if codeAbstraction == None:
         ruleId = testTransformationProcess()
     else:
+        ruleIdList = convertStr2IdList(ruleNameList)
         ruleId = transformationStep(codeAbstraction,ruleIdList)
 
 
     ruleName = getRuleName(ruleId)
+    # sys.stderr.write(str(ruleName)+"\n")
+
+    return ruleName
+
+
+if __name__ == "__main__":
+
+    ruleName = ""
+
+    if len(sys.argv) < 3:
+        print("ERROR: usage -> %s <code_abstraction> <rule_id_list>" % (sys.argv[0]))
+    else:
+        codeAbstraction = eval(sys.argv[1])
+        ruleNameList = parseList(sys.argv[2],2)
+
+        ruleName = predict(codeAbstraction,ruleNameList)
 
     sys.exit(ruleName)
 

@@ -1,11 +1,11 @@
 #!/opt/local/bin/python
 # /usr/bin/env python
-__author__ = 'Thomas Rueckstiess, ruecksti@in.tum.de'
 
-""" This example demonstrates how to use the discrete Temporal Difference
-Reinforcement Learning algorithms (SARSA, Q, Q(lambda)) in a classical
-fully observable MDP maze task. The goal point is the top right free
-field. """
+# Copyright (c) 2013-2016, The IMDEA Software Institute and
+# Copyright (c) 2013-2016, Universidad Politécnica de Madrid
+
+# See LICENSE.txt and AUTHORS.txt for licensing and authorship
+
 
 from scipy import *
 import sys, time, re

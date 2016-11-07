@@ -1,5 +1,11 @@
 #!/usr/bin/python
 
+# Copyright (c) 2013-2016, The IMDEA Software Institute and
+# Copyright (c) 2013-2016, Universidad Politécnica de Madrid
+
+# See LICENSE.txt and AUTHORS.txt for licensing and authorship
+
+
 import sys,re,os
 from sklearn import tree
 from sklearn.externals import joblib
@@ -361,8 +367,8 @@ if __name__ == "__main__":
     # pathList = ["./predict_set/geometry/rotate"]
 
     # pathList = ["./sca_test_files"]
-    pathList = ["./train_set/imageFilter/threshold/s2s_transformations"]
-    # pathList = ["./predict_set/imageFilter/brightness/s2s_transformations"]
+    # pathList = ["./train_set/imageFilter/threshold/oracle_test","./predict_set/imageFilter/brightness/oracle_test"]
+    pathList = ["./train_set/hpcDwarfs/nBody/s2s_transformations/2arrays"]
 
     print("\n#####################################################\n")
 

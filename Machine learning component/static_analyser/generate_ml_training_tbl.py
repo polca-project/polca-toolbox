@@ -1,5 +1,11 @@
 #!/usr/bin/python
 
+# Copyright (c) 2013-2016, The IMDEA Software Institute and
+# Copyright (c) 2013-2016, Universidad Politécnica de Madrid
+
+# See LICENSE.txt and AUTHORS.txt for licensing and authorship
+
+
 import sys,re,os
 
 nameRules = []
@@ -11,6 +17,10 @@ trainTransitionTable = {}
 
 initStates = []
 finalStates = []
+
+def convertAbsList2Key(abstraction):
+
+    return "".join(str(x) for x in eval(abstraction))
 
 def updateTrainTable(useCase):
     global initStates,nameRules,abst2State,trainTransitionTable,finalStates
@@ -58,7 +68,7 @@ def updateTrainTable(useCase):
                         print("\t%s" % m6.group(0))
 
                     if m1:
-                        abstraction = m1.group(1)
+                        abstraction = convertAbsList2Key(m1.group(1))
                         stateId = setStateId(currSeqId,abstraction)
 
                 if prevStateId != -1:
@@ -85,6 +95,8 @@ def updateTrainTable(useCase):
 def setStateId(sequenceId,abstraction):
     global abst2State,abst2SeqList
 
+    # absKey = convertAbsList2Key(abstraction)
+    # print absKey
     if abstraction in abst2State.keys():
         if abstraction in abst2SeqList.keys():
             seqList = abst2SeqList[abstraction]
@@ -103,6 +115,7 @@ def setStateId(sequenceId,abstraction):
     else:
         stateId = len(abst2State)
         initTransitionTableRow(stateId)
+
         abst2State[abstraction] = stateId
         abst2SeqList[abstraction] = [sequenceId]
 
@@ -114,6 +127,7 @@ def setStateId(sequenceId,abstraction):
 
 def getStateId(abstraction):
     global abst2State
+
 
     return abst2State[abstraction]
 
@@ -181,7 +195,7 @@ if __name__ == "__main__":
     trainDataFile = 'trainingData.txt'
 
 
-    pathList = [["threshold0","./train_set/imageFilter/threshold/s2s_transformations"]
+    pathList = [["threshold0","./train_set/imageFilter/threshold/s2s_test"]
                 ]
 
     print("\n#####################################################\n")

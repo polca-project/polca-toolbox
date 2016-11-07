@@ -1,5 +1,11 @@
 #!/usr/bin/python
 
+# Copyright (c) 2013-2016, The IMDEA Software Institute and
+# Copyright (c) 2013-2016, Universidad Politécnica de Madrid
+
+# See LICENSE.txt and AUTHORS.txt for licensing and authorship
+
+
 #-----------------------------------------------------------------
 # Python program using pycparser library to extract code SCA features
 # for code classification
@@ -15,6 +21,9 @@ from pycparser import c_parser, c_ast, parse_file, c_generator
 import re,os
 
 # Global variables
+
+isRollableCmd = "../static_analyser/stmtDiff.py"
+# isRollableCmd = "./stmtDiff.py"
 
 # Singleton reference to CGenerator for pretty print of stmts and compute
 # rollUp pattern
@@ -878,10 +887,10 @@ class ASTVisitor(c_ast.NodeVisitor):
                 # print("----------")
                 # print("%d: %s (%s)" % (i+1,nStmtStr,next_stmt.__class__.__name__))
                 if not isRolledUpFor:
-                    val = os.system('./stmtDiff.py "%s" "%s"' % (pStmtStr,nStmtStr))
+                    val = os.system('%s "%s" "%s"' % (isRollableCmd,pStmtStr,nStmtStr))
                 else:
                     bodyStmtStr = generator.visit(prev_stmt.stmt)
-                    val = os.system('./stmtDiff.py "%s" "%s"' % (bodyStmtStr,nStmtStr))
+                    val = os.system('%s "%s" "%s"' % (isRollableCmd,bodyStmtStr,nStmtStr))
                     if val != 0:
                         foundRolledUpFor = 1
                     else:
@@ -1489,11 +1498,13 @@ def analyzeCodeFromStr(strCode):
 
     analysisTuple = analyzeCode(s2s_tmp_file)
     
-    print("#########################################")
-    sys.stdout.write("%s\n" % generateStats())
-    print("#########################################")
+    # print("#########################################")
+    # sys.stdout.write("%s\n" % generateStats())
+    # print("#########################################")
 
     os.system("rm %s" % (s2s_tmp_file))
+
+    return analysisTuple
 
 
 if __name__ == "__main__":
