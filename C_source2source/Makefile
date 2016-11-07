@@ -139,3 +139,22 @@ tar:
 	cp $(DEMOFILES) $(NAME)/demo/
 	tar cfz $(NAME).tgz $(NAME)
 	rm -rf $(NAME)
+
+clean: 
+	@rm -rf $(NAME)
+	@rm -rf $(NAME_EXT)
+	@rm -rf $(TESTER)
+	@rm -rf $(AST)
+	@rm -rf $(EXPANDER)
+	@rm -rf $(PREADER)
+	@rm -rf $(TRANS)
+	@rm -rf $(INIT)
+	@rm -rf $(APPLY)
+	@rm -rf $(ROLLUP)
+	@rm -rf $(PRETTY)
+	@rm -rf $(RANORACLE)
+	@rm -rf *.hi
+	@rm -rf *.dyn_o
+	@rm -rf *.dyn_hi
+
+

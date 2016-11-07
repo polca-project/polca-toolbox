@@ -520,49 +520,54 @@ readInfoOriCode mapProgram (pragmaAst, ann, line, minLine) =
 		(pragmaAst, ann, line, minLine, start, end, code)
 
 searchBlockFromPoint current mapProgram (iS, iPrev, iN) = 
-	case DM.member current mapProgram of 
-		False ->
-			let 
-				(lastStartLine, lastStartCol) = fromMaybe (0, 0) iS
-			in 
-				case (lastStartLine, lastStartCol) of 
-					(0,0) ->
-						((0,0), (0,0), "")
-					_ ->
-						let 
-							lastLine = 
-								-- trace (show (lastStartLine, lastStartCol)) 
-								(mapProgram!lastStartLine)
-						in 
-							((lastStartLine, lastStartCol), (lastStartLine, length lastLine), lastLine)
-		True -> 
-			let 
-				line = 
-					-- trace (show $ reverse iPrev) 
-					(mapProgram!current)
-			in 
-				case (stripPrefix "#pragma " (trim line)) of 
-					(Just _) ->
-						case (iN, iPrev) of 
-							(0, (_:_)) ->
-								let 
-									prevLine = 
-										-- trace (show (current - 1))  
-										(mapProgram!(current - 1))
-								in 
-									case appearsSCBefCB (reverse prevLine) of 
-										True -> 
-											(fromMaybe (0, 0) iS, (current - 1, length prevLine), init $ reverse iPrev)
-										False ->
-											searchBlockFromPoint (current + 1) mapProgram (iS, iPrev, iN)			
-							_ ->
-								searchBlockFromPoint (current + 1) mapProgram (iS, iPrev, iN)
-					Nothing -> 
-						case (searchCB current line iN 1 iPrev iS) of 
-							(Just s, Just e, code, 0) ->
-								(s, e, reverse code)
-							(mbs, _, prev, n) ->
-								searchBlockFromPoint (current + 1) mapProgram (mbs, prev, n)
+	let 
+		sameLine =	
+			\() ->
+				let 
+					(lastStartLine, lastStartCol) = fromMaybe (0, 0) iS
+				in 
+					case (lastStartLine, lastStartCol) of 
+						(0,0) ->
+							((0,0), (0,0), "")
+						_ ->
+							let 
+								lastLine = 
+									-- trace (show (lastStartLine, lastStartCol)) 
+									(mapProgram!lastStartLine)
+							in 
+								((lastStartLine, lastStartCol), (lastStartLine, length lastLine), lastLine)
+	in 
+		case DM.member current mapProgram of 
+			False ->
+				sameLine()
+			True -> 
+				let 
+					line = 
+						-- trace (show $ reverse iPrev) 
+						(mapProgram!current)
+				in 
+					case (stripPrefix "#pragma " (trim line)) of 
+						(Just _) ->
+							case (iN, iPrev) of 
+								(0, (_:_)) ->
+									let 
+										prevLine = 
+											-- trace (show (current - 1))  
+											(mapProgram!(current - 1))
+									in 
+										case appearsSCBefCB (reverse prevLine) of 
+											True -> 
+												sameLine()
+											False ->
+												searchBlockFromPoint (current + 1) mapProgram (iS, iPrev, iN)			
+								_ ->
+									searchBlockFromPoint (current + 1) mapProgram (iS, iPrev, iN)
+						Nothing -> 
+							case (searchCB current line iN 1 iPrev iS) of 
+								(Just s, Just e, code, 0) ->
+									(s, e, reverse code)
+								(mbs, _, prev, n) ->
+									searchBlockFromPoint (current + 1) mapProgram (mbs, prev, n)
 
 appearsSCBefCB (';':_) = 
 	True
@@ -571,7 +576,7 @@ appearsSCBefCB (')':_) =
 appearsSCBefCB (_:rest) = 
 	appearsSCBefCB rest
 appearsSCBefCB [] = 
-	False
+	True
 
 searchCB line ('{':rest) 0 c prev Nothing = 
 	searchCB line rest 1 (c + 1) ('{':prev) (Just (line, c))

@@ -1262,6 +1262,8 @@ removeAddsInArrayAccesses ast  =
 searchAddsInArrayAccesses :: CExprAnn -> [(CExprAnn, CExprAnn)]
 searchAddsInArrayAccesses expr_found@(CIndex v (CBinary CAddOp e1 _ _) nI) =
 	[(expr_found, (CIndex v e1 nI))]
+searchAddsInArrayAccesses expr_found@(CIndex v (CConst (CIntConst _ _)) nI) =
+	[(expr_found, (CIndex v (intConstant 0) nI))]
 searchAddsInArrayAccesses _ = []
 
 removeNodeInfoAnns :: (Data b) => b -> b

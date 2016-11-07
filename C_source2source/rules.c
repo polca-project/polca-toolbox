@@ -358,13 +358,13 @@ unrolling
     }
 }
 
-// Move a sequences of statements inside a for-loop
-move_inside_for
+// Move a sequences of statements before a for statement inside it
+move_inside_for_pre
 {
     pattern:
     {
         cstmts(pre);
-        for (; cexpr(cond); cexpr(inc))
+        for (cexpr(i) = cexpr(ini); cexpr(cond); cexpr(inc))
         {
             cstmts(body);
         }
@@ -372,26 +372,52 @@ move_inside_for
     }
     condition:
     {
-        // This rule was not correct as it was. The only alternative to make it correct
-        // is to force pre to not write in vars read by cond 
-        // i.e. the loop will enter (or not) to perform the first iteration 
-        // independetly of the evaluation of pre.
         no_writes_in_read(cstmts(pre),cstmts(cond));
+        no_writes_in_read(cstmts(pre),cstmts(ini));
     }
     generate:
     {
-        cdecl(cint(),cexpr(first_iteration));
-        cexpr(first_iteration) = 1;
-        for (; cexpr(cond); cexpr(inc))
+        for (cexpr(i) = cexpr(ini); cexpr(cond); cexpr(inc))
         {
-            if(cexpr(first_iteration))
+            if(cexpr(i) == cexpr(ini))
             {
                 cstmts(pre);
-                cexpr(first_iteration) = 0;
             }
             cstmts(body);
         }
         cstmts(fin);
+    }
+}
+
+// Move a sequences of statements after a for statement inside it
+move_inside_for_post
+{
+    pattern:
+    {
+        cstmts(pre);
+        for (cexpr(i) = cexpr(ini); cexpr(i) < cexpr(limit); cexpr(i)++)
+        {
+            cstmts(body);
+        }
+        cstmts(post);
+    }
+    condition:
+    {
+        no_writes(cexpr(i),cstmts(post));
+    }
+    generate:
+    {
+        cstmts(pre);
+        for (cexpr(i) = cexpr(ini); cexpr(i) < cexpr(limit); cexpr(i)++)
+        {
+            cstmts(body);
+            if(cexpr(i) < (cexpr(limit) - 1))
+            {
+                cexpr(i)++;
+                cstmts(post);
+                cexpr(i)--;
+            }
+        }
     }
 }
 
