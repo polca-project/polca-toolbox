@@ -2,8 +2,14 @@ The POLCA event driver is a tool based on the Extrae package that generates trac
 
 POLCA Event Driver takes advantage of multiple interposition mechanisms to add monitors into the application. No matter which mechanism is being used, the target is the same, to collect performance metrics at known applications points to finally provide the performance analyst a correlation between performance and the application execution.
 
-Installation:
+
+Installation
+--------------
+
 Compiling can be done using the Makefile, so just execute "make".
 
-Usage:
+
+Usage
+--------------
+
 Include the library to instrumentate the code. Predefined calls are in the file "polca_tran.c", or build custom ones extending the descriptions of "inst_polca.h".
