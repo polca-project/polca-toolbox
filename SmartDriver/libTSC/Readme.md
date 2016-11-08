@@ -11,6 +11,8 @@ To use the TSC library certain calls have to be integrated into the source code.
 Example
 --------------
 
+Code for measuring the number of ticks in one second:
+
 <pre>
 #include <libtsc.h>
 int main(void) {
