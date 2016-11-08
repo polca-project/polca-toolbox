@@ -1,5 +1,11 @@
+EMOXU-3
+==============
+
 EMOXU-3, based on libEMOXU-3, is provided and allows to measure and create detailed reports of performance and energy usage of
 executable files and scripts. The application can be run with the following options:
+
+Usage
+--------------
 
 <pre>
 Energy Monitoring for Odroid-XU3 v0.0.9 - 29.09.2016
