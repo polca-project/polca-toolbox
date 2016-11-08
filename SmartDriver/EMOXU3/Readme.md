@@ -24,6 +24,9 @@ Options:
   --help,       -h              Show this help
 </pre>
 
+Example
+--------------
+
 <pre>
 $ emoxu3 -i 100 -s -R -e "application par1 par2"
 </pre>
