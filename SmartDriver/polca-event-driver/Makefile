@@ -1,5 +1,5 @@
 CC = gcc
-EXTRAE_HOME = ./extrae-3.0.1/
+EXTRAE_HOME = ./extrae/
 
 INC = -I$(EXTRAE_HOME)/include
 
