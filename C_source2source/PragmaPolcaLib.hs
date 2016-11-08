@@ -509,7 +509,51 @@ linkPolcaAnnAst ast polcaAnn filename =
 		let numberedLines = zip [1..(length linesFile)] linesFile
 		let mapProgram = (DM.fromList numberedLines) -- :: (DM.Map Int String)
 		let pragmas = map (readInfoOriCode mapProgram) fromAST
-		return pragmas
+		let pragmasFunInfo = map (searchFunDef ast) pragmas
+		return pragmasFunInfo
+
+searchFunDef ast (d, pragma, b, c, (sL, sC), e, f) = 
+	let 
+		funDef = 
+			case applyRulesGeneral (lookForFunDef sL pragma) ast of 
+				[] ->
+					("", [], [])
+				(fd:_) ->
+					fd
+	in 
+		(d, pragma, b, c, (sL, sC), e, f, funDef)
+
+
+
+lookForFunDef line pragma (CFunDef _ (CDeclr (Just ide) [(CFunDeclr (Right (params, _)) _ _)] _ _ _) _ _ nI) = 
+	let 
+		lineCurrent = posRow $ posOfNode nI
+	in 
+		case line == lineCurrent of 
+			True ->
+				let 
+					idParams = 
+						zip [1..(length params)] params
+					params_name = 
+						[(i, identToString ide_par) 
+						| (i, (CDecl _ [((Just (CDeclr (Just ide_par) _ _ _ _)), _, _)] _)) <- idParams]
+					pragmaComp = 
+						[trim pc | pc <- splitOn " " pragma]
+					pragmaPos0 = 
+						[case [pos | (pos, par) <- params_name, pc == par] of 
+							[] ->
+								(pc, -1)
+							(p:_) ->
+								(pc, p) 
+						 | pc <- pragmaComp]
+					pragmaPos = 
+						[item | item@(_, pos) <- pragmaPos0, pos /= -1]
+				in 
+					[(identToString ide, params_name, pragmaPos)]
+			False -> 
+				[]
+lookForFunDef _ _ _ = 
+	[]
 
 readInfoOriCode mapProgram (pragmaAst, ann, line, minLine) = 
 	let 
@@ -518,6 +562,31 @@ readInfoOriCode mapProgram (pragmaAst, ann, line, minLine) =
 			(searchBlockFromPoint line mapProgram (Nothing, [], 0))
 	in 
 		(pragmaAst, ann, line, minLine, start, end, code)
+
+readCallsToPragmedFuns linkedPolcaAnn ast = 
+	concat $ map (searchCallToPragma ast) linkedPolcaAnn
+
+
+searchCallToPragma ast (_, _, _, _, _, _, _, ("", _, _)) = 
+	[]
+searchCallToPragma ast (_, _, _, _, _, _, _, (fun, params, argsPragma)) = 
+	applyRulesGeneral (lookForCall fun) ast
+
+lookForCall fun (CCall (CVar idCall _) args nI) =
+	case (identToString idCall) == fun of 
+		True -> 
+			let
+				idedArgs = zip [1..(length args)] args
+			in 
+			[(
+				posRow $ posOfNode nI, 
+				fun,
+				[(i, prettyMyAST arg) | (i, arg) <- idedArgs]
+			)]
+		False ->
+			[]  
+lookForCall _ _ =
+	[]
 
 searchBlockFromPoint current mapProgram (iS, iPrev, iN) = 
 	let 
