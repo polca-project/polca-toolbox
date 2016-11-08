@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/appicons">
+        <file alias="document-new">artwork/appicons/document-new.png</file>
+        <file alias="document-open">artwork/appicons/document-open.png</file>
+        <file alias="window-close">artwork/appicons/window-close.png</file>
+        <file alias="pogade-logo">artwork/appicons/pogade-logo.png</file>
+        <file alias="document-save">artwork/appicons/document-save.png</file>
+        <file alias="document-save-as">artwork/appicons/document-save-as.png</file>
+        <file alias="item-add">artwork/appicons/item-add.png</file>
+        <file alias="item-remove">artwork/appicons/item-remove.png</file>
+        <file alias="changes-allow">artwork/appicons/changes-allow.svg</file>
+        <file alias="changes-prevent">artwork/appicons/changes-prevent.svg</file>
+        <file alias="help-about">artwork/appicons/help-about.png</file>
+        <file alias="help-content">artwork/appicons/help-contents.png</file>
+        <file alias="apply">artwork/appicons/dialog-apply.png</file>
+    </qresource>
+    <qresource prefix="/"/>
+</RCC>

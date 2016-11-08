@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PogadeSourceCodeEditor</class>
+ <widget class="QWidget" name="PogadeSourceCodeEditor">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>486</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
+   <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="title">
+      <string>Versioning</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QPushButton" name="buttonCreateRevision">
+        <property name="text">
+         <string>New Revision</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="comboRevisions"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonEnableEdit">
+        <property name="toolTip">
+         <string>Enable Edit Source File</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="appicons.qrc">
+          <normaloff>:/appicons/changes-prevent</normaloff>
+          <normalon>:/appicons/changes-allow</normalon>:/appicons/changes-prevent</iconset>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonSave">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Save</string>
+        </property>
+        <property name="icon">
+         <iconset resource="appicons.qrc">
+          <normaloff>:/appicons/document-save</normaloff>:/appicons/document-save</iconset>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="title">
+      <string>Process &amp;&amp; Visualize</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QPushButton" name="buttonMakeStandard">
+        <property name="text">
+         <string>Standard</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonProcess">
+        <property name="text">
+         <string>Process</string>
+        </property>
+        <property name="icon">
+         <iconset resource="appicons.qrc">
+          <normaloff>:/appicons/apply</normaloff>:/appicons/apply</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonViewGraph">
+        <property name="text">
+         <string>Graph</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonTree">
+        <property name="text">
+         <string>Scopes Tree</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout"/>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="appicons.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>buttonCreateRevision</sender>
+   <signal>clicked()</signal>
+   <receiver>PogadeSourceCodeEditor</receiver>
+   <slot>newRevision()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>296</x>
+     <y>77</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonEnableEdit</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>PogadeSourceCodeEditor</receiver>
+   <slot>enableEdit(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>328</x>
+     <y>77</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonSave</sender>
+   <signal>clicked()</signal>
+   <receiver>PogadeSourceCodeEditor</receiver>
+   <slot>saveFile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>344</x>
+     <y>77</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonProcess</sender>
+   <signal>clicked()</signal>
+   <receiver>PogadeSourceCodeEditor</receiver>
+   <slot>polcaProcessCode()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>349</x>
+     <y>77</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonViewGraph</sender>
+   <signal>clicked()</signal>
+   <receiver>PogadeSourceCodeEditor</receiver>
+   <slot>viewGraph()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>357</x>
+     <y>77</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonTree</sender>
+   <signal>clicked()</signal>
+   <receiver>PogadeSourceCodeEditor</receiver>
+   <slot>viewTree()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>392</x>
+     <y>157</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>242</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonMakeStandard</sender>
+   <signal>clicked()</signal>
+   <receiver>PogadeSourceCodeEditor</receiver>
+   <slot>makeStandard()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>74</x>
+     <y>157</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>242</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>newRevision()</slot>
+  <slot>enableEdit(bool)</slot>
+  <slot>saveFile()</slot>
+  <slot>polcaProcessCode()</slot>
+  <slot>viewGraph()</slot>
+  <slot>viewTree()</slot>
+  <slot>makeStandard()</slot>
+ </slots>
+</ui>

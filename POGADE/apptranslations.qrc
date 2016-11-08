@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/translations">
+        <file alias="lang-EN">language/pogade_en.qm</file>
+        <file alias="lang-ES">language/pogade_es.qm</file>
+    </qresource>
+</RCC>

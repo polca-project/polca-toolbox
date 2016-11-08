@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PogadeGraphViewer</class>
+ <widget class="QWidget" name="PogadeGraphViewer">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>359</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QPushButton" name="buttonZoomPlus">
+       <property name="text">
+        <string>Plus</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonZoomMinus">
+       <property name="text">
+        <string>Minus</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonZoomReset">
+       <property name="text">
+        <string>Reset</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonExport">
+       <property name="text">
+        <string>Export</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="PGGraphicsView" name="viewer"/>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PGGraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">pggraphicsview.h</header>
+   <slots>
+    <slot>zoomPlus()</slot>
+    <slot>zoomMinus()</slot>
+    <slot>zoomReset()</slot>
+   </slots>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonExport</sender>
+   <signal>clicked()</signal>
+   <receiver>PogadeGraphViewer</receiver>
+   <slot>exportGraph()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>349</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>179</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonZoomMinus</sender>
+   <signal>clicked()</signal>
+   <receiver>viewer</receiver>
+   <slot>zoomMinus()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>135</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>194</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonZoomPlus</sender>
+   <signal>clicked()</signal>
+   <receiver>viewer</receiver>
+   <slot>zoomPlus()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>49</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>194</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonZoomReset</sender>
+   <signal>clicked()</signal>
+   <receiver>viewer</receiver>
+   <slot>zoomReset()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>221</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>194</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>exportGraph()</slot>
+ </slots>
+</ui>

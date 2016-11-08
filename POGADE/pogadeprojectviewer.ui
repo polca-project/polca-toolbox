@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PogadeProjectViewer</class>
+ <widget class="QWidget" name="PogadeProjectViewer">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="labelName">
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::AutoText</enum>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonNewFile">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="appicons.qrc">
+         <normaloff>:/appicons/document-new</normaloff>:/appicons/document-new</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonAddFile">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="appicons.qrc">
+         <normaloff>:/appicons/item-add</normaloff>:/appicons/item-add</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonRemove">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="appicons.qrc">
+         <normaloff>:/appicons/item-remove</normaloff>:/appicons/item-remove</iconset>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTreeWidget" name="fileTree">
+     <column>
+      <property name="text">
+       <string>Files</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="appicons.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>buttonRemove</sender>
+   <signal>clicked()</signal>
+   <receiver>PogadeProjectViewer</receiver>
+   <slot>removeItem()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>367</x>
+     <y>50</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonAddFile</sender>
+   <signal>clicked()</signal>
+   <receiver>PogadeProjectViewer</receiver>
+   <slot>addFile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>317</x>
+     <y>50</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>addFile()</slot>
+  <slot>removeItem()</slot>
+ </slots>
+</ui>

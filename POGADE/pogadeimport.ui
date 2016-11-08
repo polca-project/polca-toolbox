@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PogadeImport</class>
+ <widget class="QDialog" name="PogadeImport">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>168</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="2" column="2">
+      <widget class="QPushButton" name="buttonDirectory">
+       <property name="text">
+        <string>DIR</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Project File:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="lineFile"/>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="lineDirectory"/>
+     </item>
+     <item row="1" column="2">
+      <widget class="QPushButton" name="buttonFile">
+       <property name="text">
+        <string>FILE</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Local Directory:</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>PogadeImport</receiver>
+   <slot>extractProject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>PogadeImport</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonFile</sender>
+   <signal>clicked()</signal>
+   <receiver>PogadeImport</receiver>
+   <slot>selectFile()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>349</x>
+     <y>43</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>83</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonDirectory</sender>
+   <signal>clicked()</signal>
+   <receiver>PogadeImport</receiver>
+   <slot>selectDir()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>349</x>
+     <y>94</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>83</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lineFile</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>PogadeImport</receiver>
+   <slot>checkInputData()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>207</x>
+     <y>43</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>83</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lineDirectory</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>PogadeImport</receiver>
+   <slot>checkInputData()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>207</x>
+     <y>94</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>83</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>selectFile()</slot>
+  <slot>selectDir()</slot>
+  <slot>extractProject()</slot>
+  <slot>checkInputData()</slot>
+ </slots>
+</ui>
