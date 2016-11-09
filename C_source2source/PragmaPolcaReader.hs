@@ -35,16 +35,31 @@ data PragmaPolca =
 		endLine :: Int,
 		endCol :: Int,
 		code :: String,
-		funInfo :: (String, [(Int, String)], [(String, Int)])
+		funInfo :: FunInfo
 	} deriving Show
 
+data FunInfo = 
+	FunInfo
+	{
+		funName :: String,
+		paramPos :: [VarPos],
+		pragmaPos :: [VarPos]
+	} deriving Show
+
+data VarPos = 
+	VarPos
+	{
+		varPos :: Int,
+		varName :: String
+
+	} deriving Show
 
 data CallPolca = 
 	CallPolca
 	{ 
 		line :: Int,
 		fun :: String,
-		args :: [(Int, String)]
+		args :: [VarPos]
 	} deriving Show
 
 data ListPragmaPolca = 
@@ -78,6 +93,21 @@ instance FromJSON CallPolca where
     -- A non-Object value is of the wrong type, so fail.
     parseJSON _          = mzero
 
+instance FromJSON FunInfo where
+    parseJSON (Object v) = FunInfo <$>
+                           v .: DT.pack "funName" <*>
+                           v .: DT.pack "paramPos" <*>
+                           v .: DT.pack "pragmaPos" 
+    -- A non-Object value is of the wrong type, so fail.
+    parseJSON _          = mzero
+
+instance FromJSON VarPos where
+    parseJSON (Object v) = VarPos <$>
+                           v .: DT.pack "varPos" <*>
+                           v .: DT.pack "varName" 
+    -- A non-Object value is of the wrong type, so fail.
+    parseJSON _          = mzero
+
 instance FromJSON ListPragmaPolca where
     parseJSON (Object v) = ListPragmaPolca <$>
                            v .: DT.pack "pragmas" <*>
@@ -99,6 +129,21 @@ instance ToJSON PragmaPolca where
     			DT.pack "endCol" .= endCol,
     			DT.pack "code" .= code,
     			DT.pack "funInfo" .= funInfo
+    			]
+
+instance ToJSON FunInfo where
+    toJSON (FunInfo funName paramPos pragmaPos) = 
+    	object [
+    			DT.pack "funName" .= funName, 
+    			DT.pack "paramPos" .= paramPos, 
+    			DT.pack "pragmaPos" .= pragmaPos
+    			]
+
+instance ToJSON VarPos where
+    toJSON (VarPos varPos varName) = 
+    	object [
+				DT.pack "varPos" .= varPos,
+    			DT.pack "varName" .= varName
     			]
 
 instance ToJSON CallPolca where
@@ -153,16 +198,22 @@ main =
 						endLine = eL,
 						endCol = eC,
 						code = codeOri,
-						funInfo = funI
+						funInfo = 
+							FunInfo
+							{
+								funName = fN,
+								paramPos = [VarPos{varName = par, varPos = pos} | (pos, par) <- ppar],
+								pragmaPos = [VarPos{varName = par, varPos = pos}  | (par, pos) <- pprag]
+							}
 					}) 
-					| (ast_node, pp, line, minCodeLine, (sL, sC), (eL, eC), codeOri, funI) <- linkedPolcaAnn],
+					| (ast_node, pp, line, minCodeLine, (sL, sC), (eL, eC), codeOri, (fN, ppar, pprag)) <- linkedPolcaAnn],
 				calls =
 					[
 					CallPolca
 					{
 						line = lineC,
 						fun = funC,
-						args = argsC
+						args = [VarPos{varName = par, varPos = pos} | (pos, par) <- argsC]
 					}
 					| (lineC, funC, argsC) <- readCallsToPragmedFuns linkedPolcaAnn ast]
 			}
