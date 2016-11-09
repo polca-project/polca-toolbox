@@ -1756,6 +1756,18 @@ printCond (state@PrintState{dictVars = dict}) (CBlockStmt (CExpr (Just (CCall (C
 		--"(null (uses " ++ (nargs!!0)
 		-- ++ " " ++ nargs1
 		-- ++ "))"	
+-- printCond (state@PrintState{dictVars = dict}) (CBlockStmt (CExpr (Just (CCall (CVar (Ident "no_is_decl" _ _) _) args _) ) _) ) = 
+-- 	let 
+-- 		nargs = map (extractNameHas dict) args
+-- 		(Just containerType) = extractType dict (args!!0)
+-- 		nargs0 = transformToStmts containerType (nargs!!0)
+-- 	in
+-- 		"(notCond $ isBlockDecl $ head " ++ nargs0 ++ ")"
+printCond (state@PrintState{dictVars = dict}) (CBlockStmt (CExpr (Just (CCall (CVar (Ident "all_are_decl" _ _) _) args _) ) _) ) = 
+	let 
+		nargs = map (extractNameHas dict) args
+	in
+		"(all (\\x -> fst $ isBlockDecl x) " ++ (nargs!!0) ++ ", concat $ map (\\x -> snd $ isBlockDecl x) " ++ (nargs!!0) ++ ")"
 printCond (state@PrintState{dictVars = dict}) (CBlockStmt (CExpr (Just (CCall (CVar (Ident "is_cons" _ _) _) args _) ) _) ) = 
 	"(isConstant " ++ (extractNameHas dict (args!!0)) ++ ")"
 printCond (state@PrintState{dictVars = dict}) (CBlockStmt (CExpr (Just (CCall (CVar (Ident "is_var" _ _) _) args _) ) _) ) = 

@@ -358,38 +358,44 @@ unrolling
     }
 }
 
-// Move a sequences of statements before a for statement inside it
+// Move a statement which are before a for statement inside the loop
 move_inside_for_pre
 {
     pattern:
     {
-        cstmts(pre);
+        cstmts(pre0);
+        cstmt(moved_inside);
+        cstmts(pre1);
         for (cexpr(i) = cexpr(ini); cexpr(cond); cexpr(inc))
         {
             cstmts(body);
         }
-        cstmts(fin);
+        cstmts(post);
     }
     condition:
     {
-        no_writes_in_read(cstmts(pre),cstmts(cond));
-        no_writes_in_read(cstmts(pre),cstmts(ini));
+        no_writes_in_read(cstmt(moved_inside),cstmts(cond));
+        no_writes_in_read(cstmt(moved_inside),cstmts(ini));
+        no_writes(cexpr(i), cstmt(moved_inside));
+        all_are_decl(cstmts(pre1));
     }
     generate:
     {
+        cstmts(pre0);
+        cstmts(pre1);
         for (cexpr(i) = cexpr(ini); cexpr(cond); cexpr(inc))
         {
             if(cexpr(i) == cexpr(ini))
             {
-                cstmts(pre);
+                cstmt(moved_inside);
             }
             cstmts(body);
         }
-        cstmts(fin);
+        cstmts(post);
     }
 }
 
-// Move a sequences of statements after a for statement inside it
+// Move a statement which are after a for statement inside the loop
 move_inside_for_post
 {
     pattern:
@@ -399,25 +405,31 @@ move_inside_for_post
         {
             cstmts(body);
         }
-        cstmts(post);
+        cstmts(post0);
+        cstmt(moved_inside);
+        cstmts(post1);
     }
     condition:
     {
-        no_writes(cexpr(i),cstmts(post));
+        no_writes(cexpr(i), cstmt(moved_inside));
+        all_are_decl(cstmts(post0));
+        pure(cexpr(limit));
     }
     generate:
     {
         cstmts(pre);
+        cstmts(post0);
         for (cexpr(i) = cexpr(ini); cexpr(i) < cexpr(limit); cexpr(i)++)
         {
             cstmts(body);
             if(cexpr(i) < (cexpr(limit) - 1))
             {
                 cexpr(i)++;
-                cstmts(post);
+                cstmt(moved_inside);
                 cexpr(i)--;
             }
         }
+        cstmts(post1);
     }
 }
 
@@ -1193,6 +1205,37 @@ replace_var_equal
     } 
 }
 
+contiguous_same_if
+{
+    pattern:
+    {
+        cstmts(pre);
+        if (cexpr(cond))
+        {
+            cstmts(body1);
+        }
+        if (cexpr(cond))
+        {
+            cstmts(body2);
+        }
+        cstmts(post);
+    }
+    condition:
+    {
+        no_writes_in_read(cstmts(body1), cexpr(cond));
+    }
+    generate:
+    {
+        cstmts(pre);
+        if (cexpr(cond))
+        {
+            cstmts(body1);
+            cstmts(body2);
+        }
+        cstmts(post);
+    }
+}
+
 
 
 // remove a for loop that just run one statemnt during its iterations
@@ -1637,6 +1680,59 @@ roll_up_array
         cstmts(fin);
     }
 }
+
+/////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+// Feautures extraction
+/////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+
+// // Counts the number of statements before a for loop that can be moved inside it
+// fea_move_inside_for_pre
+// {
+//     pattern:
+//     {
+//         cstmts(pre);
+//         for (cexpr(i) = cexpr(ini); cexpr(cond); cexpr(inc))
+//         {
+//             cstmts(body);
+//         }
+//         cstmts(fin);
+//     }
+//     condition:
+//     {
+//         no_writes_in_read(cstmts(pre),cstmts(cond));
+//         no_writes_in_read(cstmts(pre),cstmts(ini));
+//         no_writes(cexpr(i), cstmts(pre));
+//     }
+//     generate:
+//     {
+//         count(no_decl(pre));
+//     }
+// }
+
+// // Counts the number of statements after a for loop that can be moved inside it
+// fea_move_inside_for_post
+// {
+//     pattern:
+//     {
+//         cstmts(pre);
+//         for (cexpr(i) = cexpr(ini); cexpr(i) < cexpr(limit); cexpr(i)++)
+//         {
+//             cstmts(body);
+//         }
+//         cstmts(post);
+//     }
+//     condition:
+//     {
+//         no_writes(cexpr(i),cstmts(post));
+//         pure(cexpr(limit));
+//     }
+//     generate:
+//     {
+//         count(no_decl(post));
+//     }
+// }
 
 // // Remove a 2D array that is just copying the values of another
 // remove_aux_2D_array_int

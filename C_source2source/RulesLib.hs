@@ -683,7 +683,9 @@ noReads v es = (null $ useExp v es, [])
 
 readsExp v es = (not $ null $ useExp v es, [])
 
-notCond (c, u) = (not c, u)
+notCond (c, u) = 
+	(not c, u)
+
 
 isExpr (CExpr (Just (CCall _ _ _)) _) = (False, [])
 isExpr (CExpr _ _) = (True, [])
@@ -703,6 +705,11 @@ noReadInWritten sts1 sts2 =
 				--(trace ( show $ map (\x -> (prettyMyASTAnn x)) written) written)
 	in
 		(all (\x -> x) noReadInWritten, [])
+
+isBlockDecl (CBlockDecl _) = 
+	(True, [])
+isBlockDecl _ = 
+	(False, [])
 
 noWritesInRead expr sts = 
 	let 
