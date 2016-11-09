@@ -604,6 +604,7 @@ searchBlockFromPoint current mapProgram (iS, iPrev, iN) =
 									-- trace (show (lastStartLine, lastStartCol)) 
 									(mapProgram!lastStartLine)
 							in 
+								-- trace ("Annotated-stmt: " ++ lastLine ) 
 								((lastStartLine, lastStartCol), (lastStartLine, length lastLine), lastLine)
 	in 
 		case DM.member current mapProgram of 
@@ -619,12 +620,12 @@ searchBlockFromPoint current mapProgram (iS, iPrev, iN) =
 						(Just _) ->
 							case (iN, iPrev) of 
 								(0, (_:_)) ->
-									let 
-										prevLine = 
-											-- trace (show (current - 1))  
-											(mapProgram!(current - 1))
-									in 
-										case appearsSCBefCB (reverse prevLine) of 
+									-- let 
+									-- 	prevLine = 
+									-- 		-- trace (show (current - 1))  
+									-- 		(mapProgram!(current - 1))
+									-- in 
+										case appearsSCBefCB iPrev of 
 											True -> 
 												sameLine()
 											False ->
