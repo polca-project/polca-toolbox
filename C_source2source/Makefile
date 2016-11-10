@@ -9,15 +9,16 @@ NAME_EXT = polca_s2s_ext
 TESTER = rules_tester
 AST = ast
 EXPANDER = expand
-PREADER = pragma_reader
+PRAGMA_READER = pragma_reader
 TRANS = polca_trans
 INIT = polca_init
 APPLY = polca_apply
 ROLLUP = polca_rollup
 PRETTY = polca_pretty
-RANORACLE = random_oracle
+RAN_ORACLE = random_oracle
+FEAT_EXTR = polca_features
 
-FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README README.md LICENSE.txt AUTHORS.txt rules.c vec_mult.c dps.c Translator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs RandomOracle.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs
+FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README README.md LICENSE.txt AUTHORS.txt rules.c vec_mult.c dps.c Translator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs RandomOracle.hs FeaturesExtractor.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs
 DEMOFILES = demo/rgb_filter_input.c demo/rgb_filter_input_maxjready.c demo/ppmImage.c demo/ppmImage.h demo/ppmImage.c demo/ppmImage.c demo/lodepng.h demo/lodepng.c 
 CETUSMODIFIED = ../cetus/src/cetus/analysis/CallGraph.java ../cetus/src/cetus/analysis/DDGraph.java ../cetus/src/cetus/analysis/LoopTools.java ../cetus/src/cetus/exec/Driver.java ../cetus/src/cetus/hir/STMLAnnotation.java ../cetus/src/cetus/hir/TranslationUnit.java
 CETUSFILES = ../cetus.tar.gz cetus/cetus.sh cetus/cetus_stml.sh cetus/options.cetus ../cetus/polca_changes.txt 
@@ -88,12 +89,12 @@ translator:
 
 # A random oracle to be used as a testing oracle
 random_oracle:
-	ghc -main-is RandomOracle RandomOracle.hs -o $(RANORACLE) $(GHC_FLAGS)
+	ghc -main-is RandomOracle RandomOracle.hs -o $(RAN_ORACLE) $(GHC_FLAGS)
 
 # Build the interface for external tools
 interface:
 	# Build an executable that returns a JSON with the pragmas in a program
-	ghc -main-is PragmaPolcaReader PragmaPolcaReader.hs -o $(PREADER) $(GHC_FLAGS)
+	ghc -main-is PragmaPolcaReader PragmaPolcaReader.hs -o $(PRAGMA_READER) $(GHC_FLAGS)
 	# Build an executable that returns 1/0 depending on whether the statements are rollable or not
 	ghc -main-is IsRollable IsRollable.hs -o $(ROLLUP) $(GHC_FLAGS)
 	# Executables to transform the program through external tools 
@@ -101,6 +102,8 @@ interface:
 	ghc -main-is AppTransformation AppTransformation.hs -o $(APPLY) $(GHC_FLAGS)
 	# Reformating of the input code
 	ghc -main-is PrettyPrinter PrettyPrinter.hs -o $(PRETTY) $(GHC_FLAGS)
+	# Features extractor to be used by the machine learning component
+	ghc -main-is FeaturesExtractor FeaturesExtractor.hs -o $(FEAT_EXTR) $(GHC_FLAGS)
 
 # Do all the previous configuration needed before to build the executables
 configure:
@@ -146,13 +149,13 @@ clean:
 	@rm -rf $(TESTER)
 	@rm -rf $(AST)
 	@rm -rf $(EXPANDER)
-	@rm -rf $(PREADER)
+	@rm -rf $(PRAGMA_READER)
 	@rm -rf $(TRANS)
 	@rm -rf $(INIT)
 	@rm -rf $(APPLY)
 	@rm -rf $(ROLLUP)
 	@rm -rf $(PRETTY)
-	@rm -rf $(RANORACLE)
+	@rm -rf $(RAN_ORACLE)
 	@rm -rf *.hi
 	@rm -rf *.dyn_o
 	@rm -rf *.dyn_hi

@@ -549,6 +549,21 @@ instance ToJSON CodeAndChanges where
     toJSON (CodeAndChanges code codeBlock changes) = 
     	object [DT.pack "code" .= code, DT.pack "codeBlock" .= codeBlock, DT.pack "changes" .= changes]
 
+featuresExtract filename rules block = 
+	do 
+		iniState <- initialStepsTrans False filename
+		let astsDef = 
+			case block of 
+				(Just def) ->
+					applyRulesGeneral (search_def def) (rebuildAst iniState)
+				Nothing ->
+					[]
+		case astsDef of 
+			[] ->
+				putStrLn $ buildJSON  iniState (getApplicableChangesSpecRules iniState rules)
+			(astDef:_) ->
+				putStrLn $ buildJSON  iniState (getApplicableChangesSpecRulesGivenAst iniState rules astDef)
+		-- putStrLn $ filename ++ "\n" ++ (show rules) ++ "\n" ++ (fromMaybe "ALL" block)
 
 init_trans name defM =
 	do
@@ -591,9 +606,9 @@ appTrans name selected rule defM =
 					[]
 		case astsDef of 
 			[] ->
-				app_trans_int name modState (getApplicableChangesSpecRule modState rule)
+				app_trans_int name modState (getApplicableChangesSpecRules modState [rule])
 			(astDef:_) ->
-				app_trans_int name modState (getApplicableChangesSpecRuleGivenAst modState rule astDef)
+				app_trans_int name modState (getApplicableChangesSpecRulesGivenAst modState [rule] astDef)
 
 app_trans_int name modState changes = 
 	putStrLn (buildJSON modState changes) 
@@ -709,32 +724,44 @@ getModifiedState name selected =
 	 	-- writeTransFileWithoutAnns (name ++ ".temp2") modState
 	 	return modState
 
-getApplicableChangesSpecRule :: TransState -> String 
+getApplicableChangesSpecRules :: TransState -> [String]
 		->	([(String,
               ((String, CStatAnn, CStatAnn), TransState, [(String, CStatAnn)]))],
              [(String,
               ((String, CExprAnn, CExprAnn), TransState, [(String, CStatAnn)]))]) 
-getApplicableChangesSpecRule state rule = 
-	case [f | (rule1,f) <- dictRules, rule1 == rule] of 
+getApplicableChangesSpecRules state rules = 
+	case [f | (rule1,f) <- dictRules, elem rule1 rules] of 
 		[] ->
 			getApplicableChangesWOPrevious state
 		funs ->
-			case funs of 
-				[Left fun] ->
-					([], filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state))
-				[Right fun] ->
-					(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state), [])
+			let 
+				rulesForStmts = [fun | (Left fun) <- funs]
+				rulesForExprs = [fun | (Right fun) <- funs]
+			in
+			(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious rulesForExprs state),
+			 filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious rulesForStmts state))
+			-- case funs of 
+			-- 	[Left fun] ->
+			-- 		([], filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state))
+			-- 	[Right fun] ->
+			-- 		(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state), [])
 
-getApplicableChangesSpecRuleGivenAst state rule ast = 
-	case [f | (rule1,f) <- dictRules, rule1 == rule] of 
+getApplicableChangesSpecRulesGivenAst state rules ast = 
+	case [f | (rule1, f) <- dictRules, elem rule1 rules] of 
 		[] ->
 			getApplicableChangesForGivenAst state ast
 		funs ->
-			case funs of 
-				[Left fun] ->
-					([], filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesForGivenAst [fun] ast state))
-				[Right fun] ->
-					(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesForGivenAst [fun] ast state), [])
+			let 
+				rulesForStmts = [fun | (Left fun) <- funs]
+				rulesForExprs = [fun | (Right fun) <- funs]
+			in
+			(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesForGivenAst rulesForExprs ast state),
+			 filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesForGivenAst rulesForStmts ast state))
+			-- case funs of 
+			-- 	[Left fun] ->
+			-- 		([], filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesForGivenAst [fun] ast state))
+			-- 	[Right fun] ->
+			-- 		(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesForGivenAst [fun] ast state), [])
 
 getApplicableChangesForGivenAst state ast = 
 	let -- extractRules :: (Typeable a, Typeable b) => [a] -> [b]

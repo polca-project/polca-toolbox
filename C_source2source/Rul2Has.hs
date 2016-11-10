@@ -1185,6 +1185,8 @@ printComBlockItemGen state0@PrintState{dictVars = dict} (CBlockStmt s) =
 			printExprGen state0 call
 		(CExpr (Just (call@(CCall (CVar (Ident "change_access" _ _) _) _ _)) ) _) -> 
 			printExprGen state0 call
+		(CExpr (Just (call@(CCall (CVar (Ident "count_no_decl" _ _) _) _ _)) ) _) -> 
+			printExprGen state0 call
 		(CExpr (Just (call@(CCall (CVar (Ident "change_array" _ _) _) _ _)) ) _) -> 
 			printExprGen state0 call
 		(CExpr (Just (call@(CCall (CVar (Ident "decl_from_struct" _ _) _) _ _)) ) _) -> 
@@ -1411,6 +1413,8 @@ printStmtGen state0@PrintState{dictVars = dict} (CExpr e _) =
 				(Just (CCall (CVar (Ident "fresh" _ _) _) args _)) ->
 					prev
 				(Just (CCall (CVar (Ident "change_access" _ _) _) args _)) ->
+					prev
+				(Just (CCall (CVar (Ident "count_no_decl" _ _) _) args _)) ->
 					prev
 				(Just (CCall (CVar (Ident "change_array" _ _) _) args _)) ->
 					prev
@@ -1644,6 +1648,14 @@ printCallGen state0@PrintState{dictVars = dict, currentFree = freeVar0} name_fun
 				++ " state0"
 				++ ")", 
 				state3)
+		"count_no_decl"->
+			let 
+				(nargs0, state1) = (tryExtractNameHas state0 (args!!0))
+			in
+				("[CBlockStmt (CExpr (Just  (intConstant (fromIntegral (length (map isBlockDecl " 
+					++ nargs0 
+					++ ") )))) undefNodeAnn)]", 
+				state1)
 		"decl_from_struct"->
 			let 
 				(nargs0,state1) = (tryExtractNameHas state0 (args!!0))

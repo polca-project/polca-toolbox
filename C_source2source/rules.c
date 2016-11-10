@@ -1687,52 +1687,49 @@ roll_up_array
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
-// // Counts the number of statements before a for loop that can be moved inside it
-// fea_move_inside_for_pre
-// {
-//     pattern:
-//     {
-//         cstmts(pre);
-//         for (cexpr(i) = cexpr(ini); cexpr(cond); cexpr(inc))
-//         {
-//             cstmts(body);
-//         }
-//         cstmts(fin);
-//     }
-//     condition:
-//     {
-//         no_writes_in_read(cstmts(pre),cstmts(cond));
-//         no_writes_in_read(cstmts(pre),cstmts(ini));
-//         no_writes(cexpr(i), cstmts(pre));
-//     }
-//     generate:
-//     {
-//         count(no_decl(pre));
-//     }
-// }
+// Counts the number of statements before a for loop that can be moved inside it
+feat_move_inside_for_pre
+{
+    pattern:
+    {
+        cstmts(pre);
+        for (cexpr(i) = cexpr(ini); cexpr(cond); cexpr(inc))
+        {
+            cstmts(body);
+        }
+        cstmts(fin);
+    }
+    condition:
+    {
+        no_writes(cexpr(i), cstmts(pre));
+    }
+    generate:
+    {
+        count_no_decl(cstmts(pre));
+    }
+}
 
-// // Counts the number of statements after a for loop that can be moved inside it
-// fea_move_inside_for_post
-// {
-//     pattern:
-//     {
-//         cstmts(pre);
-//         for (cexpr(i) = cexpr(ini); cexpr(i) < cexpr(limit); cexpr(i)++)
-//         {
-//             cstmts(body);
-//         }
-//         cstmts(post);
-//     }
-//     condition:
-//     {
-//         no_writes(cexpr(i),cstmts(post));
-//         pure(cexpr(limit));
-//     }
-//     generate:
-//     {
-//         count(no_decl(post));
-//     }
-// }
+// Counts the number of statements after a for loop that can be moved inside it
+feat_move_inside_for_post
+{
+    pattern:
+    {
+        cstmts(pre);
+        for (cexpr(i) = cexpr(ini); cexpr(i) < cexpr(limit); cexpr(i)++)
+        {
+            cstmts(body);
+        }
+        cstmts(post);
+    }
+    condition:
+    {
+        pure(cexpr(limit));
+    }
+    generate:
+    {
+        count_no_decl(cstmts(post));
+    }
+}
 
 // // Remove a 2D array that is just copying the values of another
 // remove_aux_2D_array_int
