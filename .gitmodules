@@ -4,3 +4,6 @@
 [submodule "POROTO"]
 	path = POROTO
 	url = https://github.com/cetic/poroto.git
+[submodule "Polca_H2H2C"]
+	path = Polca_H2H2C
+	url = https://github.com/jankuper/Polca_H2H2C.git
