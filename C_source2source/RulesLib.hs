@@ -1258,7 +1258,8 @@ isRollable _ _ =
 
 removeAddsInArrayAccesses :: (Data b) => b -> b
 removeAddsInArrayAccesses ast  =
-	let substitutions = 
+	let 
+		substitutions = 
 			nubBy 
 				(\(o1,n1) (o2,n2) -> (geq o1 o2) && (geq n1 n2)) 
 				(applyRulesGeneral searchAddsInArrayAccesses ast)
@@ -1268,8 +1269,21 @@ removeAddsInArrayAccesses ast  =
 
 searchAddsInArrayAccesses :: CExprAnn -> [(CExprAnn, CExprAnn)]
 searchAddsInArrayAccesses expr_found@(CIndex v (CBinary CAddOp e1 _ _) nI) =
-	[(expr_found, (CIndex v e1 nI))]
+	let 
+		substitutions = 
+			nubBy 
+				(\(o1,n1) (o2,n2) -> (geq o1 o2) && (geq n1 n2)) 
+				(searchAddsInArrayAccesses (CIndex v e1 nI))
+		res = 
+			foldl 
+				(\current_ast change -> changeAST change current_ast) 
+				(CIndex v e1 nI)
+				substitutions
+	in 
+		trace ((prettyMyASTAnn expr_found) ++ " " ++ (prettyMyASTAnn res)) [(expr_found, res)]
 searchAddsInArrayAccesses expr_found@(CIndex v (CConst (CIntConst _ _)) nI) =
+	[(expr_found, (CIndex v (intConstant 0) nI))]
+searchAddsInArrayAccesses expr_found@(CIndex v (CVar _ _) nI) =
 	[(expr_found, (CIndex v (intConstant 0) nI))]
 searchAddsInArrayAccesses _ = []
 

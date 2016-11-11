@@ -1599,7 +1599,7 @@ roll_up
     }
     condition:
     {
-        is_rollable(cstmt(r1), cexpr(r2));
+        is_rollable(cexpr(r1), cexpr(r2));
         not(is_array(cexpr(l2)));
         // is_decl_in(lhs(cstmt(s2)), cstmts(ini));
     }
