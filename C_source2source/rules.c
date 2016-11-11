@@ -422,7 +422,7 @@ move_inside_for_post
         for (cexpr(i) = cexpr(ini); cexpr(i) < cexpr(limit); cexpr(i)++)
         {
             cstmts(body);
-            if(cexpr(i) < (cexpr(limit) - 1))
+            if(cexpr(i) == (cexpr(limit) - 1))
             {
                 cexpr(i)++;
                 cstmt(moved_inside);

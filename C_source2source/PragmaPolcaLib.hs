@@ -539,21 +539,41 @@ lookForFunDef line pragma (CFunDef _ (CDeclr (Just ide) [(CFunDeclr (Right (para
 						| (i, (CDecl _ [((Just (CDeclr (Just ide_par) _ _ _ _)), _, _)] _)) <- idParams]
 					pragmaComp = 
 						[trim pc | pc <- splitOn " " pragma]
-					pragmaPos0 = 
-						[case [pos | (pos, par) <- params_name, pc == par] of 
-							[] ->
-								(pc, -1)
-							(p:_) ->
-								(pc, p) 
-						 | pc <- pragmaComp]
+					(pragmaPos0, _) = 
+						mapfoldl
+							(\pc posPragma->
+								case [pos | (pos, par) <- params_name, pc == par] of 
+									[] ->
+										((pc, -1, posPragma), posPragma)
+									(p:_) ->
+										((pc, p, posPragma), posPragma + 1))
+							1
+							pragmaComp
+					 -- | pc <- pragmaComp]
+					-- pragmaPos0 = 
+					-- 	[case [pos | (pos, par) <- params_name, pc == par] of 
+					-- 		[] ->
+					-- 			(pc, -1)
+					-- 		(p:_) ->
+					-- 			(pc, p) 
+					-- 	 | pc <- pragmaComp]
 					pragmaPos = 
-						[item | item@(_, pos) <- pragmaPos0, pos /= -1]
+						[item | item@(_, pos, _) <- pragmaPos0, pos /= -1]
 				in 
 					[(identToString ide, params_name, pragmaPos)]
 			False -> 
 				[]
 lookForFunDef _ _ _ = 
 	[]
+
+mapfoldl f current (x:xs) = 
+	let 
+		(nx, ncurrent) = f x current
+		(nxs, fcurrent) = mapfoldl f ncurrent xs
+	in 
+		((nx:nxs), fcurrent)
+mapfoldl f current [] = 
+	([], current)
 
 readInfoOriCode mapProgram (pragmaAst, ann, line, minLine) = 
 	let 

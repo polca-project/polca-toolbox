@@ -43,7 +43,7 @@ data FunInfo =
 	{
 		funName :: String,
 		paramPos :: [VarPos],
-		pragmaPos :: [VarPos]
+		pragmaPos :: [PragmaVarPos]
 	} deriving Show
 
 data VarPos = 
@@ -51,6 +51,15 @@ data VarPos =
 	{
 		varPos :: Int,
 		varName :: String
+
+	} deriving Show
+
+data PragmaVarPos = 
+	PragmaVarPos
+	{
+		parPosFun :: Int,
+		parPosPragma :: Int,
+		parName :: String
 
 	} deriving Show
 
@@ -108,6 +117,14 @@ instance FromJSON VarPos where
     -- A non-Object value is of the wrong type, so fail.
     parseJSON _          = mzero
 
+instance FromJSON PragmaVarPos where
+    parseJSON (Object v) = PragmaVarPos <$>
+                           v .: DT.pack "parPosFun" <*>
+                           v .: DT.pack "parPosPragma" <*>
+                           v .: DT.pack "parName" 
+    -- A non-Object value is of the wrong type, so fail.
+    parseJSON _          = mzero
+
 instance FromJSON ListPragmaPolca where
     parseJSON (Object v) = ListPragmaPolca <$>
                            v .: DT.pack "pragmas" <*>
@@ -144,6 +161,14 @@ instance ToJSON VarPos where
     	object [
 				DT.pack "varPos" .= varPos,
     			DT.pack "varName" .= varName
+    			]
+
+instance ToJSON PragmaVarPos where
+    toJSON (PragmaVarPos parPosFun parPosPragma parName) = 
+    	object [
+				DT.pack "parPosFun" .= parPosFun,
+				DT.pack "parPosPragma" .= parPosPragma,
+    			DT.pack "parName" .= parName
     			]
 
 instance ToJSON CallPolca where
@@ -203,7 +228,7 @@ main =
 							{
 								funName = fN,
 								paramPos = [VarPos{varName = par, varPos = pos} | (pos, par) <- ppar],
-								pragmaPos = [VarPos{varName = par, varPos = pos}  | (par, pos) <- pprag]
+								pragmaPos = [PragmaVarPos{parName = par, parPosFun = posF, parPosPragma = posP}  | (par, posF, posP) <- pprag]
 							}
 					}) 
 					| (ast_node, pp, line, minCodeLine, (sL, sC), (eL, eC), codeOri, (fN, ppar, pprag)) <- linkedPolcaAnn],

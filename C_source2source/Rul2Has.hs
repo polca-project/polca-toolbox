@@ -1652,9 +1652,9 @@ printCallGen state0@PrintState{dictVars = dict, currentFree = freeVar0} name_fun
 			let 
 				(nargs0, state1) = (tryExtractNameHas state0 (args!!0))
 			in
-				("[CBlockStmt (CExpr (Just  (intConstant (fromIntegral (length (map isBlockDecl " 
-					++ nargs0 
-					++ ") )))) undefNodeAnn)]", 
+				("[CBlockStmt (CExpr (Just  (intConstant (fromIntegral (length [x | x <- " 
+					++ nargs0
+					++ ", not (fst (isBlockDecl x))] )))) undefNodeAnn)]", 
 				state1)
 		"decl_from_struct"->
 			let 
