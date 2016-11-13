@@ -1280,7 +1280,8 @@ searchAddsInArrayAccesses expr_found@(CIndex v (CBinary CAddOp e1 _ _) nI) =
 				(CIndex v e1 nI)
 				substitutions
 	in 
-		trace ((prettyMyASTAnn expr_found) ++ " " ++ (prettyMyASTAnn res)) [(expr_found, res)]
+		-- trace ((prettyMyASTAnn expr_found) ++ " " ++ (prettyMyASTAnn res)) 
+		[(expr_found, res)]
 searchAddsInArrayAccesses expr_found@(CIndex v (CConst (CIntConst _ _)) nI) =
 	[(expr_found, (CIndex v (intConstant 0) nI))]
 searchAddsInArrayAccesses expr_found@(CIndex v (CVar _ _) nI) =

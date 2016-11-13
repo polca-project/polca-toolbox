@@ -558,11 +558,15 @@ featuresExtract filename rules block =
 					applyRulesGeneral (search_def def) (rebuildAst iniState)
 				Nothing ->
 					[]
+		let funs = 
+			[f | (rule1,f) <- dictRules, elem rule1 rules]
 		case astsDef of 
 			[] ->
-				putStrLn $ buildJSON  iniState (getApplicableChangesSpecRules iniState rules)
+				-- putStrLn $ buildJSON  iniState (getApplicableChangesSpecRules iniState rules)
+				putStrLn $ buildJSON  iniState (getApplicableChanges funs iniState{ast_to_transform = Nothing})
 			(astDef:_) ->
-				putStrLn $ buildJSON  iniState (getApplicableChangesSpecRulesGivenAst iniState rules astDef)
+				-- putStrLn $ buildJSON  iniState (getApplicableChangesSpecRulesGivenAst iniState rules astDef)
+				putStrLn $ buildJSON  iniState (getApplicableChanges funs iniState{ast_to_transform = Just (fromMaybe "" block, astDef, searchASTFun astDef (fun_defs iniState))})
 		-- putStrLn $ filename ++ "\n" ++ (show rules) ++ "\n" ++ (fromMaybe "ALL" block)
 
 init_trans name defM =
