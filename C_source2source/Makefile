@@ -117,6 +117,7 @@ cetus_install:
 	cp cetus/mod/CallGraph.java cetus/cetus-1.4.3/src/cetus/analysis/CallGraph.java
 	cp cetus/mod/DDGraph.java cetus/cetus-1.4.3/src/cetus/analysis/DDGraph.java
 	cp cetus/mod/LoopTools.java cetus/cetus-1.4.3/src/cetus/analysis/LoopTools.java
+	cp cetus/mod/IPPointsToAnalysis.java cetus/cetus-1.4.3/src/cetus/analysis/IPPointsToAnalysis.java
 	cp cetus/mod/Driver.java cetus/cetus-1.4.3/src/cetus/exec/Driver.java
 	cp cetus/mod/STMLAnnotation.java cetus/cetus-1.4.3/src/cetus/hir/STMLAnnotation.java 
 	cp cetus/mod/TranslationUnit.java cetus/cetus-1.4.3/src/cetus/hir/TranslationUnit.java
