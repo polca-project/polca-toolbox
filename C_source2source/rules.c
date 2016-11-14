@@ -433,6 +433,41 @@ move_inside_for_post
     }
 }
 
+move_enclosing_if_inside_for
+{
+    pattern:
+    {
+        cstmts(pre);
+        if(cexpr(if_cond))
+        {
+            for(cexpr(ini); cexpr(for_cond); cexpr(mod))
+            {
+                cstmts(for_body);
+            }
+        }
+        cstmts(post);
+    }
+    condition:
+    {
+        no_writes_in_read(cstmts(for_body),cexpr(if_cond));
+        no_writes_in_read(cstmts(ini),cexpr(if_cond));
+        no_writes_in_read(cstmts(for_cond),cexpr(if_cond));
+        no_writes_in_read(cstmts(mod),cexpr(if_cond));
+    }
+    generate:
+    {
+        cstmts(pre);
+        for(cexpr(ini); cexpr(for_cond); cexpr(mod))
+        {
+            if(cexpr(if_cond))
+            {
+                cstmts(for_body);
+            }
+        }
+        cstmts(post);
+    }  
+}
+
 // Collapse two for loops into a single one.
 collapse_2_for_loops
 {
