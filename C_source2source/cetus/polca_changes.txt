@@ -9,6 +9,8 @@ CHANGES IN CETUS
 	- Added functions:
 		+ boolean containsLoop(Statment stmt)
 		+ boolean isInsideLoop(Statement stmt0)
+* src/cetus/analysis/IPPointsToAnalysis.java
+	- Modified function getReturnRelations(CallSite callsite) to avoid nullPointerException errors in certain cases. 
 * src/cetus/exec/Driver.java: 
 	- Added a new option "stml" an code to make it works. This new option add STML annotations (pragmas) to the given code.
 	- Modified function void run(String[] args) to recognize the new created file by print function of TranslationUnit.java.
