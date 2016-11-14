@@ -559,7 +559,7 @@ featuresExtract filename rules block =
 				Nothing ->
 					[]
 		let funs = 
-			[f | (rule1,f) <- dictRules, elem rule1 rules]
+			[f | (rule1, f) <- dictRules, elem rule1 rules]
 		case astsDef of 
 			[] ->
 				-- putStrLn $ buildJSON  iniState (getApplicableChangesSpecRules iniState rules)
@@ -756,11 +756,11 @@ getApplicableChangesSpecRulesGivenAst state rules ast =
 			getApplicableChangesForGivenAst state ast
 		funs ->
 			let 
-				rulesForStmts = [fun | (Left fun) <- funs]
-				rulesForExprs = [fun | (Right fun) <- funs]
+				rulesForExprs = [fun | (Left fun) <- funs]
+				rulesForStmts = [fun | (Right fun) <- funs]
 			in
-			(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesForGivenAst rulesForExprs ast state),
-			 filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesForGivenAst rulesForStmts ast state))
+			(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesForGivenAst rulesForStmts ast state),
+			 filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesForGivenAst rulesForExprs ast state))
 			-- case funs of 
 			-- 	[Left fun] ->
 			-- 		([], filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesForGivenAst [fun] ast state))
@@ -978,12 +978,24 @@ getApplicableChanges funs state =
 			([], filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state))
 		[Right fun] ->
 			(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state), [])
-		[] ->
+		_ ->
 			let 
 				nstate = updateASTToTransform state
-				rulesForStmts = extractRules stmtRules nstate
+				choosenRulesForStmts = 
+					case funs of 
+						[] ->
+							stmtRules
+						_ ->
+							[fun | (Right fun) <- funs]
+				choosenRulesForExprs = 
+					case funs of 
+						[] ->
+							exprRules
+						_ ->
+							[fun | (Left fun) <- funs]
+				rulesForStmts = extractRules choosenRulesForStmts nstate
 				--rulesForStmts = []
-				rulesForExprs = extractRules exprRules nstate
+				rulesForExprs = extractRules choosenRulesForExprs nstate
 				(prevRulesForStmts0, prevRulesForExprs0) = 
 					-- trace ((show (length rulesForStmts)) ++ " " ++ (show (length rulesForExprs))) 
 					previous_changes nstate
