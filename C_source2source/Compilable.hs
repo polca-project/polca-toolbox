@@ -42,7 +42,7 @@ main = do
 				let (seqId, polcaBlock) =
 					case mBseqId of 
 						Nothing -> 
-							(-1, (args!!1)) 
+							(0, (args!!1)) 
 						(Just v) ->
 							(v, "")
 				M.trans_to_platformInt filename (-1) seqId polcaBlock

@@ -739,11 +739,11 @@ getApplicableChangesSpecRules state rules =
 			getApplicableChangesWOPrevious state
 		funs ->
 			let 
-				rulesForStmts = [fun | (Left fun) <- funs]
-				rulesForExprs = [fun | (Right fun) <- funs]
+				rulesForStmts = [fun | (Right fun) <- funs]
+				rulesForExprs = [fun | (Left fun) <- funs]
 			in
-			(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious rulesForExprs state),
-			 filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious rulesForStmts state))
+			(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious rulesForStmts state),
+			 filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious rulesForExprs state))
 			-- case funs of 
 			-- 	[Left fun] ->
 			-- 		([], filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state))
@@ -974,10 +974,10 @@ getApplicableChanges :: [Either
 	                          ((String, CExprAnn, CExprAnn), TransState, [(String, CStatAnn)]))])
 getApplicableChanges funs state =
 	case funs of 
-		[Left fun] ->
-			([], filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state))
-		[Right fun] ->
-			(filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state), [])
+		-- [Left fun] ->
+		-- 	trace "gac1" ([], filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state))
+		-- [Right fun] ->
+		-- 	trace "gac2" (filter (\(_,((_,o,n),_,_)) -> not (geq o n)) (extractRulesWOPrevious [fun] state), [])
 		_ ->
 			let 
 				nstate = updateASTToTransform state
@@ -1317,16 +1317,17 @@ applyOneRuleExploring state stack stateRep shouldBeApplied0 =
 
 selectRuleToApply state = 
 	do 
-		let answersDict = zip [1..((length dictRules) + 1)] ([(n, [lr]) | (n, lr) <- dictRules] ++ [("all", [])])
+		let answersDict = zip ([1..((length dictRules))] ++ [0]) ([(n, [lr]) | (n, lr) <- dictRules] ++ [("all", [])])
 		let question = intercalate "\n" [((show iden) ++ ".- " ++ n) | (iden, (n, _)) <- answersDict] 
 		answerRuleStr <- ask ("What is the rule that should be applied next\n" ++ question)
 			[(show iden) | (iden, _) <- answersDict]
 		let answerRule  = read answerRuleStr::Int
-		let (selectedFun:_) =  [f | (iden, (_,f)) <- answersDict, iden == answerRule]
+		let ((selectedFun, nameRule):_) =  [(f, nameRule1) | (iden, (nameRule1,f)) <- answersDict, iden == answerRule]
 		-- let selectedFun = []
 		case getApplicableChanges selectedFun state of 
 			([], []) ->
 				do 
+					putStrLn nameRule
 					putStrLn "Sorry, the selected rule is not applicable."
 					putStrLn "Press ENTER to continue..."
 					_ <- getLine
@@ -1348,7 +1349,7 @@ askNextRule state =
 			"y" ->
 				selectRuleToApply state
 
-applyruleInt :: TransState -> String -> Maybe [Int] -> Bool -> IO TransState
+applyruleInt :: TransState -> String -> Maybe [(String, Int)] -> Bool -> IO TransState
 applyruleInt state filename steps recalculate = 
 	do 
 			-- case (ast_to_transform iniState) of 
@@ -1357,20 +1358,28 @@ applyruleInt state filename steps recalculate =
 			-- 	Just astDef ->
 			-- 		getApplicableChangesForGivenAst iniState astDef
 		-- putStrLn "arriba1"
+		writeFileFromOption 
+			"plain c (without STML annotations)" 
+			filename state (\() -> return ())
 		(changes@(listChangesStmts,listChangesExprs), preselected) <-
 			case (recalculate, steps, oracle state) of 
 				(True, Nothing, "") -> 
 					askNextRule state
-				(True, _, _) -> 
+				(True, Nothing, _) -> 
 					return $ (getApplicableChanges [] state, False)
+				(True, Just [], _) -> 
+					return $ (getApplicableChanges [] state, False)
+					-- return (([], []), False)
+				(True, Just ((ruleStep, _):_), _) -> 
+					return $ (getApplicableChanges [f | (rule1, f) <- dictRules, rule1 == ruleStep] state, False)
 				(False, _, "") -> 
 					return $ (previous_changes state, False)
-		let jsonChanges = buildJSON state changes	
+		let jsonChanges = 
+			-- trace (show $ (length listChangesStmts) + (length listChangesExprs)) 
+			buildJSON state changes	
 		-- putStrLn "arriba2"	
 		writeFile (filename ++ (buildSuffix state ".json")) jsonChanges
-		writeFileFromOption 
-			"plain c (without STML annotations)" 
-			filename state (\() -> return ())
+
 		let rules = nub $
 				[rule | (_,((rule,_,_),_,_)) <- listChangesStmts] 
 			++ 	[rule | (_,((rule,_,_),_,_)) <- listChangesExprs]
@@ -1396,7 +1405,12 @@ applyruleInt state filename steps recalculate =
 										putStrLn "The transformation has been stopped due to an error."
 										return state
 								_ ->
-									applyruleIntAux state{previous_changes = changes} preselected rules changes filename (Just [selected])
+									do 
+										let listChangesExprsToStmts = 
+											[(fun, ((rule,(CExpr (Just old) undefNodeAnn),(CExpr (Just new) undefNodeAnn)),nstate, unknownProps)) 
+											 | (fun, ((rule,old,new),nstate, unknownProps)) <- listChangesExprs]
+										let (_, ((rule,_,_),_,_))  = (listChangesExprsToStmts ++ listChangesStmts)!!selected
+										applyruleIntAux state{previous_changes = changes} preselected rules changes filename (Just [(rule, selected)])
 
 
 applyRuleWithOracle state jsonChanges = 
@@ -1512,7 +1526,7 @@ applyruleIntAux2 state0 preselected changes@(listChangesStmts,listChangesExprs) 
 			Nothing ->
 				do 
 					let selectedRules = 
-						selectRules wholeList selectedRule 0
+						selectRules wholeList selectedRule 0 0
 					(continue, hasChanged, state1) <- 
 						applyChangesStmt 
 							selectedRules  
@@ -1527,9 +1541,9 @@ applyruleIntAux2 state0 preselected changes@(listChangesStmts,listChangesExprs) 
 					if continue
 					then applyruleInt state2 filename steps hasChanged
 					else return state2
-			(Just (item:nsteps)) ->
+			(Just (item@(_,indice):nsteps)) ->
 				do 
-					let (expr,(fun, ((rule,old,new),nstate, _)))  = wholeList!!item
+					let (expr,(fun, ((rule,old,new),nstate, _)))  = wholeList!!indice
 					let (nold, nnew) = 
 						case rule of 
 							--"inlining" -> 
@@ -1555,8 +1569,8 @@ applyruleIntAux2 state0 preselected changes@(listChangesStmts,listChangesExprs) 
 								changeASTFun (fun,nold,nnew) state0
 							True -> 
 								changeASTFun (fun, removeStmtForExpr old,removeStmtForExpr new) state0
-					applyruleInt (
-						nstate
+					applyruleInt 
+						(nstate
 						{
 							--current_ast = nast, 
 							--fun_defs = nfun_defs,
@@ -1571,12 +1585,12 @@ applyruleIntAux2 state0 preselected changes@(listChangesStmts,listChangesExprs) 
 						}) 
 						filename (Just nsteps) True
 
-selectRules (item@(_, (_,((rule,_,_),_,_))):tail_) selectedRule current 
+selectRules (item@(_, (_,((rule,_,_),_,_))):tail_) selectedRule current currentRule
 	| rule == selectedRule = 
-		((item,current):(selectRules tail_ selectedRule (current + 1)))
+		((item,current, currentRule):(selectRules tail_ selectedRule (current + 1) (currentRule + 1) ))
 	| otherwise = 
-		selectRules tail_ selectedRule (current + 1)
-selectRules [] selectedRule current = 
+		selectRules tail_ selectedRule (current + 1) currentRule 
+selectRules [] _ _ _ = 
 	[]
 
 
@@ -1652,7 +1666,7 @@ prepareQuestionAnswerRule (rule:rules) n =
 
 applyChangesStmt [] state0 _ preselected = 
 	return (True, preselected, state0)
-applyChangesStmt whole_list@(((isExpr, (fun, ((rule,old,new),nstate,unknownProps))), index):tail_)  state0 answer0 preselected =
+applyChangesStmt whole_list@(((isExpr, (fun, ((rule,old,new),nstate,unknownProps))), index, indexRule):tail_)  state0 answer0 preselected =
 	do
 		let (nold, nnew) = 
 			case rule of 
@@ -1714,7 +1728,7 @@ applyChangesStmt whole_list@(((isExpr, (fun, ((rule,old,new),nstate,unknownProps
 							True -> 
 								changeASTFun (fun,removeStmtForExpr old,removeStmtForExpr new) state0
 					-- TODO: Could be used to perform undo operation
-					putStrLn (show index)
+					-- putStrLn (show index)
 					--putStrLn (show (previous_changes state0))
 					-- let new_ast_to_transform = 
 					-- 	case (ast_to_transform nstate) of 
@@ -1735,7 +1749,7 @@ applyChangesStmt whole_list@(((isExpr, (fun, ((rule,old,new),nstate,unknownProps
 				 			fun_defs = nfun_defs,
 				 			last_changed = fun,
 				 			print_id = (print_id nstate) + 1,
-				 			acc_steps = (index:(acc_steps nstate))
+				 			acc_steps = ((rule, indexRule):(acc_steps nstate))
 				 			-- ast_to_transform = 
 				 			-- 	-- trace (show new_ast_to_transform) 
 				 			-- 	new_ast_to_transform
@@ -1863,7 +1877,7 @@ readSteps name =
 				return [] 
 			Right val -> 
 				do 
-					return [read stepStr::Int | stepStr <- (lines val)]
+					return [read stepStr::(String, Int) | stepStr <- (lines val)]
 
 elemIndexChanges p1 [] n
 	= -1

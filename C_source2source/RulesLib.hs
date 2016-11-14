@@ -256,7 +256,7 @@ data TransState =
 		ast_to_transform :: Maybe (String, CStatAnn, CStatAnn),
 		print_id :: Int,
 		seq_id :: Int,
-		acc_steps :: [Int],
+		acc_steps :: [(String, Int)],
 		oracle :: String
     }
     deriving (Show, Data, Typeable)
