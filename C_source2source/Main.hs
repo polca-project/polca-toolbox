@@ -1374,11 +1374,12 @@ applyruleInt state filename steps recalculate =
 					return $ (getApplicableChanges [f | (rule1, f) <- dictRules, rule1 == ruleStep] state, False)
 				(False, _, "") -> 
 					return $ (previous_changes state, False)
-		let jsonChanges = 
-			-- trace (show $ (length listChangesStmts) + (length listChangesExprs)) 
-			buildJSON state changes	
-		-- putStrLn "arriba2"	
-		writeFile (filename ++ (buildSuffix state ".json")) jsonChanges
+		-- JSON printing
+		-- let jsonChanges = 
+		-- 	-- trace (show $ (length listChangesStmts) + (length listChangesExprs)) 
+		-- 	buildJSON state changes	
+		-- -- putStrLn "arriba2"	
+		-- writeFile (filename ++ (buildSuffix state ".json")) jsonChanges
 
 		let rules = nub $
 				[rule | (_,((rule,_,_),_,_)) <- listChangesStmts] 
