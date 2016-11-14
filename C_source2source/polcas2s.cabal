@@ -9,7 +9,7 @@ synopsis:            Source-to-source transformations of C programs using STML r
 -- description:         
 homepage:            https://github.com/polca-project/polca-toolbox
 license:             AllRightsReserved
-license-file:        LICENSE
+license-file:        LICENSE.txt
 author:              Salvador Tamarit
 maintainer:          polca-project-madrid@software.imdea.org
 -- copyright:           
