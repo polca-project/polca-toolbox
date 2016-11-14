@@ -420,14 +420,14 @@ void PogadeMainWindow::newGV(PogadeProjectSourceFile* source) {
     connect(_ng, SIGNAL(visibilityChanged(bool)),
             actionGraphView, SLOT(setChecked(bool)));
 
-
     connect(wv, SIGNAL(scopeSelectedDown(int)),
             (PogadeSourceCodeEditor*)source->getDock()->widget(),
             SLOT(scopeSelectedUPProcess(int)));
 
     connect((PogadeSourceCodeEditor*)source->getDock()->widget(), SIGNAL(scopeSelectedDown(int)),
             wv, SLOT(scopeSelectedUpProcess(int)));
-
+    connect((PogadeSourceCodeEditor*)source->getDock()->widget(), SIGNAL(repaint()),
+            wv, SLOT(updateGUI()));
   }
   else {
     qDebug() << "Lets show Graph View!";
@@ -464,12 +464,13 @@ void PogadeMainWindow::newST(PogadeProjectSourceFile* source) {
 
     connect(_nst, SIGNAL(visibilityChanged(bool)),
             actionScopeTree, SLOT(setChecked(bool)));
-
     connect((PogadeSourceCodeEditor*)source->getDock()->widget(), SIGNAL(scopeSelectedDown(int)),
             we, SLOT(scopeSelectedUpProcess(int)));
     connect(we, SIGNAL(scopeSelectedDown(int)),
             (PogadeSourceCodeEditor*)source->getDock()->widget(),
             SLOT(scopeSelectedUPProcess(int)));
+    connect((PogadeSourceCodeEditor*)source->getDock()->widget(), SIGNAL(repaint()),
+            we, SLOT(updateGUI()));
 
   }
   else {
@@ -490,12 +491,14 @@ int PogadeMainWindow::checkPolcaTool() {
   if (!tool.waitForFinished(-1))
     return -3;
 
+  /*
   polcaToolCommand = settings.value("PTPretty", POLCATOOLPRETTY).toString();
   tool.start(polcaToolCommand, QStringList());
   if (!tool.waitForStarted(-1))
     return -4;
   if (!tool.waitForFinished(-1))
     return -5;
+  */
 
   return 0;
 }

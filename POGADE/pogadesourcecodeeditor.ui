@@ -115,6 +115,16 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QCheckBox" name="checkShowMemory">
+        <property name="text">
+         <string>Show Mem</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -239,6 +249,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>checkShowMemory</sender>
+   <signal>stateChanged(int)</signal>
+   <receiver>PogadeSourceCodeEditor</receiver>
+   <slot>showMemory(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>419</x>
+     <y>157</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>242</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>newRevision()</slot>
@@ -248,5 +274,6 @@
   <slot>viewGraph()</slot>
   <slot>viewTree()</slot>
   <slot>makeStandard()</slot>
+  <slot>showMemory(int)</slot>
  </slots>
 </ui>

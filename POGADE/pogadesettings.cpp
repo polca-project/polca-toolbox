@@ -17,7 +17,7 @@ pogadeSettings::pogadeSettings(QWidget *parent) :
 
   // Load Settings
   ui->linePR->setText(settings.value("PTReader", POLCATOOLREADER).toString());
-  ui->linePP->setText(settings.value("PTPretty", POLCATOOLPRETTY).toString());
+  //ui->linePP->setText(settings.value("PTPretty", POLCATOOLPRETTY).toString());
 
   // Load Language Settings
   ui->comboLanguage->addItem(tr("English"), QVariant(QLocale::English));
@@ -42,6 +42,7 @@ void pogadeSettings::chooseToolPR() {
   }
 }
 
+/*
 void pogadeSettings::chooseToolPP() {
   auto fileName = QFileDialog::getOpenFileName(this,
     tr("Open Polca Pretty Tool Binary"), "");
@@ -50,6 +51,7 @@ void pogadeSettings::chooseToolPP() {
     ui->linePP->setText(fileName);
   }
 }
+*/
 
 void pogadeSettings::doApply() {
   // TODO: check tools after setting new ones
@@ -57,7 +59,7 @@ void pogadeSettings::doApply() {
 
   QSettings settings;
   settings.setValue("PTReader", ui->linePR->text());
-  settings.setValue("PTPretty", ui->linePP->text());
+  //settings.setValue("PTPretty", ui->linePP->text());
 
   // Save Language Settings
   settings.setValue("language", ui->comboLanguage->currentData().toInt());

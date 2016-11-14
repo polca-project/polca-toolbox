@@ -8,34 +8,26 @@ ScopeNeighbourInfo::~ScopeNeighbourInfo() {
 
 }
 
-void ScopeNeighbourInfo::setId(int id) {
-  _id = id;
-}
-
-int ScopeNeighbourInfo::id() {
-  return _id;
-}
-
-std::vector<int> ScopeNeighbourInfo::inChildren() {
+std::unordered_set<int> ScopeNeighbourInfo::inNeighbours() {
   return _in;
 }
 
-void ScopeNeighbourInfo::addInChildren(int id) {
-  _in.push_back(id);
+void ScopeNeighbourInfo::addInNeighbours(int id) {
+  _in.insert(id);
 }
 
-void ScopeNeighbourInfo::clearInChildren() {
+void ScopeNeighbourInfo::clearInNeighbours() {
   _in.clear();
 }
 
-std::vector<int> ScopeNeighbourInfo::outChildren() {
+std::unordered_set<int> ScopeNeighbourInfo::outNeighbours() {
   return _out;
 }
 
-void ScopeNeighbourInfo::addOutChildren(int id) {
-  _out.push_back(id);
+void ScopeNeighbourInfo::addOutNeighbours(int id) {
+  _out.insert(id);
 }
 
-void ScopeNeighbourInfo::clearOutChildren() {
+void ScopeNeighbourInfo::clearOutNeighbours() {
   _out.clear();
 }

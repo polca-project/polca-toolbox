@@ -17,7 +17,7 @@ public:
 
 private slots:
   void chooseToolPR();
-  void chooseToolPP();
+  //void chooseToolPP();
   void doApply();
   void doOK();
   void doCancel();

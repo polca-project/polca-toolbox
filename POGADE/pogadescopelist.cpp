@@ -28,21 +28,30 @@ void PogadeScopeList::setSourceFile(PogadeProjectSourceFile *sf) {
 
 void PogadeScopeList::updateGUI() {
   if(_sf) {
+    bool showmem = _sf->memoryShow();
+
     std::queue<int> toVisitId;
     std::queue<QTreeWidgetItem *> toVisitItem;
 
     ui->tree->clear();
     std::vector<int> roots = _sf->rootScopes();
     for(int r : roots) {
+      bool show = true;
       PolcaScope *s = _sf->findScope(r);
-      QTreeWidgetItem *treeItem = new QTreeWidgetItem(ui->tree);
-      //treeItem->setData(0, 1, QVariant(s->id()));
-      treeItem->setText(0, QString::number(s->id()));
-      treeItem->setText(1, s->name());
-      treeItem->setText(2, s->pragmaTextAll());
 
-      toVisitId.push(r);
-      toVisitItem.push(treeItem);
+      if(!showmem && (s->getType() == POLCA_MEMALLOC || s->getType() == POLCA_MEMFREE))
+        show = false;
+
+      if(show) {
+        QTreeWidgetItem *treeItem = new QTreeWidgetItem(ui->tree);
+        //treeItem->setData(0, 1, QVariant(s->id()));
+        treeItem->setText(0, QString::number(s->id()));
+        treeItem->setText(1, s->name());
+        treeItem->setText(2, s->pragmaTextAll());
+
+        toVisitId.push(r);
+        toVisitItem.push(treeItem);
+      }
     }
     while(!toVisitId.empty()) {
       int nodeNow = toVisitId.front();
@@ -55,10 +64,10 @@ void PogadeScopeList::updateGUI() {
       treeNow->setText(1, s->name());
       treeNow->setText(2, s->pragmaTextAll());
 
-      std::vector<int> children = s->children();
-      for(int c : children) {
+      std::vector<ScopeChild> children = s->children();
+      for(ScopeChild c : children) {
         QTreeWidgetItem *treeItem = new QTreeWidgetItem();
-        toVisitId.push(c);
+        toVisitId.push(c.cid);
         toVisitItem.push(treeItem);
         treeNow->addChild(treeItem);
       }

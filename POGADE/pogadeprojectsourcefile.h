@@ -55,10 +55,18 @@ public:
   void findRootScopes();
   void generateTreeScopes();
   void automaticNamesScopes();
+  void processIOparamsScopes();
+
+  PolcaScope* findScope(QString name);
   PolcaScope* findScope(int id);
   PolcaScope* findScope(int startLine, int endLine);
+  PolcaScope* findScopeFromLine(int line);
+  void linkScopeChildren();
+
   std::vector<int> rootScopes();
   PogadeProject* getProject();
+  void setMemoryShow(bool show);
+  bool memoryShow();
 
 private:
   unsigned int _latestRev = 0;
@@ -77,6 +85,7 @@ private:
   QDockWidget* _dockScopeTree = nullptr;
   std::vector<PolcaScope> _scopes;
   bool _validScopes = false;
+  bool _showMemory = true;
 };
 
 #endif // POGADEPROJECTSOURCEFILE_H

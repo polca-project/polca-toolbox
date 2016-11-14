@@ -19,9 +19,11 @@ public:
   ~PogadeGraphViewer();
   void setSourceFile(PogadeProjectSourceFile *sf);
   PogadeProjectSourceFile *sourceFile();
-  void updateGUI();
   //void setDockGraphView(QDockWidget *dock);
   //QDockWidget * getDockGraphView();
+
+public slots:
+  void updateGUI();
 
 private slots:
   void exportGraph();

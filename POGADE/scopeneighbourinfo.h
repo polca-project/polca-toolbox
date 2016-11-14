@@ -1,7 +1,7 @@
 #ifndef ScopeNeighbourInfo_H
 #define ScopeNeighbourInfo_H
 
-#include <vector>
+#include <unordered_set>
 
 class ScopeNeighbourInfo
 {
@@ -9,19 +9,17 @@ public:
   ScopeNeighbourInfo();
   ~ScopeNeighbourInfo();
 
-  void setId(int id);
-  int id();
-  std::vector<int> inChildren();
-  void addInChildren(int id);
-  void clearInChildren();
-  std::vector<int> outChildren();
-  void addOutChildren(int id);
-  void clearOutChildren();
+  std::unordered_set<int> inNeighbours();
+  void addInNeighbours(int id);
+  void clearInNeighbours();
+
+  std::unordered_set<int> outNeighbours();
+  void addOutNeighbours(int id);
+  void clearOutNeighbours();
 
 private:
-  std::vector<int> _in;
-  std::vector<int> _out;
-  int _id = -1;
+  std::unordered_set<int> _in;
+  std::unordered_set<int> _out;
 };
 
 #endif // ScopeNeighbourInfo_H

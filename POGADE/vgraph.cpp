@@ -50,45 +50,79 @@ void VGraph::generateGraph(int scopeId) {
             GraphAttributes::edgeGraphics |
             GraphAttributes::nodeLabel);
 
-
+  bool showmem = _sf->memoryShow();
   if(scopeId < 0) {
     std::vector<int> rNodesIndex = _sf->rootScopes();
     for(int id : rNodesIndex) {
+      bool show = true;
       PolcaScope *ps = _sf->findScope(id);
-      node n = _G->newNode(id);
+      if(!showmem && (ps->getType() == POLCA_MEMALLOC || ps->getType() == POLCA_MEMFREE))
+        show = false;
+      if(show) {
+        node n = _G->newNode(id);
 
-      QString s = ps->name();
-      if(ps->nPragmas())
-        s += '\n' + ps->pragmaTextAll();
+        QString s = ps->name();
+        if(ps->nPragmas())
+          s += '\n' + ps->pragmaTextAll();
 
-      _GA->label(n) = s.toLatin1().toStdString();
-      int _n = s.split(QRegExp("\n|\r\n|\r")).size();
-      _GA->height(n) = _fontMetrics->height() * _n;
-      _GA->width(n) = sizeLongestString(s) + 10;
+        _GA->label(n) = s.toLatin1().toStdString();
+        int _n = s.split(QRegExp("\n|\r\n|\r")).size();
+        _GA->height(n) = _fontMetrics->height() * _n;
+        _GA->width(n) = sizeLongestString(s) + 10;
 
       // TODO: Process Internal nodes
+      }
     }
   }
   else {
+    //qDebug() << "Drawing " << scopeId;
     PolcaScope *mains = _sf->findScope(scopeId);
-    std::vector<int> children = mains->children();
+    std::vector<ScopeChild> children = mains->children();
 
-    for(int child : children) {
-      int id = child;
+    for(ScopeChild child : children) {
+      int id = child.cid;
+      //qDebug() << "   ccc " << id;
+      bool show = true;
       PolcaScope *ps = _sf->findScope(id);
-      node n = _G->newNode(id);
+      if(!showmem && (ps->getType() == POLCA_MEMALLOC || ps->getType() == POLCA_MEMFREE))
+        show = false;
+      if(show) {
+        node n = _G->newNode(id);
 
-      QString s = ps->name();
-      if(ps->nPragmas())
-        s += '\n' + ps->pragmaTextAll();
+        QString s = ps->name();
+        if(ps->nPragmas())
+          s += '\n' + ps->pragmaTextAll();
 
-      _GA->label(n) = s.toLatin1().toStdString();
-      int _n = s.split(QRegExp("\n|\r\n|\r")).size();
-      _GA->height(n) = _fontMetrics->height() * _n;
-      _GA->width(n) = sizeLongestString(s) + 10;
+        _GA->label(n) = s.toLatin1().toStdString();
+        int _n = s.split(QRegExp("\n|\r\n|\r")).size();
+        _GA->height(n) = _fontMetrics->height() * _n;
+        _GA->width(n) = sizeLongestString(s) + 10;
 
       // TODO: Process Internal nodes
+      }
     }
+
+    for(ScopeChild child : children) {
+      //Edges:
+
+      int id = child.cid;
+      node n = findNode(id);
+
+      PolcaScope *ps = _sf->findScope(id);
+
+      std::unordered_set<int> nos= ps->neighbours().outNeighbours();
+
+      for(int toId : nos) {
+        node w = findNode(toId);
+        if(w) {
+          // TODO: do something with the edge?
+          edge e = _G->newEdge(n, w);
+          //qDebug() << "EDGE: " << n->index() << " - " << w->index();
+        }
+      }
+    }
+
+
 
     /*
     for(ScopeNeighbourInfo neighbour : neighbours) {
@@ -107,8 +141,10 @@ void VGraph::generateGraph(int scopeId) {
 
       // TODO: Process Internal nodes
     }
+    */
 
 
+    /*
     for(ScopeNeighbourInfo neighbour : neighbours) {
       int id = neighbour.id();
       PolcaScope *ps = _sf->findScope(id);
@@ -128,6 +164,7 @@ void VGraph::generateGraph(int scopeId) {
       // TODO: Process Internal nodes
     }
     */
+
   }
 }
 

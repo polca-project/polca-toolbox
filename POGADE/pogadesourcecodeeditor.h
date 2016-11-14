@@ -32,6 +32,12 @@ typedef struct {
   int start;
   int startCol;
   int startLine;
+  /* function information */
+  QString funcName;
+  std::vector<QString> paramVarName;
+  std::vector<int> paramVarPos;
+  std::vector<QString> pragmaVarName;
+  std::vector<int> pragmaVarPos;
 } pragma_t;
 
 
@@ -65,6 +71,7 @@ signals:
   void createNV(PogadeProjectSourceFile*);
   void createST(PogadeProjectSourceFile*);
   void scopeSelectedDown(int);
+  void repaint();
 
 private slots:
   void lineDoubleClick(int line);
@@ -81,6 +88,8 @@ private slots:
   void viewGraph();
   void viewTree();
   void makeStandard();
+
+  void showMemory(int show);
 
 private:
   Ui::PogadeSourceCodeEditor *ui;

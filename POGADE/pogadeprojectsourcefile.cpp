@@ -224,6 +224,14 @@ std::tuple<bool, PolcaScope, PolcaPragma> PogadeProjectSourceFile::findScopeAndP
 void PogadeProjectSourceFile::automaticNamesScopes() {
   for(PolcaScope &s : _scopes) {
     s.automaticName();
+
+    //qDebug() << s.name() << " - " << s.id();
+  }
+}
+
+void PogadeProjectSourceFile::processIOparamsScopes() {
+  for(PolcaScope &s : _scopes) {
+    s.procesIOparams();
   }
 }
 
@@ -250,16 +258,11 @@ void PogadeProjectSourceFile::generateTreeScopes() {
     }
 
     for(PolcaScope *s2 : children) {
-      s1.addChildScope(s2->id());
+      std::vector<QString> _noVars;
+      s1.addChildScope(s2->id(), s2->codeLineStart(), s2, _noVars);
       s2->setParent(s1.id());
     }
   }
-
-  /*
-  for(PolcaScope &s1 : _scopes) {
-    qDebug() << s1.id() << " - " << s1.parent();
-  }
-  */
 }
 
 void PogadeProjectSourceFile::findRootScopes() {
@@ -270,39 +273,19 @@ void PogadeProjectSourceFile::findRootScopes() {
       isChild = isChild || s2.isInChildren(s1.id());
     }
 
-    //qDebug() << s1.id() << " - " << isChild;
-
     s1.setRoot(!isChild);
   }
 }
 
-/*
-void PogadeProjectSourceFile::analyzeCurrentScopes() {
-  for(PolcaScope &s1 : _scopes) {
-    s1.clearChildren();
-  }
-  for(PolcaScope &s1 : _scopes) {
-    for(PolcaScope &s2 : _scopes) {
-      if(&s1 != &s2) {
-        if(s1.codeLineStart() <= s2.codeLineStart() && s1.codeLineEnd() >= s2.codeLineEnd()) {
-          s1.addChildScope(s2.id());
-          //qDebug() << "CHILD: " << s1.id() << " <- " << s2.id();
-        }
-      }
+PolcaScope *PogadeProjectSourceFile::findScope(QString name) {
+  for(PolcaScope &s : _scopes) {
+    if(s.name() == name) {
+      return &s;
     }
   }
 
-  //Find out root scopes
-  for(PolcaScope &s1 : _scopes) {
-    bool isChild = false;
-    for(PolcaScope &s2 : _scopes) {
-      isChild = isChild || s2.isInChildren(s1.id());
-    }
-    s1.setRoot(!isChild);
-  }
+  return nullptr;
 }
-*/
-
 
 PolcaScope *PogadeProjectSourceFile::findScope(int id) {
   for(PolcaScope &s : _scopes) {
@@ -312,6 +295,12 @@ PolcaScope *PogadeProjectSourceFile::findScope(int id) {
   }
 
   return nullptr;
+}
+
+void PogadeProjectSourceFile::linkScopeChildren() {
+  for(PolcaScope &s : _scopes) {
+    s.linkChildren();
+  }
 }
 
 PolcaScope *PogadeProjectSourceFile::findScope(int startLine, int endLine) {
@@ -335,6 +324,31 @@ std::vector<int> PogadeProjectSourceFile::rootScopes() {
   return rootIds;
 }
 
+PolcaScope* PogadeProjectSourceFile::findScopeFromLine(int line) {
+  std::vector<PolcaScope*> possibles;
+  for(PolcaScope &s : _scopes) {
+    if(s.codeLineStart() <= line && s.codeLineEnd() >= line) {
+      possibles.push_back(&s);
+    }
+  }
+
+  if(possibles.size() == 0) {
+    return nullptr;
+  }
+  else {
+    PolcaScope* selected = possibles[0];
+    int size = selected->codeLineEnd() - selected->codeLineStart();
+    for(int i=1; i<possibles.size(); i++) {
+      int _size = possibles[i]->codeLineEnd() - possibles[i]->codeLineStart();
+      if(_size < size) {
+        size = size;
+        selected = possibles[i];
+      }
+    }
+    return selected;
+  }
+}
+
 bool PogadeProjectSourceFile::scopeTree() {
   return _scopeTree;
 }
@@ -346,4 +360,12 @@ void PogadeProjectSourceFile::setScopeTree(bool scopeTree, QDockWidget* dock) {
 
 PogadeProject* PogadeProjectSourceFile::getProject() {
   return _project;
+}
+
+void PogadeProjectSourceFile::setMemoryShow(bool show) {
+  _showMemory = show;
+}
+
+bool PogadeProjectSourceFile::memoryShow() {
+  return _showMemory;
 }

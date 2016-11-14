@@ -26,6 +26,7 @@ PogadeSourceCodeEditor::PogadeSourceCodeEditor(QWidget *parent) :
   ui->buttonViewGraph->setEnabled(false);
   ui->buttonTree->setEnabled(false);
   ui->buttonMakeStandard->setEnabled(false);
+  ui->checkShowMemory->setEnabled(false);
 
   se = new SourceCodeEditor();
 
@@ -133,6 +134,10 @@ void PogadeSourceCodeEditor::setSourceFile(PogadeProjectSourceFile* source) {
   sf = source;
   _currentChanged = false;
   updateGUI();
+
+  if(sf) {
+    sf->setMemoryShow(ui->checkShowMemory->isChecked());
+  }
 }
 
 void PogadeSourceCodeEditor::updateGUI() {
@@ -167,20 +172,20 @@ void PogadeSourceCodeEditor::newRevision() {
 }
 
 void PogadeSourceCodeEditor::resetComboRevision(int selectedRevision) {
-    int chosen = -1;
-    if(sf) {
-        QList<unsigned int> revisions = sf->revisions();
-        QList<QString> revisionsName  = sf->revisionsNames();
-        ui->comboRevisions->clear();
-        for(int i=0; i<revisions.size(); ++i) {
-            QString line = "Rev " + QString::number(revisions.at(i)) + " - " + revisionsName.at(i);
-            ui->comboRevisions->addItem(line, revisions.at(i));
-            if((int)revisions.at(i) == selectedRevision)
-                chosen = i;
+  int chosen = -1;
+  if(sf) {
+    QList<unsigned int> revisions = sf->revisions();
+    QList<QString> revisionsName  = sf->revisionsNames();
+    ui->comboRevisions->clear();
+    for(int i=0; i<revisions.size(); ++i) {
+      QString line = "Rev " + QString::number(revisions.at(i)) + " - " + revisionsName.at(i);
+      ui->comboRevisions->addItem(line, revisions.at(i));
+        if((int)revisions.at(i) == selectedRevision)
+          chosen = i;
         }
-        if(chosen >= 0)
-            ui->comboRevisions->setCurrentIndex(chosen);
-    }
+    if(chosen >= 0)
+    ui->comboRevisions->setCurrentIndex(chosen);
+  }
 }
 
 void PogadeSourceCodeEditor::createRevision(QString revName) {
@@ -283,13 +288,40 @@ void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
   if(doc.isEmpty()) {
     ui->buttonViewGraph->setEnabled(false);
     ui->buttonTree->setEnabled(false);
+    ui->checkShowMemory->setEnabled(false);
     return;
   }
 
   ui->buttonViewGraph->setEnabled(true);
   ui->buttonTree->setEnabled(true);
+  ui->checkShowMemory->setEnabled(true);
   QJsonObject obj = doc.object();
   QJsonArray pragmas = obj.value("pragmas").toArray();
+
+
+  /****************************************************************/
+  /****************************************************************/
+  /****************************************************************/
+  QJsonArray calls = obj.value("calls").toArray();
+  std::vector<FunCall> fcalls;
+  for(QJsonValue c : calls) {
+    FunCall f;
+    f.fun  = c.toObject().value("fun").toString();
+    f.line = c.toObject().value("line").toInt();
+    //qDebug() << c.toObject().value("fun").toString() << " - " << c.toObject().value("line").toInt();
+
+    QJsonArray args = c.toObject().value("args").toArray();
+    for(QJsonValue a : args) {
+      f.var.push_back(a.toObject().value("varName").toString());
+      f.posC.push_back(a.toObject().value("varPos").toInt());
+      //qDebug() << a.toObject().value("varPos").toInt() << " - " << a.toObject().value("varName").toString();
+    }
+    fcalls.push_back(f);
+  }
+  /****************************************************************/
+  /****************************************************************/
+  /****************************************************************/
+
 
   QList<pragma_t> plist;
 
@@ -306,18 +338,25 @@ void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
     _p.startCol   = p.toObject().value("startCol").toInt();
     _p.startLine  = p.toObject().value("startLine").toInt();
 
+    QJsonObject funInfo = p.toObject().value("funInfo").toObject();
+    _p.funcName = funInfo.value("funName").toString();
+    if(_p.funcName != "") {
+      QJsonArray paramPos  = funInfo.value("paramPos").toArray();
+      for(QJsonValue pp : paramPos) {
+        _p.paramVarName.push_back(pp.toObject().value("varName").toString());
+        _p.paramVarPos.push_back(pp.toObject().value("varPos").toInt());
+      }
+
+      QJsonArray pragmaPos = funInfo.value("pragmaPos").toArray();
+      for(QJsonValue pp : pragmaPos) {
+        _p.pragmaVarName.push_back(pp.toObject().value("parName").toString());
+        _p.pragmaVarPos.push_back(pp.toObject().value("parPosPragma").toInt());
+      }
+    }
+
     plist.append(_p);
   }
 
-
-  // Set Pragmas to Scopes
-  /*
-  for(pragma_t p : plist) {
-    qDebug() << p.pragma;
-    qDebug() << p.startLine << " - " << p.endLine;
-  }
-  qDebug() << "---------------------";
-  */
 
   for(pragma_t p : plist) {
     PolcaScope *ps;
@@ -339,93 +378,47 @@ void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
     pp.setLineStart(p.pragmaLine);
     pp.setLineEnd(p.pragmaLine);
     pp.setText(p.pragma);
+    if(p.funcName != "") {
+      //This is an annotated function
+      ps->setIsFunction(true);
+      ps->setName(p.funcName);
 
+
+      for(unsigned int i = 0; i<p.paramVarName.size(); i++) {
+        ParPos _parpos;
+        _parpos.var  = p.paramVarName[i];
+        _parpos.posC = p.paramVarPos[i];
+        for(unsigned int j = 0; j<p.pragmaVarName.size(); j++) {
+          if(_parpos.var == p.pragmaVarName[j]) {
+            _parpos.posP.push_back(p.pragmaVarPos[j]);
+          }
+        }
+        ps->addfParameter(_parpos);
+      }
+    }
 
     ps->pragmaAdd(pp);
 
     if(newscope) {
+      ps->automaticType();
       sf->addScope(*ps);
       delete ps;
     }
   }
 
   sf->automaticNamesScopes();
+  sf->processIOparamsScopes();
+  for(FunCall& c : fcalls) {
+    c.scopeId = sf->findScope(c.fun)->id();
+    sf->findScopeFromLine(c.line)->addChildScope(c.scopeId, c.line,
+                                                 sf->findScope(c.scopeId), c.var);
+  }
+  sf->linkScopeChildren();
   sf->generateTreeScopes();
   sf->findRootScopes();
+
   showPragmas();
 }
-
-/*
-void PogadeSourceCodeEditor::loadPolcaProcessing(QString file) {
-  //qDebug() << file;
-  QFile f(file);
-  f.open(QIODevice::ReadOnly | QIODevice::Text);
-
-  QJsonDocument doc = QJsonDocument::fromJson(f.readAll());
-  f.close();
-  //qDebug() << "JSON file empty? " << doc.isNull();
-  //qDebug() << "JSON content: " << doc.toJson();
-
-
-  if(!doc.isEmpty()) {
-    ui->buttonViewGraph->setEnabled(true);
-    ui->buttonTree->setEnabled(true);
-    QJsonObject obj = doc.object();
-    QJsonArray scopes = obj.value("polcaScopes").toArray();
-    for(QJsonValue s : scopes) {
-      PolcaScope ps;
-
-      //qDebug() << "---------------";
-      //qDebug() << s;
-      ps.setId(s.toObject().value("scopeId").toInt());
-      ps.setName(s.toObject().value("name").toString());
-      ps.setCodeLineStart(s.toObject().value("codeLineStart").toInt());
-      ps.setCodeLineEnd(s.toObject().value("codeLinesEnd").toInt());
-
-
-      QJsonArray children = s.toObject().value("children").toArray();
-      for(QJsonValue c : children) {
-        ScopeChildInfo sci;
-        sci.setId(c.toObject().value("id").toInt());
-
-        QJsonArray cins = c.toObject().value("in").toArray();
-        for(QJsonValue cin : cins) {
-          int n = cin.toInt();
-          sci.addInChildren(n);
-        }
-        QJsonArray couts = c.toObject().value("out").toArray();
-        for(QJsonValue cout : couts) {
-          int n = cout.toInt();
-          sci.addOutChildren(n);
-        }
-
-        ps.addChildScope(sci);
-      }
-
-      QJsonArray pragmas = s.toObject().value("pragmas").toArray();
-      for(QJsonValue p : pragmas) {
-        PolcaPragma pp;
-        pp.setText(p.toObject().value("text").toString());
-        pp.setLineStart(p.toObject().value("lineStart").toInt());
-        pp.setLineEnd(p.toObject().value("lineEnd").toInt());
-
-        ps.pragmaAdd(pp);
-      }
-
-      //TODO: do we need to check a valid sf?
-      sf->addScope(ps);
-      sf->setValidScope(true);
-    }
-    //sf->analyzeCurrentScopes();
-    sf->findRootScopes();
-    showPragmas();
-  }
-  else {
-    ui->buttonViewGraph->setEnabled(false);
-    ui->buttonTree->setEnabled(false);
-  }
-}
-*/
 
 void PogadeSourceCodeEditor::showPragmas() {
   // Remove all markers and add the new ones
@@ -579,4 +572,9 @@ void PogadeSourceCodeEditor::makeStandard() {
       }
     }
   }
+}
+
+void PogadeSourceCodeEditor::showMemory(int) {
+  sf->setMemoryShow(ui->checkShowMemory->isChecked());
+  emit repaint();
 }
