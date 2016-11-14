@@ -1358,9 +1358,6 @@ applyruleInt state filename steps recalculate =
 			-- 	Just astDef ->
 			-- 		getApplicableChangesForGivenAst iniState astDef
 		-- putStrLn "arriba1"
-		writeFileFromOption 
-			"plain c (without STML annotations)" 
-			filename state (\() -> return ())
 		(changes@(listChangesStmts,listChangesExprs), preselected) <-
 			case (recalculate, steps, oracle state) of 
 				(True, Nothing, "") -> 
@@ -1374,6 +1371,9 @@ applyruleInt state filename steps recalculate =
 					return $ (getApplicableChanges [f | (rule1, f) <- dictRules, rule1 == ruleStep] state, False)
 				(False, _, "") -> 
 					return $ (previous_changes state, False)
+		writeFileFromOption 
+			"plain c (without STML annotations)" 
+			filename state (\() -> return ())
 		-- JSON printing
 		-- let jsonChanges = 
 		-- 	-- trace (show $ (length listChangesStmts) + (length listChangesExprs)) 
@@ -1621,15 +1621,15 @@ writeFileFromOption option filename state finalCall =
 					("// RULE_APPLD: " ++ last_applied ++ "\n") 
 		let header = 
 			header0 ++ "// FUNC_ANALYZ: main BLOCK_ABS\n"	
-		let suffix = 
-			buildSuffix state ".c"
+		-- let suffix = 
+		-- 	buildSuffix state ".c"
 		case option of
 			"plain c (with all anotations)" ->
-				writeTransFileInt filename state header suffix
+				writeTransFileInt filename state header (buildSuffix state "_all_anns.c")
 			"plain c (without STML annotations)" ->
-				writeTransFileOnlyPolcaInt filename state header suffix
+				writeTransFileOnlyPolcaInt filename state header (buildSuffix state ".c")
 			"plain c (without any annotation)" ->
-				writeTransFileWithoutAnnsInt filename state header suffix
+				writeTransFileWithoutAnnsInt filename state header (buildSuffix state "_no_anns.c")
 		finalCall ()
 
 buildSuffix state ext = 

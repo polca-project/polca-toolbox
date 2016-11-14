@@ -923,7 +923,7 @@ modifyPropertiesNode (pragma:pragmas) properties
 		hasControlFlowModifiersPrefix = stripGivenPrefix "has_control_flow_modifiers" 
 		scalarDependencesPrefix = stripGivenPrefix "scalar_dependences"
 		polcaAnns = 
-			["map", "init", "kernel", "def", "io", "type_size", "total_size", "input", "output", "iteration_independent"]
+			["map", "init", "kernel", "def", "io", "type_size", "total_size", "input", "output", "iteration_independent", "rolled-up"]
 		polcaPrefix = 
 			or [(stripGivenPrefix polcaAnn) /= Nothing | polcaAnn <- polcaAnns]
 		stripGivenPrefix prefix = stripPrefix prefix (trim pragma)

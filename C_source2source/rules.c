@@ -706,7 +706,7 @@ for_loop_fusion
         // bodyFOR2 should not read things written by bodyFOR1
         // The following condition can be relaxed. It can read things calculated in the itetarions from 0 to the current
         no_reads_in_written(cstmts(bodyFOR2),cstmts(bodyFOR1));
-        // If bodyFOR2 is modifying thnigs that bodyFOR1 uses then we cannot apply the rule
+        // If bodyFOR2 is modifying things that bodyFOR1 uses then we cannot apply the rule
         no_reads_in_written(cstmts(bodyFOR1),cstmts(bodyFOR2));
         // The dependeces should be compatible. For instance, 
         // for(i...n) v[i-1] = x; for(j..n) w[i-1] = v[i]; is not compatible

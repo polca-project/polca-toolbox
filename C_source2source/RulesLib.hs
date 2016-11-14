@@ -940,7 +940,8 @@ fresh_vars state stmt =
 		(applyRulesGeneral searchDeclr stmt)
 
 createFreshNodeInfo state0@TransState{free_node_id = nId} = 
-	(Ann (mkNodeInfo nopos (head (namesStartingFrom nId))) nodePropertiesDefault,
+	-- (Ann (mkNodeInfo nopos (head (namesStartingFrom nId))) nodePropertiesDefault,
+	((mkNodeInfo nopos (head (namesStartingFrom nId))),
 	 state0
 	 {
 	 	free_node_id = nId + 1
@@ -978,8 +979,10 @@ processPragmas state0 patPragmaDict ruleProperties matchedAST =
 		polcaPragmasForNewNode0 = 
 			concat (map (buildPragmas patPragmaDict matchedAST polcaPragmasAst) polcaPragmasRule)
 		polcaPragmasForNewNode = 
-			plain $ correctPragmas polcaPragmasForNewNode0
+			-- trace ((show polcaPragmasRule) ++ " " ++ (show polcaPragmasAst) ++ " " ++ (show polcaPragmasForNewNode0))plain $ 
+			correctPragmas polcaPragmasForNewNode0
 		nP = 
+			-- trace (show polcaPragmasForNewNode) 
 			((polcaPragmas.value .~ (Just polcaPragmasForNewNode)) astProperties)
 	in 
 		((Ann nI nP), state1)
@@ -1101,6 +1104,8 @@ buildPragmas patPragmaDict matchedAST pragmasAst pragmaRule =
 						[]
 					(hpv:_) ->
 						[["curr_chunk_size ", (head (head hpv))]]
+			  | ((string == "rolled-up") && (length pragmaRule > 0)) ->
+				[["rolled-up"]]
 			| otherwise -> 
 				[]
 
