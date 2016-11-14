@@ -1395,7 +1395,7 @@ applyruleInt state filename steps recalculate =
 						applyruleIntAux state{previous_changes = changes} preselected rules changes filename steps
 					_ ->
 						do 
-							selected <- applyRuleWithOracle state jsonChanges
+							selected <- applyRuleWithOracle state (buildJSON state changes)
 							case selected of 
 								(-1) ->
 									do 
