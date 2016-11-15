@@ -508,8 +508,9 @@ data ChangeCode =
 		line :: Int,
 		oldCode  :: String,
 		newCode :: String,
-		newCodeBlock :: String,
-		newCodeFun :: String
+		-- newCodeBlock :: String,
+		-- newCodeFun :: String,
+		newCodeAll :: String
 		-- termPosition :: String
 	} deriving Show
 
@@ -517,8 +518,8 @@ data CodeAndChanges =
 	CodeAndChanges
 	{ 
 		code :: String,
-		codeBlock :: String,
-		codeFun :: String,
+		-- codeBlock :: String,
+		-- codeFun :: String,
 		changes :: [ChangeCode]
 	} deriving Show
 
@@ -529,33 +530,42 @@ instance FromJSON ChangeCode where
                            v .: DT.pack "line" <*>
                            v .: DT.pack "oldCode" <*>
                            v .: DT.pack "newCode" <*>
-                           v .: DT.pack "newCodeBlock" <*>
-                           v .: DT.pack "newCodeFun"
+                           -- v .: DT.pack "newCodeBlock" <*>
+                           -- v .: DT.pack "newCodeFun"
+                           v .: DT.pack "newCodeAll"
     -- A non-Object value is of the wrong type, so fail.
     parseJSON _          = mzero
 
 instance FromJSON CodeAndChanges where
     parseJSON (Object v) = CodeAndChanges <$>
     					   v .: DT.pack "code" <*>
-    					   v .: DT.pack "codeBlock" <*>
-    					   v .: DT.pack "codeFun" <*>
+    					   -- v .: DT.pack "codeBlock" <*>
+    					   -- v .: DT.pack "codeFun" <*>
                            v .: DT.pack "changes"
     -- A non-Object value is of the wrong type, so fail.
     parseJSON _          = mzero
 
 instance ToJSON ChangeCode where
-    toJSON (ChangeCode idChange ruleName line oldCode newCode newCodeBlock newCodeFun) = 
-    	object [DT.pack "idChange" .= idChange, 
+    toJSON (ChangeCode idChange ruleName line oldCode newCode newCodeAll) = 
+    	object [
+    			DT.pack "idChange" .= idChange, 
     			DT.pack "ruleName" .= ruleName, 
     			DT.pack "line" .= line,
     			DT.pack "oldCode" .= oldCode, 
     			DT.pack "newCode" .= newCode,
-    			DT.pack "newCodeBlock" .= newCodeBlock,
-    			DT.pack "newCodeFun" .= newCodeFun]
+    			DT.pack "newCodeAll" .= newCodeAll
+    			-- DT.pack "newCodeBlock" .= newCodeBlock,
+    			-- DT.pack "newCodeFun" .= newCodeFun]
+    			]
 
 instance ToJSON CodeAndChanges where
-    toJSON (CodeAndChanges code codeBlock codeFun changes) = 
-    	object [DT.pack "code" .= code, DT.pack "codeBlock" .= codeBlock, DT.pack "codeFun" .= codeFun, DT.pack "changes" .= changes]
+    toJSON (CodeAndChanges code changes) = 
+    	object [
+    			DT.pack "code" .= code, 
+    			-- DT.pack "codeBlock" .= codeBlock, 
+    			-- DT.pack "codeFun" .= codeFun, 
+    			DT.pack "changes" .= changes
+    			]
 
 featuresExtract filename rules block = 
 	do 
@@ -657,40 +667,46 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 	do
 		let state = updateASTToTransform state0
 		-- let state = addPositionInfoState state1
+		-- let newBlockPrinterS = 
+		-- 	\(fun,old, new) ->
+		-- 		case (ast_to_transform state) of 
+		-- 			Nothing -> 
+		-- 				("", "")
+		-- 			(Just  (polca_block, _, _)) ->
+		-- 				let 
+		-- 					nstate = state{fun_defs = (changeASTFun (fun,old, new) state)}
+		-- 				in 
+		-- 					case (applyRulesGeneral (search_def polca_block) (rebuildAst nstate)) of 
+		-- 						[] ->
+		-- 							("", "")
+		-- 						(newBlock:_) ->
+		-- 							(
+		-- 								printWithPragmasStmt prettyPragmasPolca (searchASTFun newBlock (fun_defs nstate)),
+		-- 								(printMyASTBlock newBlock nstate)
+		-- 							)
+		-- let newBlockPrinterE = 
+		-- 	\(fun,old, new) ->
+		-- 		case (ast_to_transform state) of 
+		-- 			Nothing -> 
+		-- 				("", "")
+		-- 			(Just  (polca_block, _, _)) ->
+		-- 				let 
+		-- 					nstate = state{fun_defs = (changeASTFun (fun,old, new) state)}
+		-- 				in 
+		-- 					case (applyRulesGeneral (search_def polca_block) (rebuildAst nstate)) of 
+		-- 						[] ->
+		-- 							("", "")
+		-- 						(newBlock:_) ->
+		-- 							(
+		-- 								printWithPragmasStmt prettyPragmasPolca (searchASTFun newBlock (fun_defs nstate)),
+		-- 								(printMyASTBlock newBlock nstate)
+		-- 							)
 		let newBlockPrinterS = 
 			\(fun,old, new) ->
-				case (ast_to_transform state) of 
-					Nothing -> 
-						("", "")
-					(Just  (polca_block, _, _)) ->
-						let 
-							nstate = state{fun_defs = (changeASTFun (fun,old, new) state)}
-						in 
-							case (applyRulesGeneral (search_def polca_block) (rebuildAst nstate)) of 
-								[] ->
-									("", "")
-								(newBlock:_) ->
-									(
-										printWithPragmasStmt prettyPragmasPolca (searchASTFun newBlock (fun_defs nstate)),
-										(printMyASTBlock newBlock nstate)
-									)
+				printWithPragmasInt prettyPragmasPolca state{fun_defs = (changeASTFun (fun,old, new) state)}
 		let newBlockPrinterE = 
 			\(fun,old, new) ->
-				case (ast_to_transform state) of 
-					Nothing -> 
-						("", "")
-					(Just  (polca_block, _, _)) ->
-						let 
-							nstate = state{fun_defs = (changeASTFun (fun,old, new) state)}
-						in 
-							case (applyRulesGeneral (search_def polca_block) (rebuildAst nstate)) of 
-								[] ->
-									("", "")
-								(newBlock:_) ->
-									(
-										printWithPragmasStmt prettyPragmasPolca (searchASTFun newBlock (fun_defs nstate)),
-										(printMyASTBlock newBlock nstate)
-									)
+				printWithPragmasInt prettyPragmasPolca state{fun_defs = (changeASTFun (fun,old, new) state)}
 		let cS = 
 			[(rule_name, searchMinMaxLine old, (printMyASTBlock old state), (printMyASTBlock new state), newBlockPrinterS (fun,old, new)) 
 			 | (fun, ((rule_name,old,new), _, [])) <- listChangesStmts]
@@ -701,7 +717,9 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 			cE ++ cS 
 		let idedChanges = 
 			zip [0..((length allChanges) - 1)] allChanges
-		let strProg = printWithPragmas state
+		let strProg = 
+			-- printWithPragmas state
+			printWithPragmasInt prettyPragmasPolca state
 		let (strBlock, strFun) = 
 			case (ast_to_transform state) of 
 				Nothing ->
@@ -718,13 +736,22 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 				{
 				 code = 
 				 	strProg,
-				 codeBlock = 
-				 	strBlock,
-				 codeFun = 
-				 	strFun,
+				 -- codeBlock = 
+				 -- 	strBlock,
+				 -- codeFun = 
+				 -- 	strFun,
 				 changes = 
-					[ChangeCode {idChange = id, ruleName = r, line = l + linesInclude, oldCode = o, newCode = n, newCodeBlock = nb, newCodeFun = nf} 
-					 | (id, (r, l, o, n, (nf, nb))) <- idedChanges]}
+					[ChangeCode {
+						idChange = id, 
+						ruleName = r, 
+						line = l + linesInclude, 
+						oldCode = o, 
+						newCode = n, 
+						newCodeAll = nall
+						-- newCodeBlock = nb, 
+						-- newCodeFun = nf
+					} 
+					 | (id, (r, l, o, n, nall)) <- idedChanges]}
 		BSL.unpack (JSON.encode jsonContent)
 
 getTermPositionE :: CExprAnn -> TransState -> String
