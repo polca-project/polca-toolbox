@@ -316,7 +316,7 @@ trans_report_auto name mode =
 trans_report_explore name =
 	do
 		initial_steps_test name
-		state0 <- initialStepsTrans True name
+		state0 <- initialStepsTrans True name True
 		trans_report_aux_explore name state0 [] state0 []
 		--(state, stack, stateRep, selectableRules) <- applyOneRuleExploring state0 [] state0 []
 		--check_continue_explore name state stack stateRep selectableRules
@@ -551,7 +551,7 @@ instance ToJSON CodeAndChanges where
 
 featuresExtract filename rules block = 
 	do 
-		iniState <- initialStepsTrans False filename
+		iniState <- initialStepsTrans False filename False
 		let astsDef = 
 			case block of 
 				(Just def) ->
@@ -571,7 +571,7 @@ featuresExtract filename rules block =
 
 init_trans name defM =
 	do
-		iniState <- initialStepsTrans False name
+		iniState <- initialStepsTrans False name True
 		let (nameDef, astsDef) = 
 			case defM of 
 				(Just def) ->
@@ -802,14 +802,11 @@ astEqualTo astSearched ast =
 		False ->
 			[]
 
-initialStepsTrans verbose name = 
-	initialStepsTransInt verbose name (-1) 0
+initialStepsTrans verbose name runCetus = 
+	initialStepsTransInt verbose name (-1) 0 runCetus
  
-initialStepsTransInt verbose name seqId printId = 
+initialStepsTransInt verbose name seqId printId runCetus = 
 	do 
-		-- TODO: Delete .cetus.c previous file OR delete it after use
-		-- TODO: Treat problems with Cetus and show the output of cetus when some arises
-		putStrLnCond verbose ("Annotating the code using Cetus...")
 		(ast00, linkedPolcaAnn, includes0) <- readFileInfo verbose name True
 		let normAST = normalize ast00
 		let annAST00 = fmap (\nI -> Ann nI nodePropertiesDefault) normAST
@@ -826,51 +823,60 @@ initialStepsTransInt verbose name seqId printId =
 		-- 			writeFile "a1.ast" (Gr.groom annAST00)
 		-- 			writeFile "a2.ast" (Gr.groom ast000)
 		-- 		-- putStrLn $ "Somethin' changed." ++ (ppDiff (getGroupedDiff (lines $ Gr.groom annAST00) (lines $ Gr.groom ast000)))
-		let initialState00  = 
-			TransState 
-			{
-				free_node_id = 0, 
-				freeVar = 0,
-				includes = [],
-				fun_defs = applyRulesGeneral searchFunDefsGeneral ast000,
-				no_fun_defs = applyRulesGeneral searchNoFunDefsGeneral ast000,
-				last_changed = "",
-				previous_changes = ([],[]),
-				applied_rules = [],
-				applicable_rules = Set.empty,
-				trans_with_anns = False,
-				ast_to_transform = Nothing,
-				print_id = printId,
-				seq_id = seqId,
-				acc_steps = [],
-				oracle = ""
-			} 
-		writeFile (name ++ ".cetus") (printWithPragmasWithoutStdLib initialState00)
-		--writeFile (name ++ ".cetus") ((unlines includes0) ++ "\n\n" ++ (prettyMyAST ast00) ++ "\n")
-		let directoryToCetus = outputDirectory name
-		let cetusCommand = "cetus/cetus_stml.sh " ++ (directoryToCetus ++ (takeFileName name)) ++ ".cetus " ++ directoryToCetus ++ " > cetus/output.txt 2> cetus/output.txt"
-		--putStrLnCond verbose cetusCommand
-		--ExitSuccess <- system "cd cetus"
-		--ExitSuccess <- system cetusCommand
-		--let annotatedFile = name ++ ""
-		let annotatedFile = name ++ ".cetus.cetus"
-		execResult <- system cetusCommand
-		case execResult of 
-			ExitSuccess ->
-				putStrLnCond verbose ("STML Annotated code stored in " ++ annotatedFile ++ ".c")
-			_ ->
-				do 
-					contents <- readFile "cetus/output.txt"
-					--return (error contents)
-					fail (contents ++ "\n\n\nError while annotating using Cetus.")
-		(ast0, linkedPolcaAnn,_) <- readFileInfo verbose annotatedFile True
-		let lastNode = getLastNode ast0
+		(ast1, lastNode) <-
+			case runCetus of 
+				False ->
+					return (ast000, getLastNode normAST)
+				True ->
+					do
+						-- TODO: Delete .cetus.c previous file OR delete it after use
+						putStrLnCond verbose ("Annotating the code using Cetus...")
+						let initialState00  = 
+							TransState 
+							{
+								free_node_id = 0, 
+								freeVar = 0,
+								includes = [],
+								fun_defs = applyRulesGeneral searchFunDefsGeneral ast000,
+								no_fun_defs = applyRulesGeneral searchNoFunDefsGeneral ast000,
+								last_changed = "",
+								previous_changes = ([],[]),
+								applied_rules = [],
+								applicable_rules = Set.empty,
+								trans_with_anns = False,
+								ast_to_transform = Nothing,
+								print_id = printId,
+								seq_id = seqId,
+								acc_steps = [],
+								oracle = ""
+							} 
+						writeFile (name ++ ".cetus") (printWithPragmasWithoutStdLib initialState00)
+						--writeFile (name ++ ".cetus") ((unlines includes0) ++ "\n\n" ++ (prettyMyAST ast00) ++ "\n")
+						let directoryToCetus = outputDirectory name
+						let cetusCommand = "cetus/cetus_stml.sh " ++ (directoryToCetus ++ (takeFileName name)) ++ ".cetus " ++ directoryToCetus ++ " > cetus/output.txt 2> cetus/output.txt"
+						--putStrLnCond verbose cetusCommand
+						--ExitSuccess <- system "cd cetus"
+						--ExitSuccess <- system cetusCommand
+						--let annotatedFile = name ++ ""
+						let annotatedFile = name ++ ".cetus.cetus"
+						execResult <- system cetusCommand
+						case execResult of 
+							ExitSuccess ->
+								putStrLnCond verbose ("STML Annotated code stored in " ++ annotatedFile ++ ".c")
+							_ ->
+								do 
+									contents <- readFile "cetus/output.txt"
+									--return (error contents)
+									fail (contents ++ "\n\n\nError while annotating using Cetus.")
+						(ast0, linkedPolcaAnn,_) <- readFileInfo verbose annotatedFile True
+						let lastNode1 = getLastNode ast0
 
-		let annAST = fmap (\nI -> Ann nI nodePropertiesDefault) ast0
-		let ast2 = changeAnnAST linkedPolcaAnn annAST
-		writeFile (name ++ ".ast") (Gr.groom ast2)
-		--writeFile (name ++ ".ast") (show ast2)
-		let ast1 = ast2
+						let annAST = fmap (\nI -> Ann nI nodePropertiesDefault) ast0
+						let ast2 = changeAnnAST linkedPolcaAnn annAST
+						writeFile (name ++ ".ast") (Gr.groom ast2)
+						--writeFile (name ++ ".ast") (show ast2)
+						return (ast2, lastNode1)
+		-- let ast1 = ast2
 		----print lastNode 
 		let initialState0  = 
 			TransState 
@@ -904,7 +910,7 @@ getTrans name mode iter =
 
 getTransInt name mode iter seq_id print_id polca_block command = 
 	do
-		initialState0 <- initialStepsTransInt True name seq_id print_id
+		initialState0 <- initialStepsTransInt True name seq_id print_id True
 		let initialState1 = 
 			case polca_block of 
 				"" ->
