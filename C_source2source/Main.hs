@@ -518,6 +518,7 @@ data CodeAndChanges =
 	{ 
 		code :: String,
 		codeBlock :: String,
+		codeFun :: String,
 		changes :: [ChangeCode]
 	} deriving Show
 
@@ -537,6 +538,7 @@ instance FromJSON CodeAndChanges where
     parseJSON (Object v) = CodeAndChanges <$>
     					   v .: DT.pack "code" <*>
     					   v .: DT.pack "codeBlock" <*>
+    					   v .: DT.pack "codeFun" <*>
                            v .: DT.pack "changes"
     -- A non-Object value is of the wrong type, so fail.
     parseJSON _          = mzero
@@ -552,8 +554,8 @@ instance ToJSON ChangeCode where
     			DT.pack "newCodeFun" .= newCodeFun]
 
 instance ToJSON CodeAndChanges where
-    toJSON (CodeAndChanges code codeBlock changes) = 
-    	object [DT.pack "code" .= code, DT.pack "codeBlock" .= codeBlock, DT.pack "changes" .= changes]
+    toJSON (CodeAndChanges code codeBlock codeFun changes) = 
+    	object [DT.pack "code" .= code, DT.pack "codeBlock" .= codeBlock, DT.pack "codeFun" .= codeFun, DT.pack "changes" .= changes]
 
 featuresExtract filename rules block = 
 	do 
@@ -700,13 +702,14 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 		let idedChanges = 
 			zip [0..((length allChanges) - 1)] allChanges
 		let strProg = printWithPragmas state
-		let strBlock = 
+		let (strBlock, strFun) = 
 			case (ast_to_transform state) of 
 				Nothing ->
-					""
+					("", "")
 				(Just (_,astBlock,_)) ->
 					-- "{\n" ++ (printChangeWithoutAnns astBlock) ++ "}" 
-					prettyMyASTAnn astBlock
+					(prettyMyASTAnn astBlock,
+				     printWithPragmasStmt prettyPragmasPolca (searchASTFun astBlock (fun_defs state)))
 		let linesInclude = 
 			-- length $ includes state
 			0
@@ -717,6 +720,8 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 				 	strProg,
 				 codeBlock = 
 				 	strBlock,
+				 codeFun = 
+				 	strFun,
 				 changes = 
 					[ChangeCode {idChange = id, ruleName = r, line = l + linesInclude, oldCode = o, newCode = n, newCodeBlock = nb, newCodeFun = nf} 
 					 | (id, (r, l, o, n, (nf, nb))) <- idedChanges]}
