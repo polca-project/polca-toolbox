@@ -569,7 +569,7 @@ instance ToJSON CodeAndChanges where
 
 featuresExtract filename rules block = 
 	do 
-		iniState <- initialStepsTrans False filename True
+		iniState <- initialStepsTrans False filename False
 		let astsDef = 
 			case block of 
 				(Just def) ->

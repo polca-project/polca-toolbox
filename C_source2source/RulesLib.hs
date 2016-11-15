@@ -744,22 +744,31 @@ buildFreeVar nameSTML state0@TransState{freeVar = free} =
 		--((CVar ident undefNode), ident, [], state0{freeVar = free + 1})
 
 
-hasCallsOld state (stmt@(CExpr (Just _) _)) = 
+-- hasCalls state (stmt@(CExpr (Just _) _)) = 
+-- 	let 
+-- 		calls = (applyRulesGeneral searchCalls stmt)
+-- 		--funDefs = (applyRulesGeneral (searchFunDefsOld calls) (current_ast state))
+-- 		funDefs = searchFunDefs calls (fun_defs state)
+-- 	in 
+-- 		(((length calls) == (length funDefs)) && (length calls) > 0, [])
+-- hasCalls state stmt = 
+-- 	(False, [])
+
+hasCallsBlock:: TransState -> CBlockItemAnn -> (Bool, [(String, CStatAnn)])
+hasCallsBlock state (CBlockStmt block) = 
+	-- hasCall block
 	let 
-		calls = (applyRulesGeneral searchCalls stmt)
-		--funDefs = (applyRulesGeneral (searchFunDefsOld calls) (current_ast state))
+		calls = applyRulesGeneral searchCalls block
 		funDefs = searchFunDefs calls (fun_defs state)
 	in 
 		(((length calls) == (length funDefs)) && (length calls) > 0, [])
-hasCallsOld state stmt = 
+hasCallsBlock _ _ = 
 	(False, [])
 
-hasCallsBlock:: CBlockItemAnn -> (Bool, [(String, CStatAnn)])
-hasCallsBlock (CBlockStmt block) = hasCall block
-hasCallsBlock _ = (False, [])
-
-hasCalls _ list =
-	checkCondUnkList (map hasCallsBlock list)
+-- hasCalls _ list =
+-- 	checkCondUnkList (map hasCallsBlock list)
+hasCalls state list =
+	checkCondUnkList (map (hasCallsBlock state) list)
 
 noEmpty [] = 
 	(False, [])
