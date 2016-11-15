@@ -580,9 +580,13 @@ init_trans name defM =
 					([], [])
 		case astsDef of 
 			[] ->
-				init_trans_int name iniState (getApplicableChangesWOPrevious iniState)
+				init_trans_int name iniState (getApplicableChanges [] iniState)
 			(astDef:_) ->
-				init_trans_int name iniState{ast_to_transform = Just (nameDef, astDef, searchASTFun astDef (fun_defs iniState))} (getApplicableChangesForGivenAst iniState astDef)
+				let 
+					nIniState = 
+						iniState{ast_to_transform = Just (nameDef, astDef, searchASTFun astDef (fun_defs iniState))}
+				in 
+					init_trans_int name nIniState (getApplicableChanges [] iniState) --(getApplicableChangesForGivenAst iniState astDef)
 		
 
 search_def :: String -> CStatAnn -> [CStatAnn]
@@ -664,7 +668,7 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 			[(rule_name, searchMinMaxLine old, (printMyASTBlock old state), (printMyASTBlock new state), newBlockPrinterS (fun,old, new)) 
 			 | (fun, ((rule_name,old,new), _, [])) <- listChangesStmts]
 		let cE = 
-			[(rule_name, searchMinMaxLine old, (printMyASTBlock old state), (printMyASTBlock old state), newBlockPrinterE (fun,old, new)) 
+			[(rule_name, searchMinMaxLine old, (printMyASTBlock old state), (printMyASTBlock new state), newBlockPrinterE (fun,old, new)) 
 			 | (fun, ((rule_name,old,new), _, [])) <- listChangesExprs]
 		let allChanges = 
 			cE ++ cS 
@@ -678,6 +682,9 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 				(Just (_,astBlock,_)) ->
 					-- "{\n" ++ (printChangeWithoutAnns astBlock) ++ "}" 
 					prettyMyASTAnn astBlock
+		let linesInclude = 
+			-- length $ includes state
+			0
 		let jsonContent = 
 			CodeAndChanges 
 				{
@@ -686,7 +693,7 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 				 codeBlock = 
 				 	strBlock,
 				 changes = 
-					[ChangeCode {idChange = id, ruleName = r, line = l, oldCode = o, newCode = n, newCodeBlock = nb} 
+					[ChangeCode {idChange = id, ruleName = r, line = l + linesInclude, oldCode = o, newCode = n, newCodeBlock = nb} 
 					 | (id, (r, l, o, n, nb)) <- idedChanges]}
 		BSL.unpack (JSON.encode jsonContent)
 
@@ -808,9 +815,6 @@ initialStepsTrans verbose name runCetus =
 initialStepsTransInt verbose name seqId printId runCetus = 
 	do 
 		(ast00, linkedPolcaAnn, includes0) <- readFileInfo verbose name True
-		let normAST = normalize ast00
-		let annAST00 = fmap (\nI -> Ann nI nodePropertiesDefault) normAST
-		let ast000 = changeAnnAST linkedPolcaAnn annAST00
 		-- case (geq annAST00 ast000) of 
 		-- 	True ->
 		-- 		putStrLn "Nothin' changed."
@@ -826,10 +830,16 @@ initialStepsTransInt verbose name seqId printId runCetus =
 		(ast1, lastNode) <-
 			case runCetus of 
 				False ->
-					return (ast000, getLastNode normAST)
+					do 
+						let annAST00 = fmap (\nI -> Ann nI nodePropertiesDefault) ast00
+						let ast000 = changeAnnAST linkedPolcaAnn annAST00
+						return (ast000, getLastNode ast00)
 				True ->
 					do
 						-- TODO: Delete .cetus.c previous file OR delete it after use
+						let normAST = normalize ast00
+						let annAST00 = fmap (\nI -> Ann nI nodePropertiesDefault) normAST
+						let ast000 = changeAnnAST linkedPolcaAnn annAST00
 						putStrLnCond verbose ("Annotating the code using Cetus...")
 						let initialState00  = 
 							TransState 
