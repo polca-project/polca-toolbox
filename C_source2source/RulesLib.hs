@@ -1329,6 +1329,16 @@ isArray (CIndex _ _ _) = (True, [])
 isArray _ = (False, [])
 
 
+addPositionInfoState :: TransState -> TransState
+addPositionInfoState state = 
+	-- state{fun_defs = (map addPositionInfoDef (fun_defs state))}
+	let 
+		nfun_defs = 
+			[ (fun_state,info_fun,addPositionInfoStmt fun_state body )
+			 | item@(fun_state, info_fun, body) <- (fun_defs state)] 
+	in 
+		state{fun_defs = nfun_defs}
+
 addPositionInfo :: CTranslUnitAnn -> CTranslUnitAnn
 addPositionInfo (CTranslUnit fundefs ann) = 
 	CTranslUnit (map addPositionInfoDef fundefs) ann

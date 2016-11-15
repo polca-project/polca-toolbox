@@ -38,6 +38,7 @@ import Debug.Trace
 import Control.Exception as CE
 import Control.Monad
 import Control.Monad.Trans.State
+import Control.Lens ((^.))
 --import Control.Lens
 
 --import GHC.Vacuum.GraphViz 
@@ -507,7 +508,9 @@ data ChangeCode =
 		line :: Int,
 		oldCode  :: String,
 		newCode :: String,
-		newCodeBlock :: String
+		newCodeBlock :: String,
+		newCodeFun :: String
+		-- termPosition :: String
 	} deriving Show
 
 data CodeAndChanges = 
@@ -525,7 +528,8 @@ instance FromJSON ChangeCode where
                            v .: DT.pack "line" <*>
                            v .: DT.pack "oldCode" <*>
                            v .: DT.pack "newCode" <*>
-                           v .: DT.pack "newCodeBlock" 
+                           v .: DT.pack "newCodeBlock" <*>
+                           v .: DT.pack "newCodeFun"
     -- A non-Object value is of the wrong type, so fail.
     parseJSON _          = mzero
 
@@ -538,12 +542,13 @@ instance FromJSON CodeAndChanges where
     parseJSON _          = mzero
 
 instance ToJSON ChangeCode where
-    toJSON (ChangeCode idChange ruleName line oldCode newCode newCodeBlock) = 
+    toJSON (ChangeCode idChange ruleName line oldCode newCode newCodeBlock newCodeFun) = 
     	object [DT.pack "idChange" .= idChange, DT.pack "ruleName" .= ruleName, 
     			DT.pack "line" .= line,
     			DT.pack "oldCode" .= oldCode, 
     			DT.pack "newCode" .= newCode,
-    			DT.pack "newCodeBlock" .= newCodeBlock]
+    			DT.pack "newCodeBlock" .= newCodeBlock,
+    			DT.pack "newCodeFun" .= newCodeFun]
 
 instance ToJSON CodeAndChanges where
     toJSON (CodeAndChanges code codeBlock changes) = 
@@ -551,7 +556,7 @@ instance ToJSON CodeAndChanges where
 
 featuresExtract filename rules block = 
 	do 
-		iniState <- initialStepsTrans False filename False
+		iniState <- initialStepsTrans False filename True
 		let astsDef = 
 			case block of 
 				(Just def) ->
@@ -566,7 +571,11 @@ featuresExtract filename rules block =
 				putStrLn $ buildJSON  iniState (getApplicableChanges funs iniState{ast_to_transform = Nothing})
 			(astDef:_) ->
 				-- putStrLn $ buildJSON  iniState (getApplicableChangesSpecRulesGivenAst iniState rules astDef)
-				putStrLn $ buildJSON  iniState (getApplicableChanges funs iniState{ast_to_transform = Just (fromMaybe "" block, astDef, searchASTFun astDef (fun_defs iniState))})
+				let 
+					nstate = 
+						iniState{ast_to_transform = Just (fromMaybe "" block, astDef, searchASTFun astDef (fun_defs iniState))}
+				in 
+					putStrLn $ buildJSON  nstate (getApplicableChanges funs nstate)
 		-- putStrLn $ filename ++ "\n" ++ (show rules) ++ "\n" ++ (fromMaybe "ALL" block)
 
 init_trans name defM =
@@ -596,6 +605,14 @@ search_def name stmt =
 			[]
 		_ ->
 			[stmt]
+
+searchTermPosition :: NodeAnn -> NodeAnn -> [String]
+searchTermPosition (Ann nIS _) (Ann nIF nP) = 
+	case (geq nIS nIF) of 
+		True -> 
+			[nP^.term_position]
+		False ->
+			[]
 
 
 init_trans_int name iniState changes = 
@@ -636,34 +653,41 @@ printMyASTBlock astToPrint state =
 buildJSON state0 (listChangesStmts,listChangesExprs) = 
 	do
 		let state = updateASTToTransform state0
+		-- let state = addPositionInfoState state1
 		let newBlockPrinterS = 
 			\(fun,old, new) ->
 				case (ast_to_transform state) of 
 					Nothing -> 
-						""
+						("", "")
 					(Just  (polca_block, _, _)) ->
 						let 
 							nstate = state{fun_defs = (changeASTFun (fun,old, new) state)}
 						in 
 							case (applyRulesGeneral (search_def polca_block) (rebuildAst nstate)) of 
 								[] ->
-									""
+									("", "")
 								(newBlock:_) ->
-									(printMyASTBlock newBlock nstate)
+									(
+										prettyMyASTAnn (searchASTFun newBlock (fun_defs nstate)),
+										(printMyASTBlock newBlock nstate)
+									)
 		let newBlockPrinterE = 
 			\(fun,old, new) ->
 				case (ast_to_transform state) of 
 					Nothing -> 
-						""
+						("", "")
 					(Just  (polca_block, _, _)) ->
 						let 
 							nstate = state{fun_defs = (changeASTFun (fun,old, new) state)}
 						in 
 							case (applyRulesGeneral (search_def polca_block) (rebuildAst nstate)) of 
 								[] ->
-									""
+									("", "")
 								(newBlock:_) ->
-									(printMyASTBlock newBlock nstate)
+									(
+										prettyMyASTAnn (searchASTFun newBlock (fun_defs nstate)),
+										(printMyASTBlock newBlock nstate)
+									)
 		let cS = 
 			[(rule_name, searchMinMaxLine old, (printMyASTBlock old state), (printMyASTBlock new state), newBlockPrinterS (fun,old, new)) 
 			 | (fun, ((rule_name,old,new), _, [])) <- listChangesStmts]
@@ -693,9 +717,27 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 				 codeBlock = 
 				 	strBlock,
 				 changes = 
-					[ChangeCode {idChange = id, ruleName = r, line = l + linesInclude, oldCode = o, newCode = n, newCodeBlock = nb} 
-					 | (id, (r, l, o, n, nb)) <- idedChanges]}
+					[ChangeCode {idChange = id, ruleName = r, line = l + linesInclude, oldCode = o, newCode = n, newCodeBlock = nb, newCodeFun = nf} 
+					 | (id, (r, l, o, n, (nb, nf))) <- idedChanges]}
 		BSL.unpack (JSON.encode jsonContent)
+
+getTermPositionE :: CExprAnn -> TransState -> String
+getTermPositionE term state = 
+	-- case (applyRulesGeneral (searchTermPosition (getAnnotation term)) (rebuildAst state)) of
+	-- 	[] ->
+	-- 		""
+	-- 	(someRes:_) ->
+	-- 		someRes
+	""
+
+getTermPositionS :: CStatAnn -> TransState -> String
+getTermPositionS term state = 
+	case (applyRulesGeneral (searchTermPosition (annotation term)) (rebuildAst state)) of
+		[] ->
+			""
+		(someRes:_) ->
+			someRes
+
 
 getModifiedState name selected = 
 	do
