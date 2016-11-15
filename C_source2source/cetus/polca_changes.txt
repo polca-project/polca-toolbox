@@ -17,6 +17,8 @@ CHANGES IN CETUS
 	- Modified function void parseFiles() to use the input file directory as working directory (to search for libraries)
 * src/cetus/hir/STMLAnnotation.java: 
 	- New class to represent the STML annotations
+* src/cetus/hir/AccessSymbol.java: 
+	- try-catch to ignore certain errors.
 * src/cetus/hir/TranslationUnit.java: 
 	- Modified function defaultPrint to allow some annotations to be printed. 
 	- Modified function print(File outDir) to save the annotated file with different name than the original.

@@ -543,7 +543,8 @@ instance FromJSON CodeAndChanges where
 
 instance ToJSON ChangeCode where
     toJSON (ChangeCode idChange ruleName line oldCode newCode newCodeBlock newCodeFun) = 
-    	object [DT.pack "idChange" .= idChange, DT.pack "ruleName" .= ruleName, 
+    	object [DT.pack "idChange" .= idChange, 
+    			DT.pack "ruleName" .= ruleName, 
     			DT.pack "line" .= line,
     			DT.pack "oldCode" .= oldCode, 
     			DT.pack "newCode" .= newCode,
@@ -668,7 +669,7 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 									("", "")
 								(newBlock:_) ->
 									(
-										prettyMyASTAnn (searchASTFun newBlock (fun_defs nstate)),
+										printWithPragmasStmt prettyPragmasPolca (searchASTFun newBlock (fun_defs nstate)),
 										(printMyASTBlock newBlock nstate)
 									)
 		let newBlockPrinterE = 
@@ -685,7 +686,7 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 									("", "")
 								(newBlock:_) ->
 									(
-										prettyMyASTAnn (searchASTFun newBlock (fun_defs nstate)),
+										printWithPragmasStmt prettyPragmasPolca (searchASTFun newBlock (fun_defs nstate)),
 										(printMyASTBlock newBlock nstate)
 									)
 		let cS = 
@@ -718,7 +719,7 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 				 	strBlock,
 				 changes = 
 					[ChangeCode {idChange = id, ruleName = r, line = l + linesInclude, oldCode = o, newCode = n, newCodeBlock = nb, newCodeFun = nf} 
-					 | (id, (r, l, o, n, (nb, nf))) <- idedChanges]}
+					 | (id, (r, l, o, n, (nf, nb))) <- idedChanges]}
 		BSL.unpack (JSON.encode jsonContent)
 
 getTermPositionE :: CExprAnn -> TransState -> String
@@ -1433,11 +1434,11 @@ applyruleInt state filename steps recalculate =
 			"plain c (without STML annotations)" 
 			filename state (\() -> return ())
 		-- JSON printing
-		-- let jsonChanges = 
-		-- 	-- trace (show $ (length listChangesStmts) + (length listChangesExprs)) 
-		-- 	buildJSON state changes	
-		-- -- putStrLn "arriba2"	
-		-- writeFile (filename ++ (buildSuffix state ".json")) jsonChanges
+		let jsonChanges = 
+			-- trace (show $ (length listChangesStmts) + (length listChangesExprs)) 
+			buildJSON state changes	
+		-- putStrLn "arriba2"	
+		writeFile (filename ++ (buildSuffix state ".json")) jsonChanges
 
 		let rules = nub $
 				[rule | (_,((rule,_,_),_,_)) <- listChangesStmts] 
@@ -1453,7 +1454,7 @@ applyruleInt state filename steps recalculate =
 						applyruleIntAux state{previous_changes = changes} preselected rules changes filename steps
 					_ ->
 						do 
-							selected <- applyRuleWithOracle state (buildJSON state changes)
+							selected <- applyRuleWithOracle state jsonChanges
 							case selected of 
 								(-1) ->
 									do 

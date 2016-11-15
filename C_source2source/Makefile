@@ -20,7 +20,7 @@ FEAT_EXTR = polca_features
 
 FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README README.md LICENSE.txt AUTHORS.txt rules.c vec_mult.c dps.c Translator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs RandomOracle.hs FeaturesExtractor.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs
 DEMOFILES = demo/rgb_filter_input.c demo/rgb_filter_input_maxjready.c demo/ppmImage.c demo/ppmImage.h demo/ppmImage.c demo/ppmImage.c demo/lodepng.h demo/lodepng.c 
-CETUSMODIFIED = ../cetus/src/cetus/analysis/CallGraph.java ../cetus/src/cetus/analysis/DDGraph.java ../cetus/src/cetus/analysis/LoopTools.java ../cetus/src/cetus/analysis/IPPointsToAnalysis.java ../cetus/src/cetus/exec/Driver.java ../cetus/src/cetus/hir/STMLAnnotation.java ../cetus/src/cetus/hir/TranslationUnit.java 
+CETUSMODIFIED = ../cetus/src/cetus/analysis/CallGraph.java ../cetus/src/cetus/analysis/DDGraph.java ../cetus/src/cetus/analysis/LoopTools.java ../cetus/src/cetus/analysis/IPPointsToAnalysis.java ../cetus/src/cetus/exec/Driver.java ../cetus/src/cetus/hir/STMLAnnotation.java ../cetus/src/cetus/hir/AccessSymbol.java ../cetus/src/cetus/hir/TranslationUnit.java 
 CETUSFILES = ../cetus.tar.gz cetus/cetus.sh cetus/cetus_stml.sh cetus/options.cetus ../cetus/polca_changes.txt 
 
 GHC_FLAGS = -fno-warn-tabs -XFlexibleContexts
@@ -121,6 +121,7 @@ cetus_install:
 	cp cetus/mod/Driver.java cetus/cetus-1.4.3/src/cetus/exec/Driver.java
 	cp cetus/mod/STMLAnnotation.java cetus/cetus-1.4.3/src/cetus/hir/STMLAnnotation.java 
 	cp cetus/mod/TranslationUnit.java cetus/cetus-1.4.3/src/cetus/hir/TranslationUnit.java
+	cp cetus/mod/AccessSymbol.java cetus/cetus-1.4.3/src/cetus/hir/AccessSymbol.java
 	cd cetus/cetus-1.4.3/; ./build.sh bin 
 	cp cetus/cetus-1.4.3/lib/cetus.jar cetus/
 	cp cetus/cetus-1.4.3/lib/antlr.jar cetus/
