@@ -735,11 +735,11 @@ checkCondUnkList condUnkList =
 
 buildFreeVar nameSTML state0@TransState{freeVar = free} =
 	let 
-		nameC = "polca_var_" ++ nameSTML ++ "_" ++ (show free)
+		nameC = "iv_" ++ nameSTML ++ "_" ++ (show free)
 		ident = internalIdent nameC
 	in  
 		((CVar ident undefNodeAnn), ident, 
-			[("code_var", [nameSTML], [["polca_var_" ++ nameSTML ++ "_" ++ (show free)]], (Name{nameId = 0}))],
+			[("code_var", [nameSTML], [["iv_" ++ nameSTML ++ "_" ++ (show free)]], (Name{nameId = 0}))],
 			state0{freeVar = free + 1})
 		--((CVar ident undefNode), ident, [], state0{freeVar = free + 1})
 

@@ -424,9 +424,7 @@ move_inside_for_post
             cstmts(body);
             if(cexpr(i) == (cexpr(limit) - 1))
             {
-                cexpr(i)++;
                 cstmt(moved_inside);
-                cexpr(i)--;
             }
         }
         cstmts(post1);
@@ -440,6 +438,7 @@ move_enclosing_if_inside_for
         cstmts(pre);
         if(cexpr(if_cond))
         {
+            cstmts(pre1);
             for(cexpr(ini); cexpr(for_cond); cexpr(mod))
             {
                 cstmts(for_body);
@@ -453,10 +452,12 @@ move_enclosing_if_inside_for
         no_writes_in_read(cstmts(ini),cexpr(if_cond));
         no_writes_in_read(cstmts(for_cond),cexpr(if_cond));
         no_writes_in_read(cstmts(mod),cexpr(if_cond));
+        all_are_decl(cstmts(pre1));
     }
     generate:
     {
         cstmts(pre);
+        cstmts(pre1);
         for(cexpr(ini); cexpr(for_cond); cexpr(mod))
         {
             if(cexpr(if_cond))
@@ -500,6 +501,7 @@ collapse_2_for_loops
     generate:
     {
         // #pragma polca same_properties a
+        filter_decl(cstmts(prelude));
         for(cexpr(j) = cexpr(initial_value); cexpr(j) < (cexpr(limit1) * cexpr(limit2)); cexpr(j)++)
         {
             if_then_else:
@@ -507,7 +509,7 @@ collapse_2_for_loops
                 no_empty(cstmts(prelude));
                 if(cexpr(j) % cexpr(limit2) == 0) 
                 {
-                    cstmts(prelude);
+                    filter_no_decl(cstmts(prelude));
                 }
                 ;
             }
@@ -1607,7 +1609,9 @@ roll_up_init
         cdecl(cint(),cexpr(i));
         #pragma polca rolled-up
         for(cexpr(i) = 0; cexpr(i) < 1; cexpr(i)++)
+        {
             cexpr(d)[cexpr(i)] = change_access(cexpr(r1), all(), add(cexpr(i)));
+        }
         cexpr(l2) = cexpr(r2);
         subs(cstmts(fin), cexpr(l1), cexpr(d)[0]);
     }
@@ -1624,7 +1628,9 @@ roll_up
         cdecl(cint(),cexpr(i));
         #pragma polca rolled-up
         for(cexpr(i) = 0; cexpr(i) < cexpr(rolls); cexpr(i)++)
+        {
             cexpr(l1) = cexpr(r1);
+        }
         cexpr(l2) = cexpr(r2);
         cstmts(fin);
     }
@@ -1642,7 +1648,9 @@ roll_up
         cdecl(cint(),cexpr(i));
         #pragma polca rolled-up
         for(cexpr(i) = 0; cexpr(i) < cexpr(rolls) + 1; cexpr(i)++)
+        {
             cexpr(l1) = cexpr(r1);
+        }
         subs(cstmts(fin), cexpr(l2), cexpr(d)[0 + cexpr(rolls)]);
     }
 }
@@ -1669,7 +1677,9 @@ roll_up_array_init
         cdecl(cint(),cexpr(i));
         #pragma polca rolled-up
         for(cexpr(i) = 0; cexpr(i) < 1; cexpr(i)++)
+        {
             change_access(cexpr(l1), all(), add(cexpr(i))) = change_access(cexpr(r1), all(), add(cexpr(i)));
+        }
         cexpr(l2) = cexpr(r2);
         cstmts(fin);
     }
@@ -1683,7 +1693,9 @@ roll_up_array
         cdecl(cint(),cexpr(i));
         #pragma polca rolled-up
         for(cexpr(i) = 0; cexpr(i) < cexpr(rolls); cexpr(i)++)
+        {
             cexpr(l1) = cexpr(r1);
+        }
         cexpr(l2) = cexpr(r2);
         cstmts(fin);
     }
@@ -1699,7 +1711,9 @@ roll_up_array
         cdecl(cint(),cexpr(i));
         #pragma polca rolled-up
         for(cexpr(i) = 0; cexpr(i) < cexpr(rolls) + 1; cexpr(i)++)
+        {
             cexpr(l1) = cexpr(r1);
+        }
         cstmts(fin);
     }
 }
