@@ -315,7 +315,7 @@ move_inside_for_post
             cstmts(body);
             if(cexpr(i) == (cexpr(limit) - 1))
             {
-                cstmt(moved_inside);
+                subs(cstmt(moved_inside), cexpr(i), cexpr(i) + 1);
             }
         }
         cstmts(post1);
