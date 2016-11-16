@@ -84,13 +84,6 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
-       <widget class="QPushButton" name="buttonMakeStandard">
-        <property name="text">
-         <string>Standard</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="buttonProcess">
         <property name="text">
          <string>Process</string>
@@ -98,6 +91,13 @@
         <property name="icon">
          <iconset resource="appicons.qrc">
           <normaloff>:/appicons/apply</normaloff>:/appicons/apply</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonTransformations">
+        <property name="text">
+         <string>Transformations</string>
         </property>
        </widget>
       </item>
@@ -234,10 +234,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>buttonMakeStandard</sender>
+   <sender>buttonTransformations</sender>
    <signal>clicked()</signal>
    <receiver>PogadeSourceCodeEditor</receiver>
-   <slot>makeStandard()</slot>
+   <slot>showTransformations()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>74</x>
@@ -273,7 +273,7 @@
   <slot>polcaProcessCode()</slot>
   <slot>viewGraph()</slot>
   <slot>viewTree()</slot>
-  <slot>makeStandard()</slot>
   <slot>showMemory(int)</slot>
+  <slot>showTransformations()</slot>
  </slots>
 </ui>

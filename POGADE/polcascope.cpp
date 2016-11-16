@@ -48,8 +48,66 @@ void PolcaScope::pragmasClear() {
   _pragmas.clear();
 }
 
+void PolcaScope::addIOInfo(QString var, int type) {
+  ParPos *_p = nullptr;
+  for(ParPos p : _parPosC) {
+    if(p.var == var) {
+      _p = &p;
+    }
+  }
+
+  if(_p) {
+    if(type == PARIN) {
+      _p->input = true;
+    }
+    else if(type == PAROUT) {
+      _p->output = true;
+    }
+  }
+  else {
+    ParPos p;
+    p.var  = var;
+    p.posC = this->_parPosC.size() + 1;
+    p.posP.push_back(p.posC);
+    p.input  = false;
+    p.output = false;
+
+
+    if(type == PARIN) {
+      p.input = true;
+    }
+    else if(type == PAROUT) {
+      p.output = true;
+    }
+
+    this->_parPosC.push_back(p);
+  }
+
+}
+
+void PolcaScope::setIOFromPragma(PolcaPragma pragma) {
+  QStringList l = pragma.text().split(' ', QString::SkipEmptyParts);
+  if(l[0] == "input") {
+    for(int i=1; i<l.size(); i++) {
+      this->addIOInfo(l[i], PARIN);
+    }
+  }
+  else if(l[0] == "output") {
+    for(int i=1; i<l.size(); i++) {
+      this->addIOInfo(l[i], PAROUT);
+    }
+  }
+  else if(l[0] == "inout") {
+    for(int i=1; i<l.size(); i++) {
+      this->addIOInfo(l[i], PARIN);
+      this->addIOInfo(l[i], PAROUT);
+    }
+  }
+}
+
 void PolcaScope::pragmaAdd(PolcaPragma pragma) {
   _pragmas.push_back(pragma);
+  this->setIOFromPragma(pragma);
 }
 
 std::vector<PolcaPragma> PolcaScope::getPragmas() {
@@ -67,21 +125,6 @@ void PolcaScope::setParent(int parent) {
 void PolcaScope::clearParent() {
   _parent = -1;
 }
-
-/*
-void PolcaScope::addNeighbourScope(ScopeNeighbourInfo neighbour) {
-  _neighbours.push_back(neighbour);
-}
-
-void PolcaScope::clearNeighbours() {
-  _neighbours.clear();
-}
-
-std::vector<ScopeNeighbourInfo> PolcaScope::neighbours() {
-  return _neighbours;
-}
-*/
-
 
 void PolcaScope::addChildScope(int child, int line, PolcaScope* pscope,
                                std::vector<QString> var) {
@@ -104,7 +147,7 @@ void PolcaScope::addChildScope(int child, int line, PolcaScope* pscope,
     bool in, out;
     ParChild par;
     QString pragmaName;
-    pscope->getParPragmaFunc(i, &pragmaName, &in, &out);
+    pscope->getParPragmaFunc(i+1, &pragmaName, &in, &out);
     par.input   = in;
     par.output  = out;
     par.parName = var[i];
@@ -242,8 +285,10 @@ void PolcaScope::automaticType() {
   for(PolcaPragma p : _pragmas) {
     QStringList l = p.text().split(' ', QString::SkipEmptyParts);
     type = stringToType(l[0]);
-    if(type)
+    if(type) {
+      this->_parPosC = processPragmaIO(type, l);
       break;
+    }
   }
   _type = type;
 }
@@ -305,9 +350,126 @@ int PolcaScope::stringToType(QString s) {
   }
 }
 
+ParPos* PolcaScope::getParPosWithName(std::vector<ParPos> &list, QString varName) {
+  for(ParPos &p : list) {
+    if(p.var == varName) {
+      return &p;
+    }
+  }
+
+  return nullptr;
+}
+
+std::vector<ParPos> PolcaScope::processPragmaIO(int type, QStringList l) {
+  std::vector<ParPos> _pars;
+  ParPos* p;
+  ParPos* _p;
+
+  switch(type) {
+    case POLCA_MAP:
+      p = getParPosWithName(_pars, l[2]);
+      if(p) {
+        p->posP.push_back(1);
+        p->input = true;
+      } else {
+        _p = new ParPos;
+        _p->var    = l[2];
+        _p->posC   = _pars.size()+1;
+        _p->posP.push_back(1);
+        _p->input  = true;
+        _p->output = false;
+        _pars.push_back(*_p);
+      }
+
+      p = getParPosWithName(_pars, l[3]);
+      if(p) {
+        p->posP.push_back(2);
+        p->output = true;
+      } else {
+        _p = new ParPos;
+        _p->var    = l[3];
+        _p->posC   = _pars.size()+1;
+        _p->posP.push_back(2);
+        _p->input  = false;
+        _p->output = true;
+        _pars.push_back(*_p);
+      }
+      break;
+    case POLCA_ITN:
+    case POLCA_ZIPWITH:
+    case POLCA_FOLDL:
+      p = getParPosWithName(_pars, l[2]);
+      if(p) {
+        p->posP.push_back(1);
+        p->input = true;
+      } else {
+        _p = new ParPos;
+        _p->var    = l[2];
+        _p->posC   = _pars.size()+1;
+        _p->posP.push_back(1);
+        _p->input  = true;
+        _p->output = false;
+        _pars.push_back(*_p);
+      }
+
+      p = getParPosWithName(_pars, l[3]);
+      if(p) {
+        p->posP.push_back(2);
+        p->input = true;
+      } else {
+        _p = new ParPos;
+        _p->var    = l[3];
+        _p->posC   = _pars.size()+1;
+        _p->posP.push_back(2);
+        _p->input  = true;
+        _p->output = false;
+        _pars.push_back(*_p);
+      }
+
+      p = getParPosWithName(_pars, l[4]);
+      if(p) {
+        p->posP.push_back(2);
+        p->output = true;
+      } else {
+        _p = new ParPos;
+        _p->var    = l[4];
+        _p->posC   = _pars.size()+1;
+        _p->posP.push_back(3);
+        _p->input  = false;
+        _p->output = true;
+        _pars.push_back(*_p);
+      }
+      break;
+    case POLCA_MEMALLOC:
+      _p = new ParPos;
+      _p->var    = l[3];
+      _p->posC   = _pars.size()+1;
+      _p->posP.push_back(1);
+      _p->input  = false;
+      _p->output = true;
+      _pars.push_back(*_p);
+      break;
+    case POLCA_MEMFREE:
+      _p = new ParPos;
+      _p->var    = l[1];
+      _p->posC   = _pars.size()+1;
+      _p->posP.push_back(1);
+      _p->input  = true;
+      _p->output = true;
+      _pars.push_back(*_p);
+      break;
+    default:
+      //p->input  = false;
+      //p->output = false;
+      break;
+  }
+
+  return _pars;
+}
+
 void PolcaScope::setIOPar(ParPos*p, int type) {
-  p->input  = false;
-  p->output = false;
+  //p->input  = false;
+  //p->output = false;
 
   for(unsigned int i=0; i<p->posP.size(); i++) {
     int pos = p->posP[i];
@@ -332,6 +494,17 @@ void PolcaScope::setIOPar(ParPos*p, int type) {
         } else {
         }
         break;
+      case POLCA_MEMALLOC:
+        if(pos == 1) {
+          p->output = true;
+        }
+        break;
+      case POLCA_MEMFREE:
+        if(pos == 1) {
+          p->input  = true;
+          p->output = true;
+        }
+        break;
       default:
         //p->input  = false;
         //p->output = false;
@@ -341,6 +514,8 @@ void PolcaScope::setIOPar(ParPos*p, int type) {
 }
 
 void PolcaScope::procesIOparams() {
+  //qDebug() << this->_name << " T: "<< this->typeToString(_type) << " - Params: " << _parPosC.size();
+
   for(ParPos &p : _parPosC) {
     setIOPar(&p, this->_type);
   }
@@ -370,39 +545,43 @@ void PolcaScope::getParPragmaFunc(int pos, QString *pragmaName, bool *in, bool *
 }
 
 bool PolcaScope::isParInput(ScopeChild& sc, QString par) {
+  bool result = false;
   for(ParChild pc : sc.vars) {
-    if(pc.parPragmaName == par) {
-      return pc.input;
+    if(pc.parName == par) {
+      result = result || pc.input;
     }
   }
-  return false;
+  return result;
 }
 
 bool PolcaScope::isParOutput(ScopeChild& sc, QString par) {
+  bool result = false;
   for(ParChild pc : sc.vars) {
-    //qDebug() << "----------------";
-    //qDebug() << par << " ---- " << pc.parName << " (" << pc.parPragmaName << ")";
-    if(pc.parPragmaName == par) {
-      return pc.output;
+    if(pc.parName == par) {
+      result = result ||  pc.output;
     }
   }
-  return false;
+  return result;
 }
 
-void PolcaScope::linkChildren() {
+void PolcaScope::linkChildren(std::vector<ScopeChild> sChildren) {
   // TODO: link children
 
-  if(_children.size() > 1) {
-    for(unsigned int i=0; i<_children.size(); i++) {
-      ScopeChild c1  = _children[i];
-      PolcaScope *sc = c1.cscope;
+  if(sChildren.size() > 1) {
+    for(unsigned int i=0; i<sChildren.size(); i++) {
+      ScopeChild c1  = sChildren[i];
+      //PolcaScope *sc = c1.cscope;
 
-      for(ParPos p : sc->fParameters()) {
+      for(ParChild p : c1.vars) {
+        //qDebug() << "-------------------------------";
+        //qDebug() << "F: " << c1.cid << " V: " << p.parName;
         if(p.output) {
-          for(unsigned int j=i+1; j<_children.size(); j++) {
-            ScopeChild c2  = _children[j];
-            bool isInput  = isParInput(c2, p.var);
-            bool isOutput = isParOutput(c2, p.var);
+          for(unsigned int j=i+1; j<sChildren.size(); j++) {
+            ScopeChild c2  = sChildren[j];
+            bool isInput  = isParInput(c2, p.parName);
+            bool isOutput = isParOutput(c2, p.parName);
+
+            //qDebug() << "F: " << c2.cid << " I: " << isInput << " - O: "<< isOutput;
 
             if(isInput) {
               c2.cscope->_neighbours.addInNeighbours(c1.cid);
@@ -411,18 +590,23 @@ void PolcaScope::linkChildren() {
             }
             if(isOutput) {
               // new output, break
-              j = _children.size();
+              j = sChildren.size();
             }
 
           }
         }
       }
-
-
     }
   }
 }
 
+void PolcaScope::setCallLine(int line) {
+  _callLine = line;
+}
+
+int PolcaScope::callLine() {
+  return _callLine;
+}
 
 ScopeNeighbourInfo PolcaScope::neighbours() {
   return _neighbours;

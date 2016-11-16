@@ -25,7 +25,7 @@ PogadeSourceCodeEditor::PogadeSourceCodeEditor(QWidget *parent) :
   ui->setupUi(this);
   ui->buttonViewGraph->setEnabled(false);
   ui->buttonTree->setEnabled(false);
-  ui->buttonMakeStandard->setEnabled(false);
+  ui->buttonTransformations->setEnabled(false);
   ui->checkShowMemory->setEnabled(false);
 
   se = new SourceCodeEditor();
@@ -203,7 +203,7 @@ void PogadeSourceCodeEditor::cleanExit(bool visibility) {
 
 void PogadeSourceCodeEditor::enableEdit(bool enable) {
   se->setReadOnly(!enable);
-  ui->buttonMakeStandard->setEnabled(enable);
+  ui->buttonTransformations->setEnabled(enable);
 }
 
 void PogadeSourceCodeEditor::saveFile() {
@@ -288,12 +288,14 @@ void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
   if(doc.isEmpty()) {
     ui->buttonViewGraph->setEnabled(false);
     ui->buttonTree->setEnabled(false);
+    ui->buttonTransformations->setEnabled(false);
     ui->checkShowMemory->setEnabled(false);
     return;
   }
 
   ui->buttonViewGraph->setEnabled(true);
   ui->buttonTree->setEnabled(true);
+  ui->buttonTransformations->setEnabled(true);
   ui->checkShowMemory->setEnabled(true);
   QJsonObject obj = doc.object();
   QJsonArray pragmas = obj.value("pragmas").toArray();
@@ -357,7 +359,6 @@ void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
     plist.append(_p);
   }
 
-
   for(pragma_t p : plist) {
     PolcaScope *ps;
     int newscope = 0;
@@ -371,7 +372,6 @@ void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
       PolcaScope::idNextIncrease();
       ps->setCodeLineStart(p.startLine);
       ps->setCodeLineEnd(p.endLine);
-
     }
 
     PolcaPragma pp;
@@ -408,14 +408,34 @@ void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
 
   sf->automaticNamesScopes();
   sf->processIOparamsScopes();
+
+
+  //duplicate scopes with
   for(FunCall& c : fcalls) {
-    c.scopeId = sf->findScope(c.fun)->id();
+    PolcaScope sc = sf->findScopeAndCopy(c.fun);
+    sc.setIsFunction(true);
+    sc.setCallLine(c.line);
+    sc.setId(PolcaScope::idNext());
+    PolcaScope::idNextIncrease();
+    sf->addScope(sc);
+    c.scopeId = sc.id();
     sf->findScopeFromLine(c.line)->addChildScope(c.scopeId, c.line,
                                                  sf->findScope(c.scopeId), c.var);
   }
+
   sf->linkScopeChildren();
   sf->generateTreeScopes();
   sf->findRootScopes();
+
+  std::vector<ScopeChild> _rootChildren = sf->generateOrderedRootChildren();
+  PolcaScope::linkChildren(_rootChildren);
+
+  /*
+  qDebug() << "==========================";
+  for(unsigned int i = 0; i< _rootScopes.size(); i++) {
+    qDebug() << _rootScopes[i]->name() << " " << _rootScopes[i]->id();
+  }
+  */
 
   showPragmas();
 }
@@ -530,6 +550,10 @@ void PogadeSourceCodeEditor::viewGraph() {
   emit createNV(sf);
 }
 
+void PogadeSourceCodeEditor::showTransformations() {
+  emit createTR(sf);
+}
+
 void PogadeSourceCodeEditor::viewTree() {
   emit createST(sf);
 }
@@ -539,38 +563,6 @@ void PogadeSourceCodeEditor::scopeSelectedUPProcess(int id) {
   if(sf) {
     PolcaScope *ps = sf->findScope(id);
     selectedScope(*ps);
-  }
-}
-
-void PogadeSourceCodeEditor::makeStandard() {
-  if(sf) {
-    QString fname = sf->getProject()->workingDir() + QDir::separator()+"workfile.c";
-    QFile file(fname);
-    if (file.open(QIODevice::WriteOnly)) {
-      QTextStream stream(&file);
-      stream << se->text();
-      file.close();
-
-      QStringList args;
-      args << fname;
-      QProcess tool;
-      QSettings settings;
-      QString polcaToolCommand = settings.value("PTPretty", POLCATOOLPRETTY).toString();
-      tool.start(polcaToolCommand, args);
-
-      while(!tool.waitForFinished(POLCATOOLWAITTIME)) {
-        qApp->processEvents();
-      }
-
-      if(!tool.exitCode()) {
-        // Tool returned success!
-        se->setText(tool.readAllStandardOutput());
-      }
-      else {
-        // Tool returned error
-        QMessageBox::critical(this, tr("Error"), tr("Error executing POLCA tools"));
-      }
-    }
   }
 }
 

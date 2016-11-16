@@ -42,6 +42,9 @@ void PogadeScopeList::updateGUI() {
       if(!showmem && (s->getType() == POLCA_MEMALLOC || s->getType() == POLCA_MEMFREE))
         show = false;
 
+      if(s->isFunction())
+        show = false;
+
       if(show) {
         QTreeWidgetItem *treeItem = new QTreeWidgetItem(ui->tree);
         //treeItem->setData(0, 1, QVariant(s->id()));

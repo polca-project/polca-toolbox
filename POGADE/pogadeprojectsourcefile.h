@@ -36,6 +36,8 @@ public:
   void setVisualized(bool visualized, QDockWidget* dock);
   bool scopeTree();
   void setScopeTree(bool scopeTree, QDockWidget* dock);
+  bool scopeTransformations();
+  void setScopeTransformations(bool scopeTransformations, QDockWidget* dock);
   QString code();
   QString codeRev(unsigned int rev);
   unsigned int nextRevision();
@@ -53,11 +55,14 @@ public:
   bool validScope();
   //void analyzeCurrentScopes();
   void findRootScopes();
+  std::vector<ScopeChild> generateOrderedRootChildren();
   void generateTreeScopes();
   void automaticNamesScopes();
   void processIOparamsScopes();
 
-  PolcaScope* findScope(QString name);
+  PolcaScope findScopeAndCopy(QString name);
+  PolcaScope* findScope(QString name, int line);
+  //PolcaScope* findScope(QString name);
   PolcaScope* findScope(int id);
   PolcaScope* findScope(int startLine, int endLine);
   PolcaScope* findScopeFromLine(int line);
@@ -79,13 +84,16 @@ private:
   bool _opened = false;
   bool _visualized = false;
   bool _scopeTree = false;
+  bool _scopeTransformations = false;
   PogadeProject* _project;
   QDockWidget* _dock = nullptr;
   QDockWidget* _dockVisual = nullptr;
   QDockWidget* _dockScopeTree = nullptr;
+  QDockWidget* _dockTransformations = nullptr;
   std::vector<PolcaScope> _scopes;
   bool _validScopes = false;
   bool _showMemory = true;
+  std::vector<ScopeChild> _rootChildren;
 };
 
 #endif // POGADEPROJECTSOURCEFILE_H

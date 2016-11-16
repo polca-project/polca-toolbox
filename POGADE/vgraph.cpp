@@ -58,6 +58,8 @@ void VGraph::generateGraph(int scopeId) {
       PolcaScope *ps = _sf->findScope(id);
       if(!showmem && (ps->getType() == POLCA_MEMALLOC || ps->getType() == POLCA_MEMFREE))
         show = false;
+      if(ps->isFunction())
+        show = false;
       if(show) {
         node n = _G->newNode(id);
 
@@ -73,6 +75,24 @@ void VGraph::generateGraph(int scopeId) {
       // TODO: Process Internal nodes
       }
     }
+
+    for(int id : rNodesIndex) {
+      //Edges:
+      node n = findNode(id);
+      PolcaScope *ps = _sf->findScope(id);
+
+      std::unordered_set<int> nos= ps->neighbours().outNeighbours();
+
+      for(int toId : nos) {
+        node w = findNode(toId);
+        if(w) {
+          // TODO: do something with the edge?
+          edge e = _G->newEdge(n, w);
+          //qDebug() << "EDGE: " << n->index() << " - " << w->index();
+        }
+      }
+    }
+
   }
   else {
     //qDebug() << "Drawing " << scopeId;
@@ -98,29 +118,29 @@ void VGraph::generateGraph(int scopeId) {
         _GA->height(n) = _fontMetrics->height() * _n;
         _GA->width(n) = sizeLongestString(s) + 10;
 
-      // TODO: Process Internal nodes
-      }
-    }
-
-    for(ScopeChild child : children) {
-      //Edges:
-
-      int id = child.cid;
-      node n = findNode(id);
-
-      PolcaScope *ps = _sf->findScope(id);
-
-      std::unordered_set<int> nos= ps->neighbours().outNeighbours();
-
-      for(int toId : nos) {
-        node w = findNode(toId);
-        if(w) {
-          // TODO: do something with the edge?
-          edge e = _G->newEdge(n, w);
-          //qDebug() << "EDGE: " << n->index() << " - " << w->index();
+        // TODO: Process Internal nodes
         }
       }
-    }
+
+      for(ScopeChild child : children) {
+        //Edges:
+
+        int id = child.cid;
+        node n = findNode(id);
+
+        PolcaScope *ps = _sf->findScope(id);
+
+        std::unordered_set<int> nos= ps->neighbours().outNeighbours();
+
+        for(int toId : nos) {
+          node w = findNode(toId);
+          if(w) {
+            // TODO: do something with the edge?
+            edge e = _G->newEdge(n, w);
+            //qDebug() << "EDGE: " << n->index() << " - " << w->index();
+          }
+        }
+      }
 
 
 

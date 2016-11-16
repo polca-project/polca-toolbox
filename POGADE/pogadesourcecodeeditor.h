@@ -70,6 +70,7 @@ signals:
   void printNumberElements();
   void createNV(PogadeProjectSourceFile*);
   void createST(PogadeProjectSourceFile*);
+  void createTR(PogadeProjectSourceFile*);
   void scopeSelectedDown(int);
   void repaint();
 
@@ -85,9 +86,10 @@ private slots:
   //void loadPolcaProcessing(QString file);
   void loadPolcaProcessingData(QString data);
   void showPragmas();
+  void showTransformations();
   void viewGraph();
   void viewTree();
-  void makeStandard();
+  //void makeStandard();
 
   void showMemory(int show);
 

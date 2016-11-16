@@ -28,6 +28,7 @@ public:
 public slots:
   void newGV(PogadeProjectSourceFile*);
   void newST(PogadeProjectSourceFile*);
+  void newTR(PogadeProjectSourceFile*);
 
 protected:
   void closeEvent(QCloseEvent*);
@@ -62,9 +63,11 @@ private:
   QList<QDockWidget*> _dockSourceEditorList;
   QList<QDockWidget*> _dockGraphViewList;
   QList<QDockWidget*> _dockScopeListList;
+  QList<QDockWidget*> _dockTransformationsList;
   QMenu* menuCodeEditor;
   QMenu* menuGraphView;
   QMenu* menuScopeTree;
+  QMenu* menuTransormations;
   QTranslator *_translator = nullptr;
   bool _polcaToolsAvailable = false;
   int checkPolcaTool();

@@ -8,6 +8,7 @@
 #include "pogadesettings.h"
 #include "pogadescopelist.h"
 #include "pogadesourcecodeeditor.h"
+#include "pogadetransformationview.h"
 #include "polcascope.h"
 
 #include <iostream>
@@ -44,6 +45,9 @@ PogadeMainWindow::PogadeMainWindow(QWidget *parent) :
 
   menuScopeTree = ui->menuView->addMenu(tr("Scope Tree"));
   menuScopeTree->setEnabled(false);
+
+  menuTransormations = ui->menuView->addMenu(tr("Transformations Viewer"));
+  menuTransormations->setEnabled(false);
 
   restoreState(settings.value("mainWindowState").toByteArray());
   settings.setValue("mainWindowGeometry", saveGeometry());
@@ -218,10 +222,9 @@ void PogadeMainWindow::setUpProject() {
     connect(w, SIGNAL(openSourceFile(PogadeProjectSourceFile*)),
             this, SLOT(openSourceFile(PogadeProjectSourceFile*)));
 
-
     this->addDockWidget(Qt::TopDockWidgetArea, _dockProjectViewer);
 
-    qDebug() << "Project Loaded!";
+    //qDebug() << "Project Loaded!";
 
     settings.setValue("recentProjectName", _project->name());
     settings.setValue("recentProjectFile",
@@ -273,6 +276,8 @@ void PogadeMainWindow::openSourceFile(PogadeProjectSourceFile *source) {
             this, SLOT(newGV(PogadeProjectSourceFile*)));
     connect(we, SIGNAL(createST(PogadeProjectSourceFile*)),
             this, SLOT(newST(PogadeProjectSourceFile*)));
+    connect(we, SIGNAL(createTR(PogadeProjectSourceFile*)),
+            this, SLOT(newTR(PogadeProjectSourceFile*)));
   }
   else {
     //qDebug() << "Lets show Code Editor!";
@@ -436,6 +441,45 @@ void PogadeMainWindow::newGV(PogadeProjectSourceFile* source) {
   }
 }
 
+void PogadeMainWindow::newTR(PogadeProjectSourceFile* source) {
+  if(!source->scopeTransformations()) {
+    QDockWidget *_ntr = new QDockWidget(tr("Transformations ") + source->name());
+    _ntr->setObjectName("dockTransformations" + source->name());
+    QWidget *w = new PogadeTransformationView(this);
+    _ntr->setWidget(w);
+
+    PogadeTransformationView *we = (PogadeTransformationView*) w;
+    we->setSourceFile(source);
+
+    source->setScopeTree(true, _ntr);
+    _dockTransformationsList << _ntr;
+    _ntr->show();
+    this->addDockWidget(Qt::BottomDockWidgetArea, _ntr);
+
+    // Set up the menus
+    menuTransormations->setEnabled(true);
+    QAction* actionTransformations = menuScopeTree->addAction(source->name());
+    actionTransformations->setCheckable(true);
+    actionTransformations->setChecked(true);
+
+    //////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+  }
+  else {
+    qDebug() << "Lets show Transformations View!";
+    //QDockWidget *d = source->getDockVisual();
+    //d->setVisible(true);
+  }
+}
+
 void PogadeMainWindow::newST(PogadeProjectSourceFile* source) {
   if(!source->scopeTree()) {
     QDockWidget *_nst = new QDockWidget(tr("Scope Tree ") + source->name());
@@ -484,6 +528,7 @@ int PogadeMainWindow::checkPolcaTool() {
   QProcess tool;
   QSettings settings;
 
+
   QString polcaToolCommand = settings.value("PTReader", POLCATOOLREADER).toString();
   tool.start(polcaToolCommand, QStringList());
   if (!tool.waitForStarted(-1))
@@ -491,14 +536,22 @@ int PogadeMainWindow::checkPolcaTool() {
   if (!tool.waitForFinished(-1))
     return -3;
 
-  /*
-  polcaToolCommand = settings.value("PTPretty", POLCATOOLPRETTY).toString();
+
+  polcaToolCommand = settings.value("PTInit", POLCATOOLINIT).toString();
   tool.start(polcaToolCommand, QStringList());
   if (!tool.waitForStarted(-1))
     return -4;
   if (!tool.waitForFinished(-1))
     return -5;
-  */
+
+
+  polcaToolCommand = settings.value("PTApply", POLCATOOLAPPLY).toString();
+  tool.start(polcaToolCommand, QStringList());
+  if (!tool.waitForStarted(-1))
+    return -6;
+  if (!tool.waitForFinished(-1))
+    return -7;
+
 
   return 0;
 }

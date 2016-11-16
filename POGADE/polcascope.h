@@ -11,6 +11,9 @@
 
 class PolcaScope;
 
+#define PARIN  1
+#define PAROUT 2
+
 typedef struct {
   QString fun;
   int scopeId;
@@ -46,9 +49,8 @@ typedef struct {
 #define POLCA_ITN      0x12
 #define POLCA_ZIPWITH  0x13
 #define POLCA_FOLDL    0x14
-#define POLCA_MEMALLOC 0x21
-#define POLCA_MEMFREE  0x22
-
+#define POLCA_MEMALLOC 0x24
+#define POLCA_MEMFREE  0x28
 
 class PolcaScope
 {
@@ -89,18 +91,15 @@ public:
   void clearChildren();
   bool isInChildren(int id);
   std::vector<ScopeChild> children();
-  void linkChildren();
+  static void linkChildren(std::vector<ScopeChild> sChildren);
 
   void clearfParameters();
   void addfParameter(ParPos p);
   std::vector<ParPos> fParameters();
   void procesIOparams();
 
-  /*
-  void addNeighbourScope(ScopeNeighbourInfo neighbour);
-  void clearNeighbours();
-  std::vector<ScopeNeighbourInfo> neighbours();
-  */
+  void setCallLine(int line);
+  int callLine();
 
   ScopeNeighbourInfo neighbours();
 
@@ -120,6 +119,9 @@ public:
   static bool isParInput(ScopeChild& sc, QString par);
   static bool isParOutput(ScopeChild& sc, QString par);
   /***************************************/
+  static std::vector<ParPos> processPragmaIO(int type, QStringList l);
+  static ParPos* getParPosWithName(std::vector<ParPos> &list, QString varName);
+  /***************************************/
 
   void printIO(std::vector<ParChild> varsC);
   void getParPragmaFunc(int pos, QString *pragmaName, bool *in, bool *out);
@@ -136,15 +138,19 @@ private:
   int _codeLineStart;
   int _codeLineEnd;
   bool _root;
+
   bool _isFunction = false;
+  int _callLine = -1;
 
   static void setIOPar(ParPos*p, int type);
-
   std::vector<ParPos> _parPosC;
 
   int _type;
 
   static int _idCount;
+
+  void addIOInfo(QString var, int type);
+  void setIOFromPragma(PolcaPragma pragma);
 };
 
 #endif // POLCASCOPE_H
