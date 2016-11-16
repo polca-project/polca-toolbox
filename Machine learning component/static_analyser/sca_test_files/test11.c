@@ -1,5 +1,5 @@
-// FEAT_VECTOR: [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 4, 0, 0]
-// TEST_VECTOR: [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 4, 0, 0]
+// FEAT_VECTOR: [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 4, 0, 0, 6, 1, 0]
+// TEST_VECTOR: [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 4, 0, 0, 6, 1, 0]
 // TEST_LABEL: 0 (CPU)
 
 //# maxForStmtDepth:             0
@@ -21,6 +21,10 @@
 //# numCompoundStmts:            4
 //# anyTernaryOp:                0
 //# anyUselessStmt:              0
+//# numForPostamble              6
+//# numForPreamble               1
+//# numStructVariables           0
+
 
 
 void rgbImageFilter(char* image,int width,int height,char **redImage,char **greenImage,char **blueImage)

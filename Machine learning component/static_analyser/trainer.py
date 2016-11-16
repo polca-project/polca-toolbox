@@ -69,10 +69,10 @@ def checkTestFiles(testsPath):
                     print("ERROR: file %s doesn't have 2 vectors to compare" % (filename))
                     print("\t%s: %s" % (listID[0],listVector[0]))
 
-def updateTestFileHeader(filename,featureKeepRange):
+def updateTestFileHeader(analysisTuple,filename,featureKeepRange):
     filenameAux = filename+"_aux"
 
-    analysisTuple = sca.analyzeCode(filename)
+    # analysisTuple = sca.analyzeCode(filename)
     featureVector = analysisTuple[0]
     featureStr    = analysisTuple[1]
     print(featureVector)
@@ -124,7 +124,7 @@ def updateTestFileHeader(filename,featureKeepRange):
             # the same as the vector computed by SCA abstraction tool
             # if 'FEAT_VECTOR' present but obsolete, then only update the new features
             # indicated by 'featureKeepRange'
-            if not len(featureVector) == len(listVector):
+            if not len(featureVector) == len(listVector) or (len(listVector) != (featureKeepRange[1]+1)):
                 handVector = []
                 for i in range(len(featureVector)):
                     if i >= featureKeepRange[0] and i <= featureKeepRange[1]:
@@ -210,7 +210,7 @@ def readTestFileHeader(filename):
 
     return [headerVector,headerLabel]
 
-def update_feature_vector(filename,featureKeepRange):
+def update_feature_vector(analysisTuple,filename,featureKeepRange):
     # testsPath = "./c_files"
 
     # for dirpath, dirnames, filenames in os.walk(testsPath):
@@ -223,7 +223,7 @@ def update_feature_vector(filename,featureKeepRange):
     #             updateTestFileHeader(filename)
 
     print("Updating %s ..." % (filename))
-    updateTestFileHeader(filename,featureKeepRange)
+    updateTestFileHeader(analysisTuple,filename,featureKeepRange)
 
 def check_SCA(testsPath,featureKeepRange):
     # testsPath = "./c_files"
@@ -240,11 +240,11 @@ def check_SCA(testsPath,featureKeepRange):
                 filename = "%s/%s" % (dirpath,file)
 
 
-                update_feature_vector(filename,featureKeepRange)
-
-                testHeader = readTestFileHeader(filename)
                 analysisTuple = sca.analyzeCode(filename)
                 featureVector = analysisTuple[0]
+                update_feature_vector(analysisTuple,filename,featureKeepRange)
+
+                testHeader = readTestFileHeader(filename)
                 # sys.stdout.write("test %.2d: " % test)
                 sys.stdout.write("test %s: \n\t" % file)
                 print(" %s" % str(featureVector))
@@ -367,7 +367,9 @@ if __name__ == "__main__":
     # pathList = ["./predict_set/geometry/rotate"]
 
     # pathList = ["./sca_test_files"]
+    # pathList = ["./problematic_codes"]
     # pathList = ["./train_set/imageFilter/threshold/oracle_test","./predict_set/imageFilter/brightness/oracle_test"]
+    # pathList = ["./train_set/hpcDwarfs/nBody/oracle_test"]
     pathList = ["./train_set/hpcDwarfs/nBody/s2s_transformations/2arrays"]
 
     print("\n#####################################################\n")
@@ -376,6 +378,9 @@ if __name__ == "__main__":
     # according to current SCA feature extraction method.
     # If FEAT_VECTOR is not present as a header, it will be updated
     # with the same feature vector as TEST_VECTOR
+    # If FEAT_VECTOR is obsolete (i.e. len(FEAT_VECTOR) != len(TEST_VECTOR))
+    # then FEAT_VECTOR is updated keeping the previous values specified
+    # with the range in 'featureKeepRange'
 
     featureKeepRange = [0,18]
 

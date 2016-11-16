@@ -166,9 +166,9 @@ table = ActionValueTable(numStates, numActions)
 table.initialize(1.)
 
 # create agent with controller and learner - use SARSA(), Q() or QLambda() here
-learner = QLambda()
-# learner = SARSA(0.5, 0.6)
-# learner = Q(0.5, 0.6)
+# learner = QLambda()
+learner = SARSA()
+# learner = Q()
 # standard exploration is e-greedy, but a different type can be chosen as well
 # learner.explorer = BoltzmannExplorer()
 

@@ -7,7 +7,7 @@
 # See LICENSE.txt and AUTHORS.txt for licensing and authorship
 
 from scipy import *
-import sys, time, re
+import sys, time, re, os
 import matplotlib.pyplot as plt
 import pylab
 
@@ -79,7 +79,7 @@ def readTrainData(trainDataFile):
         m2 = re.match("Final States",line)
         m3 = re.match("Transition Table",line)
         m4 = re.match("Rule Names",line)
-        m5 = re.match("Abst.-State mappings",line)
+        m5 = re.match("Abst\.-State mappings",line)
 
         if dataFound == 0:
             initStates = parseList(line,0)
@@ -175,6 +175,7 @@ def initData():
     # create value table and initialize with ones
     table = ActionValueTable(numStates, numActions)
 
+    # print(actionValueTable)
     for i in range(transitionTable.shape[0]):
         for j in range(transitionTable.shape[1]):
             table._params[i*transitionTable.shape[1]+j] = actionValueTable[i*transitionTable.shape[1]+j]
@@ -232,6 +233,7 @@ def transformationStep(codeAbstraction,ruleIdList):
     state = abst2State[codeAbstraction]
 
     globalAction = -1
+    newState     = -1
     if not state in goalStates:
         # values = table.params.reshape(numStates, numActions)[state, :].flatten()
         # sys.stderr.write("\n"+str(ruleIdList)+"\n")
@@ -248,7 +250,7 @@ def transformationStep(codeAbstraction,ruleIdList):
         # sys.stdout.write(",%2d] ->" % (globalAction))
         # sys.stdout.write(" %2d\n" % (newState))
 
-    return globalAction
+    return newState,globalAction
 
 
 def convertStr2IdList(ruleNameList):
@@ -277,30 +279,47 @@ def predict(codeAbstraction,ruleNameList):
     initData()
 
     ruleId = -1
+    newState = -1
     if codeAbstraction == None:
         ruleId = testTransformationProcess()
     else:
         ruleIdList = convertStr2IdList(ruleNameList)
-        ruleId = transformationStep(codeAbstraction,ruleIdList)
+        newState,ruleId = transformationStep(codeAbstraction,ruleIdList)
 
 
     ruleName = getRuleName(ruleId)
-    # sys.stderr.write(str(ruleName)+"\n")
+    abstraction = list(abst2State.keys())[list(abst2State.values()).index(newState)]
+    sys.stderr.write(str(newState) + " , " +abstraction + " : " + str(ruleName)+"\n")
 
-    return ruleName
+    return abstraction,ruleName
 
 
 if __name__ == "__main__":
 
     ruleName = ""
 
+    codeAbstraction = None
+    ruleNameList    = None
+
     if len(sys.argv) < 3:
         print("ERROR: usage -> %s <code_abstraction> <rule_id_list>" % (sys.argv[0]))
+        # codeAbstraction = sys.argv[1]
+        # ruleNameList = parseList(sys.argv[2],2)
     else:
         codeAbstraction = eval(sys.argv[1])
         ruleNameList = parseList(sys.argv[2],2)
 
-        ruleName = predict(codeAbstraction,ruleNameList)
+    cwd = os.getcwd()
+    # print(cwd)
+
+    cmdPath = ''
+    if 'reinforcement_learning' in cwd:
+        trainDataPath = './utils/'
+    else:
+        trainDataPath = '../machine_learning/reinforcement_learning/utils/'
+
+    # print   type(codeAbstraction)
+    abs,ruleName = predict(codeAbstraction,ruleNameList)
 
     sys.exit(ruleName)
 

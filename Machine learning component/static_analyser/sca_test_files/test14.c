@@ -1,5 +1,5 @@
-// FEAT_VECTOR: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 1, 0]
-// TEST_VECTOR: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 3, 2, 1, 0]
+// FEAT_VECTOR: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 1, 0, 0, 0, 0]
+// TEST_VECTOR: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 1, 0, 0, 0, 0]
 // TEST_LABEL: 15 (FPGA/GPU/OpenMP/MPI)
 
 //# maxForStmtDepth:             0
@@ -17,10 +17,14 @@
 //# numAuxVarArrayIndex:         0
 //# totalNumForLoops:            1
 //# numNonNormalizedForLoops:    0
-//# numStmtsRollUp:              3
+//# numStmtsRollUp:              0
 //# numCompoundStmts:            2
 //# anyTernaryOp:                1
 //# anyUselessStmt:              0
+//# numForPostamble              0
+//# numForPreamble               0
+//# numStructVariables           0
+
 
 
 void rgbImageFilter(char* image,int width,int height,char *redImage,char *greenImage,char *blueImage)

@@ -19,10 +19,15 @@ sys.path.extend(['.', '..'])
 
 from pycparser import c_parser, c_ast, parse_file, c_generator
 import re,os
+import subprocess
+import feat_extractor_interface as featEx
+
 
 # Global variables
 
-isRollableCmd = "../static_analyser/stmtDiff.py"
+isRollableCmd = "../polca_s2s/polca_rollup"
+# isRollableCmd = "../examples/C_haskell/polca_rollup"
+# isRollableCmd = "../static_analyser/stmtDiff.py"
 # isRollableCmd = "./stmtDiff.py"
 
 # Singleton reference to CGenerator for pretty print of stmts and compute
@@ -121,6 +126,7 @@ loopForCondVarFound      = 0
 # are inside a funcDef, var delcaration cannot be 
 # global
 insideFuncDef            = 0
+insideStruct             = 0
 usesGlobalVars           = 0
 globalVarList            = []
 
@@ -535,10 +541,10 @@ class ASTVisitor(c_ast.NodeVisitor):
 
 
     def visit_TypeDecl(self, node):
-        global insideFuncDef, globalVarList,varSetLValueInsideLoop
+        global insideFuncDef, globalVarList,varSetLValueInsideLoop,insideStruct
 
-        if not insideFuncDef: # definition of global var, save var id
-            # print('Global var %s decl at %s' % (node.declname, node.coord))
+        if not insideFuncDef and not insideStruct: # definition of global var, save var id
+            # print('%s , %s : Global var %s decl at %s' % (node.type, node.quals,node.declname, node.coord))
             globalVarList.append(node.declname)
         else: # we are in var decl within a function
             if (not isWithinArrayDecl) and (not currentDeclType == EMPTY_DECL):
@@ -554,6 +560,16 @@ class ASTVisitor(c_ast.NodeVisitor):
         for c_name, c in node.children():
             self.visit(c)
 
+
+    def visit_Struct(self,node):
+        global insideStruct
+
+        insideStruct = 1
+
+        for c_name, c in node.children():
+            self.visit(c)
+
+        insideStruct = 0
 
     def visit_ArrayDecl(self,node):
         global isWithinArrayDecl
@@ -682,6 +698,7 @@ class ASTVisitor(c_ast.NodeVisitor):
 
         if insideFuncDef:
             if node.name in globalVarList:
+                # sys.stderr.write("######## " + node.name + str(globalVarList) + "\n")
                 usesGlobalVars = 1
 
         # we are within for loop and current var ID is not a loop iter var and is not an array
@@ -887,10 +904,26 @@ class ASTVisitor(c_ast.NodeVisitor):
                 # print("----------")
                 # print("%d: %s (%s)" % (i+1,nStmtStr,next_stmt.__class__.__name__))
                 if not isRolledUpFor:
-                    val = os.system('%s "%s" "%s"' % (isRollableCmd,pStmtStr,nStmtStr))
+                    # val = os.system('%s "%s" "%s"' % (isRollableCmd,pStmtStr,nStmtStr))
+                    cmd = '%s "%s" "%s"' % (isRollableCmd,pStmtStr,nStmtStr)
+                    # sys.stderr.write("\t%s\n" % (cmd))
+                    # p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)#, stderr=subprocess.STDOUT)
+                    # val = p.stdout.read()
+                    val = int(os.popen(cmd).read())
+                    # print("\tRead from the cmd: %d" % (val))
                 else:
-                    bodyStmtStr = generator.visit(prev_stmt.stmt)
-                    val = os.system('%s "%s" "%s"' % (isRollableCmd,bodyStmtStr,nStmtStr))
+                    if prev_stmt.stmt.__class__.__name__ == "Compound":
+                        bodyStmtStr = generator.visit(prev_stmt.stmt.block_items[0])
+                    else:
+                        bodyStmtStr = generator.visit(prev_stmt.stmt)
+                    # val = os.system('%s "%s" "%s"' % (isRollableCmd,bodyStmtStr,nStmtStr))
+                    cmd = '%s "%s" "%s"' % (isRollableCmd,bodyStmtStr,nStmtStr)
+                    # sys.stderr.write("\t%s\n" % (cmd))
+                    # p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)#, stderr=subprocess.STDOUT)
+                    # val = "0"#p.stdout.readline()
+                    val = int(os.popen(cmd).read())
+                    # print("\tRead from the cmd: %d" % (val))
+
                     if val != 0:
                         foundRolledUpFor = 1
                     else:
@@ -1310,7 +1343,7 @@ def initVars(initType):
     global pragmaDict,varSetLValueOutsideLoop,varSetLValueInsideLoop,varSetRValueInsideLoop,non1DArrayNames,currentScope, \
     scopeList
     global numStmtsRollUp,lineBeginCompounds,numCompoundStmts,compoundBlockId2Analyze
-    global isWithinBlock2Analyze,currentCompoundStmtId,numCompoundStmtsInBlock,anyTernaryOp,anyUselessStmt
+    global isWithinBlock2Analyze,currentCompoundStmtId,numCompoundStmtsInBlock,anyTernaryOp,anyUselessStmt,insideStruct
 
     if(initType == INIT_AST):
         loopIterVarId            = []
@@ -1323,6 +1356,7 @@ def initVars(initType):
         # are inside a funcDef, var delcaration cannot be
         # global
         insideFuncDef            = 0
+        insideStruct             = 0
 
         globalVarList            = []
 
@@ -1405,7 +1439,7 @@ def initVars(initType):
     anyUselessStmt           = 0
 
 
-def generateStats():
+def generateStats(featuresList):
 
     statsStr = ""
     statsStr += "//# maxForStmtDepth:            %2d\n" % (maxForStmtDepth)
@@ -1426,8 +1460,13 @@ def generateStats():
     statsStr += "//# numStmtsRollUp:             %2d\n" % (numStmtsRollUp)
     statsStr += "//# numCompoundStmts:           %2d\n" % (numCompoundStmtsInBlock)
     statsStr += "//# anyTernaryOp:               %2d\n" % (anyTernaryOp)
-    statsStr += "//# anyUselessStmt:             %2d"   % (anyUselessStmt)
+    statsStr += "//# anyUselessStmt:             %2d\n"   % (anyUselessStmt)
 
+    l = 28
+
+    for feature in featuresList:
+        spaces = ' ' * (l - len(rule2Desc_dict[feature[0]]))
+        statsStr += "//# %s%s%2d\n" % (rule2Desc_dict[feature[0]],spaces,feature[1])
 
 
     return statsStr
@@ -1464,9 +1503,20 @@ def prepareCode(sourceFile,targetFile):
     fw.close()
 
 
+s2s_feature_dict = [['feat_move_inside_for_post', 'countNewCode'],
+                    ['feat_move_inside_for_pre' , 'countNewCode'],
+                    ['subs_struct_by_fields'     , 'countChanges']]
+
+rule2Desc_dict = { 'feat_move_inside_for_post' : 'numForPostamble',
+                   'feat_move_inside_for_pre'  : 'numForPreamble',
+                   'subs_struct_by_fields'     : 'numStructVariables'}
+
+# s2s_feature_dict = [['subs_struct_by_fields'     , 'countChanges']]
+
 def analyzeCode(filename):
 
-    tmpFileName = "./sca_tmp.c"
+    # tmpFileName = "./sca_tmp.c"
+    tmpFileName = "../static_analyser/sca_tmp.c"
     prepareCode(filename,tmpFileName)
 
     initVars(INIT_AST)
@@ -1475,12 +1525,24 @@ def analyzeCode(filename):
     readCompound(tmpFileName)
     show_func_defs(tmpFileName)
 
+
+    featuresList = featEx.measureFeatures(tmpFileName,s2s_feature_dict,'BLOCK_ABS')
+
+    # for rule in featuresList:
+    #     print("%s : %s" % (rule[0],rule[1]))
+
     featureVector = [maxForStmtDepth,anyFuncCall,anyArrayWriteShifted,numIrregularForLoops,usesGlobalVars,
                      anyIfStmt,(int)(not anyForLoopNonStaticLimit),anySIMDloop,anyLoopSchedule,numLoopInvVar,
                      numLoopHoistedVarMods,numNon1Darray,numAuxVarArrayIndex,totalNumForLoops,numNonNormalizedForLoops,
                      numStmtsRollUp,numCompoundStmtsInBlock,anyTernaryOp,anyUselessStmt]
 
-    statsStr = generateStats()
+    subl = [feat[1] for feat in featuresList]
+    featureVector += subl
+
+    # print(featureVector)
+    # print("\n\n")
+
+    statsStr = generateStats(featuresList)
 
     # print(featureVector)
 
@@ -1512,14 +1574,16 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         filename  = sys.argv[1]
     else:
+        # filename = 'sca_test_files/test09.c'
         # filename = 'sca_test_files/test_rollUp_8.c'
-        filename = 'train_set/imageFilter/threshold/s2s_transformations/threshold0_001_002.c'
-        # filename = 'sca_test_files/test15.c'
+        # filename = 'train_set/imageFilter/threshold/s2s_transformations/threshold0_001_002.c'
+        # filename = '../static_analyser/sca_test_files/test20.c'
+        filename = '../static_analyser/train_set/hpcDwarfs/nBody/s2s_transformations/2arrays/nbody_001_009.c'
 
-    analyzeCode(filename)
+    featTuple = analyzeCode(filename)
     # print stats
     print("#########################################")
-    sys.stdout.write("%s\n" % generateStats())
+    sys.stdout.write("%s\n" % featTuple[1])
     print("#########################################")
 
 

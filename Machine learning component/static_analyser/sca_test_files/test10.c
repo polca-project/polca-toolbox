@@ -1,5 +1,5 @@
-// FEAT_VECTOR: [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 1, 0, 2, 0, 0]
-// TEST_VECTOR: [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 1, 0, 2, 0, 0]
+// FEAT_VECTOR: [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 1, 0, 2, 0, 0, 0, 0, 0]
+// TEST_VECTOR: [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 1, 0, 2, 0, 0, 0, 0, 0]
 // TEST_LABEL: 7 (GPU/OpenMP/MPI)
 
 //# maxForStmtDepth:             1
@@ -21,6 +21,10 @@
 //# numCompoundStmts:            2
 //# anyTernaryOp:                0
 //# anyUselessStmt:              0
+//# numForPostamble              0
+//# numForPreamble               0
+//# numStructVariables           0
+
 
 
 #define N 5

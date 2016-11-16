@@ -30,8 +30,8 @@ def updateTrainTable(useCase):
     path = useCase[1]
 
     # use only files *.c and avoid *.c~ (emacs) and .#*.c (emacs)
-    namePattern = "^%s(_(.)*_(.)*)*\.c$" % name
-    # namePattern = "^[^.].*\.c$"
+    # namePattern = "^%s(_(.)*_(.)*)*\.c$" % name
+    namePattern = "^%s_(\d+)_(\d+)\.c$" % name
     for dirpath, dirnames, filenames in os.walk(path):
 
         ruleAppldId = -1
@@ -48,8 +48,8 @@ def updateTrainTable(useCase):
             if m0:
                 print("match pattern %s for %s" % (namePattern,file))
                 if not None in m0.groups():
-                    currTransfStep = int(m0.group(3))
-                    currSeqId = int(m0.group(2))
+                    currTransfStep = int(m0.group(2))
+                    currSeqId = int(m0.group(1))
                     # If we started a new sequence and is not the first sequence
                     if prevSeqId != -1 and prevSeqId != currSeqId:
                         # print("State %d is final" % (getStateId(abstraction)))
@@ -74,12 +74,12 @@ def updateTrainTable(useCase):
                 if prevStateId != -1:
                     # if we are processing the first transformation step of any sequence then take
                     # the initial code as the previous state. Ex.
-                    # threshold.c -> threshold_XXX_001.c
+                    # threshold.c -> threshold_XXX_000.c
                     # In that case we should take the abstraction of the original code (threshold.c)
                     # as the previous state instead of the last code of the previous sequence XXX-1
                     if currTransfStep == 1:
                         prevStateId = getStateId(abstInitState)
-                    print("\t(%2d , %2d) -> %2d" % (prevStateId,ruleAppldId,stateId))
+                    print("\t[%2d (%s) , %2d (%s)] -> (%2d , %2d) -> %2d" % (currSeqId,m0.group(1),currTransfStep,m0.group(2),prevStateId,ruleAppldId,stateId))
                     trainTransitionTable[prevStateId][ruleAppldId] = stateId
                 else:
                     abstInitState = abstraction
@@ -90,6 +90,9 @@ def updateTrainTable(useCase):
                     initStates.append(stateId)
 
                 f.close()
+
+        # add the last abstraction as final state
+        finalStates.append(getStateId(abstraction))
 
 
 def setStateId(sequenceId,abstraction):
@@ -146,8 +149,11 @@ def getRuleId(ruleName):
 def readRulesList(rulesFile):
     global nameRules
 
-    nameRules = ["remove_identity", "reduce_to_0", "undo_distributive", "sub_to_mult", "normalize_iteration_step", "loop_reversal_d2i", "loop_reversal_i2d", "loop_interchange", "loop_interchange_pragma", "for_chunk", "unrolling", "move_inside_for", "collapse_2_for_loops", "for_loop_fission", "for_loop_fusion_mapmap", "for_loop_fusion", "for_wo_block_2_for_w_block", "remove_empty_for", "for_to_while", "while_to_for", "if_wo_block_2_if_w_block", "if_wo_else_2_if_w_else", "split_addition_assign", "join_addition_assign", "mult_ternary_2_ternary", "sum_ternary_2_ternary", "assign_ternary_2_if_else", "if_else_2_assign_ternary", "if_2_assign_ternary", "empty_else", "remove_ternary", "remove_block", "remove_empty_if", "remove_useless_statement", "strength_reduction", "useless_assign", "replace_var_equal", "just_one_iteration_removal", "join_assignments", "propagate_assignment", "loop_inv_code_motion", "inlining", "inlining_assignment", "common_subexp_elimination", "introduce_aux_array", "flatten_float_array", "flatten_int_array", "subs_struct_by_fields", "roll_up_init", "roll_up", "roll_up_array_init", "roll_up_array"]
-
+    # Rules for nBody for POLCA demo
+    nameRules = ["normalize_iteration_step", "collapse_2_for_loops", "inlining", "remove_block", "remove_useless_statement", "subs_struct_by_fields", "roll_up_array_init", "roll_up_array", "move_inside_for_pre", "move_inside_for_post", "move_enclosing_if_inside_for", "if_2_assign_ternary", "for_loop_fusion", "feat_move_inside_for_pre", "feat_move_inside_for_post"]
+    # All rules
+    # nameRules = ["remove_identity", "reduce_to_0", "undo_distributive", "sub_to_mult", "normalize_iteration_step", "loop_reversal_d2i", "loop_reversal_i2d", "loop_interchange", "loop_interchange_pragma", "for_chunk", "unrolling", "move_inside_for_pre", "move_inside_for_post", "move_enclosing_if_inside_for", "collapse_2_for_loops", "for_loop_fission", "for_loop_fusion_mapmap", "for_loop_fusion", "for_wo_block_2_for_w_block", "remove_empty_for", "for_to_while", "while_to_for", "if_wo_block_2_if_w_block", "if_wo_else_2_if_w_else", "split_addition_assign", "join_addition_assign", "mult_ternary_2_ternary", "sum_ternary_2_ternary", "assign_ternary_2_if_else", "if_else_2_assign_ternary", "if_2_assign_ternary", "empty_else", "remove_ternary", "remove_block", "remove_empty_if", "remove_useless_statement", "strength_reduction", "useless_assign", "replace_var_equal", "contiguous_same_if", "just_one_iteration_removal", "join_assignments", "propagate_assignment", "loop_inv_code_motion", "inlining", "inlining_assignment", "common_subexp_elimination", "introduce_aux_array", "flatten_float_array", "flatten_int_array", "subs_struct_by_fields", "roll_up_init", "roll_up", "roll_up_array_init", "roll_up_array", "feat_move_inside_for_pre", "feat_move_inside_for_post"]
+    # nameRules = ["remove_identity", "reduce_to_0", "undo_distributive", "sub_to_mult", "normalize_iteration_step", "loop_reversal_d2i", "loop_reversal_i2d", "loop_interchange", "loop_interchange_pragma", "for_chunk", "unrolling", "move_inside_for_pre", "move_inside_for_post", "collapse_2_for_loops", "for_loop_fission", "for_loop_fusion_mapmap", "for_loop_fusion", "for_wo_block_2_for_w_block", "remove_empty_for", "for_to_while", "while_to_for", "if_wo_block_2_if_w_block", "if_wo_else_2_if_w_else", "split_addition_assign", "join_addition_assign", "mult_ternary_2_ternary", "sum_ternary_2_ternary", "assign_ternary_2_if_else", "if_else_2_assign_ternary", "if_2_assign_ternary", "empty_else", "remove_ternary", "remove_block", "remove_empty_if", "remove_useless_statement", "strength_reduction", "useless_assign", "replace_var_equal", "contiguous_same_if", "just_one_iteration_removal", "join_assignments", "propagate_assignment", "loop_inv_code_motion", "inlining", "inlining_assignment", "common_subexp_elimination", "introduce_aux_array", "flatten_float_array", "flatten_int_array", "subs_struct_by_fields", "roll_up_init", "roll_up", "roll_up_array_init", "roll_up_array"]
 
 def initTransitionTableRow(state):
     global trainTransitionTable,nameRules
@@ -195,8 +201,15 @@ if __name__ == "__main__":
     trainDataFile = 'trainingData.txt'
 
 
-    pathList = [["threshold0","./train_set/imageFilter/threshold/s2s_test"]
+    # pathList = [["threshold0","./train_set/imageFilter/threshold/s2s_test"]
+    #             ]
+
+    pathList = [["nbody","./train_set/hpcDwarfs/nBody/s2s_transformations/2arrays"]
                 ]
+
+    # pathList = [["nbody","./train_set/hpcDwarfs/nBody/oracle_test"]
+    #             ]
+
 
     print("\n#####################################################\n")
 

@@ -1,5 +1,5 @@
-// FEAT_VECTOR: [1, 0, 1, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 3, 0, 9, 3, 0, 0]
-// TEST_VECTOR: [1, 0, 1, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 3, 0, 9, 3, 0, 0]
+// FEAT_VECTOR: [1, 0, 1, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 3, 0, 9, 3, 0, 0, 3, 1, 0]
+// TEST_VECTOR: [1, 0, 1, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 3, 0, 9, 3, 0, 0, 3, 1, 0]
 // TEST_LABEL: 0 (CPU)
 
 //# maxForStmtDepth:             1
@@ -21,6 +21,10 @@
 //# numCompoundStmts:            3
 //# anyTernaryOp:                0
 //# anyUselessStmt:              0
+//# numForPostamble              3
+//# numForPreamble               1
+//# numStructVariables           0
+
 
 
 #define N 10

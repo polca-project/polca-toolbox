@@ -19,26 +19,36 @@ rule2IdchangeDict = {}
 
 def prepareCode(codeStr):
 
-    modeCode = ""
-    if "{" in codeStr:
-        modCode = "void main()%s" % codeStr
-    else:
-        modCode = "void main(){\n%s;\n}" % codeStr
+    # modeCode = ""
+    # if "{" in codeStr:
+    #     modCode = "// FUNC_ANALYZ: main BLOCK_ABS\nvoid main()\n%s" % codeStr
+    # else:
+    #     modCode = "// FUNC_ANALYZ: main BLOCK_ABS\nvoid main()\n{\n%s;\n}" % codeStr
+
+    modCode = "// FUNC_ANALYZ: main BLOCK_ABS\n\n%s" % codeStr
 
     return modCode
+
+def convertAbsList2Key(abstraction):
+
+    return "".join(str(x) for x in abstraction)
 
 if __name__ == "__main__":
 
     if len(sys.argv) > 1:
-        jsonStr  = sys.argv[1]
-        # print jsonStr
-        codeChanges = json.loads(jsonStr)
-        # print len(codeChanges['changes'])
+        # jsonStr  = sys.argv[1]
+        # codeChanges = json.loads(jsonStr)
+        # sys.stderr.write("\n\n########"+sys.argv[1] + "\n\n")
+        # exit(0)
+        codeChanges = json.loads(open(sys.argv[1]).read())
     else:
         codeChanges = json.loads(open('output_s2s.json').read())
         # print len(codeChanges['changes'])
 
-oldCode = prepareCode(codeChanges["codeBlock"])
+# oldCode = prepareCode(codeChanges["codeBlock"])
+oldCode = prepareCode(codeChanges["code"])
+# sys.stderr.write(str(oldCode)+"\n")
+
 abstraction = sca.analyzeCodeFromStr(oldCode)
 
 # print oldCode
@@ -49,52 +59,34 @@ abstraction = sca.analyzeCodeFromStr(oldCode)
 ruleList = []
 rule2IdchangeDict = {}
 for i in range(len(codeChanges['changes'])):
-    # sys.stderr.write(str(codeChanges['changes'][i]["idChange"])+"\n")
-    # # print codeChanges['changes'][i]["line"]
-    # sys.stderr.write(str(codeChanges['changes'][i]['ruleName'])+"\n")
-    # # print codeChanges['changes'][i]['oldCode']
-    # sys.stderr.write(str(codeChanges['changes'][i]['newCode'])+"\n")
-    # sys.stderr.write("#####################################################"+"\n\n")
-
     # Convert from unicode  to regular string
     ruleName = str(codeChanges['changes'][i]['ruleName'])
-    idChange = int(codeChanges['changes'][i]["idChange"])
+    # idChange = int(codeChanges['changes'][i]["idChange"])
     ruleList.append(ruleName)
-    rule2IdchangeDict[ruleName] = idChange
-
-    # if codeChanges['changes'][i]['ruleName'] == 'inlining':
-    #
-    #     modCode = prepareCode(codeChanges['changes'][i]['newCode'])
-    #
-    #     # modCode = "void main(){\n%s;\n}" % codeChanges['changes'][i]['newCode']
-    #     # modCode = codeChanges['changes'][i]['newCode']
-    #
-    #     print modCode
-    #     abstraction = sca.analyzeCodeFromStr(modCode)
-    #     print "###########################################"
-    #     print abstraction[0]
-
-# print ruleList
-
-# # cmd = "../machine_learning/reinforcement_learning/oracle.py"
-# cmd = "../machine_learning/reinforcement_learning/oracle.py  '%s' '%s'" % (abstraction[0],ruleList)
-# # print(cmd)
-# ruleName = os.system(cmd)
 
 
-# oracle.predict(None,None)
-# print "######################################"
-# sys.stderr.write(str(ruleList)+"\n")
-ruleName = oracle.predict(abstraction[0],ruleList)
-# sys.stderr.write(str(ruleName)+"\n")
-# sys.stderr.write(str(rule2IdchangeDict[ruleName])+"\n")
-# sys.stderr.write(str(rule2IdchangeDict)+"\n")
-# print ruleName
-# if ruleName == "":
-#     print("Final state reached!!!")
-#     sys.exit(-1)
-# else:
-#     sys.exit(rule2IdchangeDict[ruleName])
+nextStateAbs,ruleName = oracle.predict(abstraction[0],ruleList)
+
+for i in range(len(codeChanges['changes'])):
+    sys.stderr.write(ruleName + " - " + str(codeChanges['changes'][i]['ruleName']) + "\n")
+    if ruleName == str(codeChanges['changes'][i]['ruleName']):
+        newCode = prepareCode(codeChanges['changes'][i]['newCodeAll'])
+
+        # sys.stderr.write(str(codeChanges['changes'][i]["idChange"])+"\n")
+        # sys.stderr.write(str(codeChanges['changes'][i]['ruleName'])+"\n")
+#        # sys.stderr.write(str(codeChanges['changes'][i]['newCode'])+"\n")
+#         sys.stderr.write(str(newCode)+"\n")
+
+        newCodeAbs = sca.analyzeCodeFromStr(newCode)
+
+        sys.stderr.write(convertAbsList2Key(newCodeAbs[0]) + "\n")
+        sys.stderr.write(nextStateAbs + "\n")
+        sys.stderr.write("#####################################################\n")
+        if convertAbsList2Key(newCodeAbs[0]) == nextStateAbs:
+            rule2IdchangeDict[ruleName] = int(codeChanges['changes'][i]["idChange"])
+            break
+
+
 
 if ruleName == "":
     print(-1)
