@@ -24,20 +24,28 @@ main = do
 			do 
 				a0 <- parseExp (args!!0)
 				a1 <- parseExp (args!!1)
-				case isRollable  a0 a1	of 
-					(True,_) ->
-						putStrLn "1"
-					(False,_) ->
-						putStrLn "0"
+				case (a0, a1) of 
+					(Just a0_, Just a1_) ->
+						case isRollable  a0_ a1_ of 
+							(True,_) ->
+								putStrLn "1"
+							(False,_) ->
+								putStrLn "0"
+					_ ->
+						putStrLn "-1"
 			 
 
 parseExp e = 
 	do
 		writeFile "temp_file_read.c" ("main(){" ++ e ++ ";}")
 		ast <- parseMyFile "temp_file_read.c"
-		let (CTranslUnit 
+		case (fmap (\nI -> Ann nI nodePropertiesDefault) ast) of
+			(CTranslUnit 
 				[(CFDefExt (CFunDef _ _ _ 
 					(CCompound _ 
-						[(CBlockStmt (CExpr (Just pe) _))] _) _))] _) = 
-			fmap (\nI -> Ann nI nodePropertiesDefault) ast
-		return pe
+						[(CBlockStmt (CExpr (Just pe) _))] _) _))] _) ->
+				return (Just pe)
+			_ ->
+				do 
+					putStrLn $ "Error while parsing the expression.\n" ++ e ++ " is not a valid C expression."
+					return Nothing

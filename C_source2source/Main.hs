@@ -995,7 +995,7 @@ getTrans name mode iter =
 
 getTransInt name mode iter seq_id print_id polca_block command = 
 	do
-		initialState0 <- initialStepsTransInt True name seq_id print_id True
+		initialState0 <- initialStepsTransInt True name seq_id print_id False
 		let initialState1 = 
 			case polca_block of 
 				"" ->
@@ -1486,7 +1486,7 @@ applyruleInt state filename steps recalculate =
 						applyruleIntAux state{previous_changes = changes} preselected rules changes filename steps
 					_ ->
 						do 
-							selected <- applyRuleWithOracle state jsonChanges
+							selected <- applyRuleWithOracle filename state jsonChanges
 							case selected of 
 								(-1) ->
 									do 
@@ -1505,10 +1505,12 @@ applyruleInt state filename steps recalculate =
 										applyruleIntAux state{previous_changes = changes} preselected rules changes filename (Just [(rule, selected)])
 
 
-applyRuleWithOracle state jsonChanges = 
+applyRuleWithOracle filename state jsonChanges = 
 	do 
+		writeFile (filename ++ ".json") jsonChanges
 		let cmd = 
-			(oracle state) ++ " \"" ++ (intoString jsonChanges) ++ "\" > oracle_choice.txt"
+			-- (oracle state) ++ " \"" ++ (intoString jsonChanges) ++ "\" > oracle_choice.txt"
+			(oracle state) ++ " " ++ (filename ++ ".json") ++ " > oracle_choice.txt"
 		-- putStrLn cmd
 		checkResult <- system cmd
 		case checkResult of 

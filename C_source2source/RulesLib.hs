@@ -1225,7 +1225,7 @@ changeArrayFromStruct stmts (CVar v _) struct_name state =
 		substitutions = 
 			nubBy 
 				(\(o1,n1) (o2,n2) -> (geq o1 o2) && (geq n1 n2)) 
-				(applyRulesGeneral (substituteStructArrays v dict) stmts)
+				(applyRulesGeneral (substituteStructArrays v dict (length fields)) stmts)
 	in 
 		(foldl (\current_ast change -> changeAST change current_ast) 
 			stmts substitutions)		
@@ -1250,9 +1250,9 @@ extract_field_names [] =
 		[]
 
 --substituteStructArrays :: Ident -> CExprAnn -> CExprAnn -> [(CExprAnn,CExprAnn)]
-substituteStructArrays (Ident v1 _ _) dict expr_found@(CMember (CIndex identv@(CVar (Ident v2 _ _) _) i1 _) (Ident field _ _) _ nI2) | v1 == v2 =
-	[(expr_found,(CIndex identv (CBinary CAddOp i1 (head [val  | (fieldD, val) <- dict, fieldD == field]) undefNodeAnn) nI2))]
-substituteStructArrays _ _ _ = []
+substituteStructArrays (Ident v1 _ _) dict size_struct expr_found@(CMember (CIndex identv@(CVar (Ident v2 _ _) _) i1 _) (Ident field _ _) _ nI2) | v1 == v2 =
+	[(expr_found,(CIndex identv (CBinary CAddOp (CBinary CMulOp i1 ((intConstant.toInteger) size_struct) undefNodeAnn) (head [val  | (fieldD, val) <- dict, fieldD == field]) undefNodeAnn) nI2))]
+substituteStructArrays _ _ _ _ = []
 
 -- TODO: Check that the steps have a difference of 1 
 --     	OR 	try to generalize it to bigger steps through the rule 
