@@ -593,7 +593,7 @@ featuresExtract filename rules block =
 
 init_trans name defM =
 	do
-		iniState <- initialStepsTrans False name True
+		iniState <- initialStepsTrans False name False
 		let (nameDef, astsDef) = 
 			case defM of 
 				(Just def) ->
@@ -729,8 +729,8 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 					(prettyMyASTAnn astBlock,
 				     printWithPragmasStmt prettyPragmasPolca (searchASTFun astBlock (fun_defs state)))
 		let linesInclude = 
-			-- length $ includes state
-			0
+			length $ includes state
+			-- 0
 		let jsonContent = 
 			CodeAndChanges 
 				{
