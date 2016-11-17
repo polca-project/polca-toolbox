@@ -8,7 +8,9 @@ You can check individual folders under this repository for more details on each 
 The C source to source transformation tool is a program transformation environment,
 implemented in Haskell, where architecture-agnostic scientific C code with
 semantic annotations is transformed into functionally equivalent code better suited
-for a given platform. The transformation steps are represented as rules which can
+for a given platform. 
+
+The transformation steps are represented as rules which can
 be fired when certain syntactic and semantic conditions are fulfilled. These rules
 are not hard-wired into the rewriting engine: they are written in a C-like language
 (STML) and are automatically processed and incorporated by the rewriting engine.
@@ -21,8 +23,12 @@ Software Institute and the Technical University of Madrid.
 
 CLaSH – pronounced: clash – is a functional hardware description language that
 borrows both the syntax and semantics from the functional programming language
-Haskell. It provides a familiar structural design approach to both combinational
-and synchronous sequential circuits. The CLaSH compiler transforms these highlevel
+Haskell. 
+
+It provides a familiar structural design approach to both combinational
+and synchronous sequential circuits. 
+
+The CLaSH compiler transforms these highlevel
 descriptions to low-level synthesisable VHDL, Verilog, or SystemVerilog.
 The CLaSH compiler is developed at the University of Twente, in the chair
 CAES (Computer Architecture for Embedded Systems).
@@ -30,17 +36,21 @@ CAES (Computer Architecture for Embedded Systems).
 ## Haskell transformations
 
 The Haskell transformations tool consists of two parts:
+
 * H2H: Haskell-to-Haskell transformations, which realize mathematical equivalences of algorithmic structures into actual transformations of Haskell code,
 * H2C: Haskell-to-C transformations, to generate C-code from specifications in Haskell of algorithmic structures.
+
 The Haskell-to-Haskell transformation tool (H2H) can apply transformations
 to Haskell code that is derived from the annotations attached to a given C-program.
 The tool H2H first of all parses this Haskell program to produce its abstract syntax
 tree (AST), and then produces a new abstract tree by applying a transformation
 rule.
+
 The Haskell to C tool generates C-code from Haskell code, in particular from
 higher order functions since these functions express algorithmic structure. We will
 present the method for two higher order functions (HOF): map and foldl, the others
 following the same pattern.
+
 H2H and H2C have been developed at the University of Twente and their code
 is licensed under a 2-clause BSD license.
 
