@@ -3,6 +3,8 @@
 The set of tools delivered by POLCA consists of the following components.
 You can check individual folders under this repository for more details on each tool.
 
+![POLCA tools diagram](./__misc__/img/POLCA tools diagram.png "Anatomy of the POLCA tool set")
+
 ## C source to source transformation tool
 
 The C source to source transformation tool is a program transformation environment,
@@ -14,32 +16,34 @@ The transformation steps are represented as rules which can
 be fired when certain syntactic and semantic conditions are fulfilled. These rules
 are not hard-wired into the rewriting engine: they are written in a C-like language
 (STML) and are automatically processed and incorporated by the rewriting engine.
+
 That makes it possible for end-users to add their own rules or to provide sets of
 rules which are adapted to certain specific domains or purposes.
+
 The C source transformation toolchain has been contributed by the IMDEA
 Software Institute and the Technical University of Madrid.
 
-## CLaSH
+## CλaSH
 
-CLaSH – pronounced: clash – is a functional hardware description language that
+CλaSH – pronounced: clash – is a functional hardware description language that
 borrows both the syntax and semantics from the functional programming language
 Haskell. 
 
 It provides a familiar structural design approach to both combinational
 and synchronous sequential circuits. 
 
-The CLaSH compiler transforms these highlevel
+The CλaSH compiler transforms these highlevel
 descriptions to low-level synthesisable VHDL, Verilog, or SystemVerilog.
-The CLaSH compiler is developed at the University of Twente, in the chair
+The CλaSH compiler is developed at the University of Twente, in the chair
 CAES (Computer Architecture for Embedded Systems).
 
 ## Haskell transformations
 
 The Haskell transformations tool consists of two parts:
 
-* H2H: Haskell-to-Haskell transformations, which realize mathematical equivalences of algorithmic structures into actual transformations of Haskell code,
+* **H2H**: Haskell-to-Haskell transformations, which realize mathematical equivalences of algorithmic structures into actual transformations of Haskell code,
 
-* H2C: Haskell-to-C transformations, to generate C-code from specifications in Haskell of algorithmic structures.
+* **H2C**: Haskell-to-C transformations, to generate C-code from specifications in Haskell of algorithmic structures.
 
 The Haskell-to-Haskell transformation tool (H2H) can apply transformations
 to Haskell code that is derived from the annotations attached to a given C-program.
@@ -121,31 +125,31 @@ dynamic instrumentation, profiling and run-time control of applications. The dif
 components of SmartDriver are designed to gather the necessary information
 to assist and asses the impact of the POLCA transformations on the applications.
 
-* TSC library The TSC library (libTSC) uses the hardware resources of modern
+* **TSC library** The TSC library (libTSC) uses the hardware resources of modern
 x86_64 CPUs to determine the CPU cycle count from the latest reset.
 
-* ACC library The ARM Cycle Counter library (libACC) uses the hardware resources
+* **ACC library** The ARM Cycle Counter library (libACC) uses the hardware resources
 of ARM-v7 and newer ARM-based CPUs to obtain the cycle counters
 of each core since it was reset.
 
-* libEMOXU-3 The Energy Monitoring for Odroid XU-3 board library (libEMOXU-3)
+* **libEMOXU-3** The Energy Monitoring for Odroid XU-3 board library (libEMOXU-3)
 uses the four voltage and current sensors that power the SoC to report the energy
 usage of the ARM Cortex A-15 cluster, the ARM Cortex A-7 cluster,
 the GPU and the system memory to create reports of the memory usage on
 the system.
 
-* libEMOHH The Energy Monitoring for Hazel Hen HPC system (libEMOHH)
+* **libEMOHH** The Energy Monitoring for Hazel Hen HPC system (libEMOHH)
 uses energy reporting hardware of each node to create reports of the memory
 usage on the system.
 
-* ASMCount ASMCounts an application that analyzes statically the binary code
+* **ASMCount** ASMCounts an application that analyzes statically the binary code
 generated for the compiler and predicts the computational cost of the different
 POLCA scopes in the code.
 The output is a JSON file that can be used by other tools to determine the
 code transformations to perform or visualization tools such as SDFpy and
 POGADE.
 
-* POLCA Event Driver The POLCA event driver is a tool based on the Extrae
+* **POLCA Event Driver** The POLCA event driver is a tool based on the Extrae
 package that generates race-files for post-mortem analysis. This tool uses
 different interposition mechanisms to inject probes into the target application
 so as to gather information regarding the application performance. It supports
@@ -202,28 +206,28 @@ Maxeler provides an in-house developed programming environment and runtime
 which comprises of the following components (that currently require Linux
 CentOS version 6.7 or higher):
 
-* MaxCompiler Maxeler’s custom-built general-purpose programming environment
+* **MaxCompiler** Maxeler’s custom-built general-purpose programming environment
 for developing data-flow applications. MaxCompiler takes as input a MaxJ
 program and generates a DFE implementation (a .max file) that can be called
 from a CPU application via the SLiC interface (see below). A .max file contains
 a bitstream as well as relevant metadata.
 
-* SLiC The Simple Live CPU interface is Maxeler’s application programming interface
+* **SLiC** The Simple Live CPU interface is Maxeler’s application programming interface
 for seamless CPU-DFE integration. SLiC allows CPU applications
 to configure and load a number of DFEs as well as to subsequently schedule
 and run actions on those DFEs using simple function calls.
 
-* MaxelerOS A software layer and run time sitting between the SLiC interface, the
+* **MaxelerOS** A software layer and run time sitting between the SLiC interface, the
 Linux operating system and the hardware, which manages DFE hardware
 and CPU-DFE interactions in a way transparent to the user.
 
-* MaxIDE A specialised Eclipse-based integrated development environment for MaxJ
+* **MaxIDE** A specialised Eclipse-based integrated development environment for MaxJ
 and DFE design, a fast DFE software simulator and comprehensive debug
 provisioning tool set used during development.
 
 MaxCompiler, SLiC, MaxelerOS and MaxIDE have been developed by Maxeler
-Technologies. All extensions developed within the context of POLCA are not
-open source and will not be made available on the project’s GitHub site.
+Technologies. ***All extensions developed within the context of POLCA are not
+open source and will not be made available on this repository.***
 
 ## Flexaware
 
@@ -247,5 +251,5 @@ defined tasks and communication channels.
 POLCA’s source to source transformation engine uses the annotations in the
 original C code to identify functions that can be used to extract tasks that will be
 passed to the FlexaWare compiler.
-FlexaWare has been developed by Recore Systems.
+***FlexaWare has been developed by Recore Systems as proprietary tool and hence is not open sourced within the context of POLCA.***
 
