@@ -1450,9 +1450,91 @@ addPositionInfoStmt label ostmt@(CFor _ _ _ _ _) =
 addPositionInfoStmt label stmt = 
 	changePositions label stmt 
 
+---------------------------------------------------------
+-- Simplification
+---------------------------------------------------------
+
+simplifyExprs state = 
+	state{fun_defs = ([simplifyExprsFun fun | fun <- fun_defs state])}
 
 
+simplifyExprsFun (fun_state, info_fun, body) = 
+	let 
+		nbody0 = fixPointSimplify body searchSimplicableOperations simplifyOperation
+		nbody = fixPointSimplify nbody0 searchSimplicableTernaries simplifyTernary
+	in
+		(fun_state, info_fun, nbody)
 
+
+fixPointSimplify :: CStatAnn -> (CExprAnn -> [CExprAnn]) -> (CExprAnn -> CExprAnn) -> CStatAnn
+fixPointSimplify stmt funSearch funTrans = 
+	let 
+		simplificable = applyRulesGeneral funSearch stmt
+		nstmt = 
+			foldl 
+				(\ast change -> changeAST change ast)
+				stmt
+				[(sim, funTrans sim) | sim <- simplificable]
+	in 
+		case (geq nstmt stmt) of 
+			True -> 
+				nstmt 
+			False ->
+				fixPointSimplify nstmt funSearch funTrans
+
+searchSimplicableOperations :: CExprAnn -> [CExprAnn]
+searchSimplicableOperations expr@(CBinary _ (CConst (CIntConst _ _)) (CConst (CIntConst _ _)) _) = 
+	[expr]
+searchSimplicableOperations expr@(CBinary _ (CConst (CIntConst v _)) _ _) | (getCInteger v) == 0 = 
+	[expr]
+searchSimplicableOperations expr@(CBinary _ (CConst (CIntConst v _)) _ _) | (getCInteger v) == 1 = 
+	[expr]
+searchSimplicableOperations expr@(CBinary _ _ (CConst (CIntConst v _)) _) | (getCInteger v) == 0 = 
+	[expr]
+searchSimplicableOperations expr@(CBinary _ _ (CConst (CIntConst v _)) _) | (getCInteger v) == 1 = 
+	[expr]
+searchSimplicableOperations other = 
+	[]
+
+searchSimplicableTernaries :: CExprAnn -> [CExprAnn]
+searchSimplicableTernaries expr@(CCond cond1 (Just (CCond cond2 (Just t) e1 _)) e2 _) = 
+	case (exprEqual e1 e2) of 
+		True ->
+			[expr]
+		False ->
+			[]
+searchSimplicableTernaries other = 
+	[]
+
+simplifyOperation (CBinary CAddOp (CConst (CIntConst x _)) (CConst (CIntConst y _)) nI) = 
+	(CConst (CIntConst (cInteger (toInteger ((getCInteger x) + (getCInteger y)))) nI))
+simplifyOperation (CBinary CMulOp (CConst (CIntConst x _)) (CConst (CIntConst y _)) nI) = 
+	(CConst (CIntConst (cInteger (toInteger ((getCInteger x) * (getCInteger y)))) nI))
+simplifyOperation (CBinary CSubOp (CConst (CIntConst x _)) (CConst (CIntConst y _)) nI) = 
+	(CConst (CIntConst (cInteger (toInteger ((getCInteger x) - (getCInteger y)))) nI))
+simplifyOperation expr@(CBinary op e1 e2 nI) = 
+	case (e1, e2, op) of 
+		((CConst (CIntConst v _)), _, CAddOp) | (getCInteger v) == 0 ->
+			e2
+		((CConst (CIntConst v _)), _, CSubOp) | (getCInteger v) == 0 ->
+			e2
+		((CConst (CIntConst v _)), _, CMulOp) | (getCInteger v) == 1 ->
+			e2
+		(_, (CConst (CIntConst v _)), CAddOp) | (getCInteger v) == 0 ->
+			e1
+		(_, (CConst (CIntConst v _)), CSubOp) | (getCInteger v) == 0 ->
+			e1
+		(_, (CConst (CIntConst v _)), CMulOp) | (getCInteger v) == 1 ->
+			e1
+		_ ->
+			expr
+simplifyOperation other = 
+	other
+
+simplifyTernary (CCond cond1 (Just (CCond cond2 (Just t) e1 _)) e2 nI) = 
+	(CCond (CBinary CAndOp cond1 cond2 undefNodeAnn) (Just t) e2 nI)
+simplifyTernary other = 
+	other
 
 ---------------------------------------------------------
 -- OLD CODE

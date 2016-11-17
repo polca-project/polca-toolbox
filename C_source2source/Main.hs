@@ -84,13 +84,8 @@ trans_to_platformInt name seq_id print_id polca_block =
 		state <- getTransInt name mode 0 seq_id print_id polca_block ""
 		to_platform name state
 
-to_platform name state = 
+to_platform name state0 = 
 	do 
-		let finish_fun = 
-			\() ->
-				do 		
-					askStoreSteps name state
-					putStrLn ("Transformation process finished.\n")
 		let platforms = 
 			[
 			"opencl",
@@ -103,6 +98,20 @@ to_platform name state =
 			"go back to transformation",
 			"none"
 			]
+		answerSim <- 
+			ask "Do you want to try to apply some simplifications in your code"
+				["y", "n"]
+		let state = 
+			case answerSim of 
+				"n" ->
+					state0
+				"y" ->
+					(simplifyExprs state0){previous_changes = ([],[])}
+		let finish_fun = 
+			\() ->
+				do 		
+					askStoreSteps name state
+					putStrLn ("Transformation process finished.\n")
 		let (question, answers,dict) = prepareQuestionAnswerRule platforms  1
 		answer0 <- ask ("To what platform do you want to generate current code:\n" ++ question) answers
 		case (head [plat | (answer_,plat) <- dict, answer_ == answer0]) of 
