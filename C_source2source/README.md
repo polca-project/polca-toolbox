@@ -462,6 +462,8 @@ original but with selected platform as suffix.
 The oracle-based mode works completely automatic using and oracle which in our case is a command. Therefore, it needs as an input a support command that reads JSON expressions and returns the transformation step that should be applied. The usage of this tool is as following:
 
 ```
+$ make exe_ext
+...
 $ ./polca_s2s_ext 
 Usage:
           polca_s2s_ext command filename [polca_block]
@@ -472,7 +474,7 @@ The name of a defined block is optional.
 For instance, if one wants to run an oracle-based session using the [Machine Learning module](https://github.com/polca-project/polca-toolbox/tree/master/Machine%20learning%20component), the following command should be used:
 
 ```
-$ ./polca_s2s_ext "py polca_ml" vec_mult.c
+$ ./polca_s2s_ext "../Machine learning component/static_analyser/s2s_ml_interface.py" vec_mult.c
 ...
 ```
 
