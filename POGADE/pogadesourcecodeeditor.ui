@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>486</width>
+    <width>506</width>
     <height>300</height>
    </rect>
   </property>
@@ -237,7 +237,7 @@
    <sender>buttonTransformations</sender>
    <signal>clicked()</signal>
    <receiver>PogadeSourceCodeEditor</receiver>
-   <slot>showTransformations()</slot>
+   <slot>viewTransformations()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>74</x>
@@ -274,6 +274,6 @@
   <slot>viewGraph()</slot>
   <slot>viewTree()</slot>
   <slot>showMemory(int)</slot>
-  <slot>showTransformations()</slot>
+  <slot>viewTransformations()</slot>
  </slots>
 </ui>

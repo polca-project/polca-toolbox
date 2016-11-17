@@ -434,6 +434,20 @@ bool PogadeProjectSourceFile::scopeTree() {
   return _scopeTree;
 }
 
+void PogadeProjectSourceFile::setTransformationView(bool transformationView, QDockWidget* dock) {
+  _transformationView = transformationView;
+  _dockTransformationView = dock;
+}
+
+PolcaTransformation* PogadeProjectSourceFile::transformation(int id) {
+  for(PolcaTransformation &pt : _transformations) {
+    if(pt.id() == id) {
+      return &pt;
+    }
+  }
+  return nullptr;
+}
+
 void PogadeProjectSourceFile::setScopeTree(bool scopeTree, QDockWidget* dock) {
   _scopeTree = scopeTree;
   _dockScopeTree = dock;
@@ -449,4 +463,16 @@ void PogadeProjectSourceFile::setMemoryShow(bool show) {
 
 bool PogadeProjectSourceFile::memoryShow() {
   return _showMemory;
+}
+
+void PogadeProjectSourceFile::clearTransformatios() {
+  _transformations.clear();
+}
+
+void PogadeProjectSourceFile::addTransformation(PolcaTransformation pt) {
+  _transformations.push_back(pt);
+}
+
+std::vector<PolcaTransformation> PogadeProjectSourceFile::getTransformations() {
+  return _transformations;
 }

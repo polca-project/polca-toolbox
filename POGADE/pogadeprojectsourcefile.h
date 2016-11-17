@@ -11,6 +11,7 @@
 #include <tuple>
 
 #include "polcascope.h"
+#include "polcatransformation.h"
 
 class PogadeProject;
 
@@ -36,6 +37,10 @@ public:
   void setVisualized(bool visualized, QDockWidget* dock);
   bool scopeTree();
   void setScopeTree(bool scopeTree, QDockWidget* dock);
+
+  void setTransformationView(bool transformationView, QDockWidget* dock);
+
+
   bool scopeTransformations();
   void setScopeTransformations(bool scopeTransformations, QDockWidget* dock);
   QString code();
@@ -73,6 +78,11 @@ public:
   void setMemoryShow(bool show);
   bool memoryShow();
 
+  void clearTransformatios();
+  void addTransformation(PolcaTransformation pt);
+  std::vector<PolcaTransformation> getTransformations();
+  PolcaTransformation* transformation(int id);
+
 private:
   unsigned int _latestRev = 0;
   unsigned int _id;
@@ -84,16 +94,20 @@ private:
   bool _opened = false;
   bool _visualized = false;
   bool _scopeTree = false;
+  bool _transformationView = false;
   bool _scopeTransformations = false;
   PogadeProject* _project;
   QDockWidget* _dock = nullptr;
   QDockWidget* _dockVisual = nullptr;
   QDockWidget* _dockScopeTree = nullptr;
+  QDockWidget* _dockTransformationView = nullptr;
   QDockWidget* _dockTransformations = nullptr;
   std::vector<PolcaScope> _scopes;
   bool _validScopes = false;
   bool _showMemory = true;
   std::vector<ScopeChild> _rootChildren;
+  ///////////////
+  std::vector<PolcaTransformation> _transformations;
 };
 
 #endif // POGADEPROJECTSOURCEFILE_H

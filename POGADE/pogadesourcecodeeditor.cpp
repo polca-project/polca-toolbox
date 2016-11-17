@@ -5,6 +5,7 @@
 #include "pogaderevisioncreate.h"
 #include "polcapragma.h"
 #include "polcascope.h"
+#include "polcatransformation.h"
 #include "scopeneighbourinfo.h"
 #include "pogadedefines.h"
 #include "toolswait.h"
@@ -224,46 +225,60 @@ void PogadeSourceCodeEditor::setTDir(QTemporaryDir *tDir) {
 }
 
 void PogadeSourceCodeEditor::polcaProcessCode() {
-  //qDebug() << "POLCA PROCESS!";
-  //qDebug() << "In theory we call the polca toolchian now... and wait for the processing";
-
-  //QString fileLocation = "/home/daniel/tp01r0.par";
-
+  QSettings settings;
   QString fileString = _tDir->path() + "/" + sf->name();
-
   QFile file(fileString);
   bool r = file.open(QFile::WriteOnly | QFile::Text);
-
   if(r) {
     file.write(sf->codeRev(sf->getRevInUse()).toLatin1());
     file.flush();
   }
-
   fileString.chop(2);
 
-  //qDebug() << "FILE: " << fileString;
-  QStringList args;
-  args << fileString;
-
-  QSettings settings;
-  QProcess tool;
-  //qDebug() << "Tool: " << settings.value("PTReader", POLCATOOLREADER).toString();
-  tool.start(settings.value("PTReader", POLCATOOLREADER).toString(), args);
+  QStringList argsReader;
+  argsReader << fileString;
+  QProcess toolReader;
+  toolReader.start(settings.value("PTReader", POLCATOOLREADER).toString(), argsReader);
 
 
-  // Launch wait window
   toolsWait *tw = new toolsWait();
   tw->show();
 
-  if (!tool.waitForStarted(-1)) {
-    //qDebug() << "Wait For Started Failed";
+  //qDebug() << "AAA";
+
+  if (!toolReader.waitForStarted(-1)) {
+    qDebug() << "Wait For Started Reader Failed";
   }
 
-  while(!tool.waitForFinished(10)) {
+  //qDebug() << "BBB";
+
+  while(!toolReader.waitForFinished(10)) {
     QCoreApplication::processEvents();
     //qDebug() << "Loop";
   }
 
+ //qDebug() << "CCC";
+
+ QStringList argsInit;
+ argsInit << fileString;
+ QProcess toolInit;
+ toolInit.start(settings.value("PTInit", POLCATOOLINIT).toString(), argsInit);
+
+ if (!toolInit.waitForStarted(-1)) {
+   qDebug() << "Wait For Started Init Failed";
+   qDebug() << toolInit.readAllStandardOutput();
+   qDebug() << "------------------------";
+   qDebug() << toolInit.readAllStandardError();
+ }
+
+  //qDebug() << "DDD";
+
+  while(!toolInit.waitForFinished(10)) {
+    QCoreApplication::processEvents();
+    //qDebug() << "Loop";
+  }
+
+  //qDebug() << "EEE";
   /*
   if (!tool.waitForFinished(-1)) {
     qDebug() << "Wait For Finished Failed";
@@ -273,29 +288,72 @@ void PogadeSourceCodeEditor::polcaProcessCode() {
   // Clouse wait window
   delete tw;
 
-  QByteArray _data =  tool.readAllStandardOutput();
-  QString data = _data;
+  QByteArray _dataReader =  toolReader.readAllStandardOutput();
+  QString dataReader = _dataReader;
 
-  //qDebug() << "JSON" << data;
+  QByteArray _dataInit =  toolInit.readAllStandardOutput();
+  QString dataInit = _dataInit;
 
-  loadPolcaProcessingData(data);
-  //loadPolcaProcessing(fileLocation);
+  //qDebug() << dataInit;
+  //qDebug() << "------------------------";
+  //qDebug() << toolInit.readAllStandardError();
+
+  loadPolcaProcessingData(dataReader);
+  loadPolcaTransformationsData(dataInit);
+}
+
+void PogadeSourceCodeEditor::loadPolcaTransformationsData(QString data) {
+  QJsonDocument doc = QJsonDocument::fromJson(data.toLatin1());
+  if(doc.isEmpty()) {
+    ui->buttonTransformations->setEnabled(false);
+    return;
+  }
+  ui->buttonTransformations->setEnabled(true);
+
+  QJsonObject obj = doc.object();
+  QJsonArray transformations = obj.value("changes").toArray();
+
+  /****************************************************************/
+  /****************************************************************/
+
+  for(QJsonValue t : transformations) {
+    PolcaTransformation *pt = new PolcaTransformation;
+    pt->setId(PolcaTransformation::idNext());
+    PolcaTransformation::idNextIncrease();
+
+    pt->setTransformationId(t.toObject().value("idChange").toInt());
+    pt->setLineStart(t.toObject().value("line").toInt());
+    pt->setCodeNew(t.toObject().value("newCode").toString());
+    pt->setCodeOld(t.toObject().value("oldCode").toString());
+    pt->setRuleName(t.toObject().value("ruleName").toString());
+
+    sf->addTransformation(*pt);
+    delete pt;
+  }
+  /****************************************************************/
+  /****************************************************************/
+  //showTransformations();
+}
+
+/*
+void PogadeSourceCodeEditor::showTransformations() {
 
 }
+*/
 
 void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
   QJsonDocument doc = QJsonDocument::fromJson(data.toLatin1());
   if(doc.isEmpty()) {
     ui->buttonViewGraph->setEnabled(false);
     ui->buttonTree->setEnabled(false);
-    ui->buttonTransformations->setEnabled(false);
+    //ui->buttonTransformations->setEnabled(false);
     ui->checkShowMemory->setEnabled(false);
     return;
   }
 
   ui->buttonViewGraph->setEnabled(true);
   ui->buttonTree->setEnabled(true);
-  ui->buttonTransformations->setEnabled(true);
+  //ui->buttonTransformations->setEnabled(true);
   ui->checkShowMemory->setEnabled(true);
   QJsonObject obj = doc.object();
   QJsonArray pragmas = obj.value("pragmas").toArray();
@@ -449,7 +507,6 @@ void PogadeSourceCodeEditor::showPragmas() {
   se->markerDeleteAll(SC_MARK_P_LINE);
   se->markerDeleteAll(SC_MARK_P_SYMB);
 
-
   if(sf && sf->validScope()) {
     std::vector<PolcaScope> scopes = sf->getScopes();
 
@@ -550,7 +607,7 @@ void PogadeSourceCodeEditor::viewGraph() {
   emit createNV(sf);
 }
 
-void PogadeSourceCodeEditor::showTransformations() {
+void PogadeSourceCodeEditor::viewTransformations() {
   emit createTR(sf);
 }
 

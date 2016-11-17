@@ -10,6 +10,7 @@
 #include "pogadesourcecodeeditor.h"
 #include "pogadetransformationview.h"
 #include "polcascope.h"
+#include "polcatransformation.h"
 
 #include <iostream>
 #include <QDebug>
@@ -35,6 +36,7 @@ PogadeMainWindow::PogadeMainWindow(QWidget *parent) :
 
   setUpProject();
   PolcaScope::idNextReset();
+  PolcaTransformation::idNextReset();
 
   // Set up Menus
   menuCodeEditor = ui->menuView->addMenu(tr("Code Editors"));
@@ -450,8 +452,9 @@ void PogadeMainWindow::newTR(PogadeProjectSourceFile* source) {
 
     PogadeTransformationView *we = (PogadeTransformationView*) w;
     we->setSourceFile(source);
+    we->updateGUI();
 
-    source->setScopeTree(true, _ntr);
+    source->setTransformationView(true, _ntr);
     _dockTransformationsList << _ntr;
     _ntr->show();
     this->addDockWidget(Qt::BottomDockWidgetArea, _ntr);

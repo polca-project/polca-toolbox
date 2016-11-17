@@ -119,8 +119,11 @@ public:
   static bool isParInput(ScopeChild& sc, QString par);
   static bool isParOutput(ScopeChild& sc, QString par);
   /***************************************/
-  static std::vector<ParPos> processPragmaIO(int type, QStringList l);
+  //static std::vector<ParPos> processPragmaIO(int type, QStringList l);
+  static std::vector<ParPos> processPragmaIO(int type, std::vector<QStringList> l);
   static ParPos* getParPosWithName(std::vector<ParPos> &list, QString varName);
+  /***************************************/
+  static std::vector<QStringList> splitParameters(QString params);
   /***************************************/
 
   void printIO(std::vector<ParChild> varsC);

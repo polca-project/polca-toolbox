@@ -38,7 +38,8 @@ SOURCES += main.cpp\
     graphexportdialog.cpp \
     toolswait.cpp \
     scopeneighbourinfo.cpp \
-    pogadetransformationview.cpp
+    pogadetransformationview.cpp \
+    polcatransformation.cpp
 
 HEADERS  += pogademainwindow.h \
     pogadeproject.h \
@@ -62,7 +63,8 @@ HEADERS  += pogademainwindow.h \
     graphexportdialog.h \
     toolswait.h \
     scopeneighbourinfo.h \
-    pogadetransformationview.h
+    pogadetransformationview.h \
+    polcatransformation.h
 
 FORMS    += pogademainwindow.ui \
     newprojectdialog.ui \

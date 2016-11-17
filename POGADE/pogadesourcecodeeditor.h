@@ -85,8 +85,10 @@ private slots:
   void polcaProcessCode();
   //void loadPolcaProcessing(QString file);
   void loadPolcaProcessingData(QString data);
+  void loadPolcaTransformationsData(QString data);
   void showPragmas();
-  void showTransformations();
+  //void showTransformations();
+  void viewTransformations();
   void viewGraph();
   void viewTree();
   //void makeStandard();

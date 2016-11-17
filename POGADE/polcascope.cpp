@@ -280,11 +280,78 @@ std::vector<ParPos> PolcaScope::fParameters() {
   return _parPosC;
 }
 
+std::vector<QStringList> PolcaScope::splitParameters(QString params) {
+  std::vector<QStringList> v;
+  QStringList l = params.split(' ', QString::SkipEmptyParts);
+  QStringList *_l;
+  bool inZip = false;
+
+  for(int i=0; i<l.size(); i++) {
+    if(i==0) {
+      _l = new QStringList();
+      _l->append(l[i]);
+      v.push_back(*_l);
+      delete _l;
+    }
+    else {
+      if(inZip) {
+        QString s1 = l[i];
+        if(s1.endsWith(")")) {
+          QString s2 = s1.mid(0, s1.size()-1);
+          _l->append(s2);
+          v.push_back(*_l);
+          delete _l;
+          inZip = false;
+        }
+        else {
+          QString s2 = s1.mid(0, s1.size()-1);
+          _l->append(s2);
+        }
+      }
+      else {
+        QString s1 = l[i];
+        if(s1.startsWith("zip(")) {
+          _l = new QStringList();
+
+          QString s2 = s1.mid(4, s1.size()-5);
+          _l->append(s2);
+          inZip = true;
+        }
+        else {
+          _l = new QStringList();
+          _l->append(l[i]);
+          v.push_back(*_l);
+          delete _l;
+        }
+      }
+    }
+  }
+
+
+  return v;
+}
+
+/*
 void PolcaScope::automaticType() {
   int type = 0;
   for(PolcaPragma p : _pragmas) {
     QStringList l = p.text().split(' ', QString::SkipEmptyParts);
     type = stringToType(l[0]);
+    if(type) {
+      this->_parPosC = processPragmaIO(type, l);
+      break;
+    }
+  }
+  _type = type;
+}
+*/
+
+void PolcaScope::automaticType() {
+  int type = 0;
+  for(PolcaPragma p : _pragmas) {
+    std::vector<QStringList> l = splitParameters(p.text());
+    QStringList _l = l[0];
+    type = stringToType(_l[0]);
     if(type) {
       this->_parPosC = processPragmaIO(type, l);
       break;
@@ -360,6 +427,128 @@ ParPos* PolcaScope::getParPosWithName(std::vector<ParPos> &list, QString varName
   return nullptr;
 }
 
+std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringList> l) {
+  std::vector<ParPos> _pars;
+  ParPos* p;
+  ParPos* _p;
+  QStringList _l1;
+  QStringList _l2;
+
+  switch(type) {
+    case POLCA_MAP:
+      for(QString _l : l[2]) {
+        p = getParPosWithName(_pars, _l);
+        if(p) {
+          p->posP.push_back(1);
+          p->input = true;
+        } else {
+          _p = new ParPos;
+          _p->var    = _l;
+          _p->posC   = _pars.size()+1;
+          _p->posP.push_back(1);
+          _p->input  = true;
+          _p->output = false;
+          _pars.push_back(*_p);
+        }
+      }
+
+      for(QString _l : l[3]) {
+        p = getParPosWithName(_pars, _l);
+        if(p) {
+          p->posP.push_back(2);
+          p->output = true;
+        } else {
+          _p = new ParPos;
+          _p->var    = _l;
+          _p->posC   = _pars.size()+1;
+          _p->posP.push_back(2);
+          _p->input  = false;
+          _p->output = true;
+          _pars.push_back(*_p);
+        }
+      }
+      break;
+    case POLCA_ITN:
+    case POLCA_ZIPWITH:
+    case POLCA_FOLDL:
+      for(QString _l : l[2]) {
+        p = getParPosWithName(_pars, _l);
+        if(p) {
+          p->posP.push_back(1);
+          p->input = true;
+        } else {
+          _p = new ParPos;
+          _p->var    = _l;
+          _p->posC   = _pars.size()+1;
+          _p->posP.push_back(1);
+          _p->input  = true;
+          _p->output = false;
+          _pars.push_back(*_p);
+        }
+      }
+
+      for(QString _l : l[3]) {
+        p = getParPosWithName(_pars, _l);
+        if(p) {
+          p->posP.push_back(2);
+          p->input = true;
+        } else {
+          _p = new ParPos;
+          _p->var    = _l;
+          _p->posC   = _pars.size()+1;
+          _p->posP.push_back(2);
+          _p->input  = true;
+          _p->output = false;
+          _pars.push_back(*_p);
+        }
+      }
+
+      for(QString _l : l[4]) {
+        p = getParPosWithName(_pars, _l);
+        if(p) {
+          p->posP.push_back(2);
+          p->output = true;
+        } else {
+          _p = new ParPos;
+          _p->var    = _l;
+          _p->posC   = _pars.size()+1;
+          _p->posP.push_back(3);
+          _p->input  = false;
+          _p->output = true;
+          _pars.push_back(*_p);
+        }
+      }
+      break;
+    case POLCA_MEMALLOC:
+      _l1 = l[3];
+      _p = new ParPos;
+      _p->var    = _l1[0];
+      _p->posC   = _pars.size()+1;
+      _p->posP.push_back(1);
+      _p->input  = false;
+      _p->output = true;
+      _pars.push_back(*_p);
+      break;
+    case POLCA_MEMFREE:
+      _l2 = l[1];
+      _p = new ParPos;
+      _p->var    = _l2[0];
+      _p->posC   = _pars.size()+1;
+      _p->posP.push_back(1);
+      _p->input  = true;
+      _p->output = true;
+      _pars.push_back(*_p);
+      break;
+    default:
+      //p->input  = false;
+      //p->output = false;
+      break;
+  }
+
+  return _pars;
+}
+
+/*
 std::vector<ParPos> PolcaScope::processPragmaIO(int type, QStringList l) {
   std::vector<ParPos> _pars;
   ParPos* p;
@@ -466,6 +655,7 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, QStringList l) {
 
   return _pars;
 }
+*/
 
 void PolcaScope::setIOPar(ParPos*p, int type) {
   //p->input  = false;
