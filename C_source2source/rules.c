@@ -493,40 +493,33 @@ collapse_2_for_loops
         no_writes(cexpr(i),cstmts(prelude));
         no_writes(cexpr(i),cstmts(postlude));
         no_writes(cexpr(j),cstmts(prelude));
-        no_writes(cexpr(j),cstmts(postlude));
+        // no_writes(cexpr(j),cstmts(postlude));
         // They are used in several spots in the resulting code
         pure(cexpr(limit1));
         pure(cexpr(limit2));
+        // no_empty(cstmts(prelude));
+        // no_empty(cstmts(postlude));
     }
     generate:
     {
         // #pragma polca same_properties a
         filter_decl(cstmts(prelude));
-        for(cexpr(j) = cexpr(initial_value); cexpr(j) < (cexpr(limit1) * cexpr(limit2)); cexpr(j)++)
+        cdecl(cint(),cexpr(ni));
+        for(cexpr(ni) = cexpr(initial_value); cexpr(ni) < (cexpr(limit1) * cexpr(limit2)); cexpr(ni)++)
         {
-            if_then_else:
+            if(cexpr(ni) % cexpr(limit2) == 0) 
             {
-                no_empty(cstmts(prelude));
-                if(cexpr(j) % cexpr(limit2) == 0) 
-                {
-                    filter_no_decl(cstmts(prelude));
-                }
-                ;
+                filter_no_decl(cstmts(prelude));
             }
             subs(
-                subs(cstmts(body),cexpr(j),cexpr(j)%cexpr(limit2)),
+                subs(cstmts(body),cexpr(j),cexpr(ni)%cexpr(limit2)),
                 cexpr(i),
-                cexpr(j)/cexpr(limit2)
+                cexpr(ni)/cexpr(limit2)
                 ); 
-            if_then_else:
+            if(cexpr(ni) % cexpr(limit2) == 0) 
             {
-                no_empty(cstmts(postlude));
-                if(cexpr(j) % cexpr(limit2) == 0) 
-                {
-                    cstmts(postlude);
-                }
-                ;
-            }      
+                cstmts(postlude);
+            }    
         }
         // These two assignments are needed to leave the correct values
         cexpr(i) = cexpr(limit1);
