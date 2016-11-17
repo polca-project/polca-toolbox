@@ -519,3 +519,35 @@ contiguous_same_if
         cstmts(post);
     }
 }
+
+divide_if
+{
+    pattern:
+    {
+        cstmts(pre);
+        if (cexpr(cond))
+        {
+            cstmt(to_new_if);
+            cstmts(rest_body);
+        }
+        cstmts(post);
+    }
+    condition:
+    {
+        no_writes_in_read(cstmt(to_new_if), cexpr(cond));
+        no_empty(cstmts(rest_body));
+    }
+    generate:
+    {
+        cstmts(pre);
+        if (cexpr(cond))
+        {
+            cstmt(to_new_if);
+        }
+        if (cexpr(cond))
+        {
+            cstmts(rest_body);
+        }
+        cstmts(post);
+    }
+}
