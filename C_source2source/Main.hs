@@ -586,7 +586,7 @@ featuresExtract filename rules block =
 				Nothing ->
 					[]
 		let funs = 
-			[f | (rule1, f) <- dictRules, elem rule1 rules]
+			[f | (rule1, f) <- dictRulesAll, elem rule1 rules]
 		case astsDef of 
 			[] ->
 				-- putStrLn $ buildJSON  iniState (getApplicableChangesSpecRules iniState rules)

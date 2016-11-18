@@ -123,12 +123,16 @@ stml2Has name =
 		let rulNamesStr = printList id "\", \"" rulNames
 		let rulDictStr = intercalate ", " (map (\(rStml, rHas) -> "(\"" ++ rStml ++ "\", " ++ rHas ++ ")") rulDict)
 		let listRules = 
-			"nameRules = [\"" ++ rulNamesStr ++ "\"]\n"
-			++ "dictRules = [" ++ rulDictStr ++ "]\n"
-			++ "stmtRules :: [TransState -> CStatAnn -> [((String, CStatAnn, CStatAnn), TransState,[(String, CStatAnn)])]]\n" 
-			++ "stmtRules = [" ++ rulStmtStr ++ "]\n"
-			++ "exprRules :: [TransState -> CExprAnn -> [((String, CExprAnn, CExprAnn), TransState,[(String, CStatAnn)])]]\n"
-			++ "exprRules = [" ++ rulExpStr ++ "]\n" 
+				"nameRulesAll = [\"" ++ rulNamesStr ++ "\"]\n"
+			++ 	"dictRulesAll = [" ++ rulDictStr ++ "]\n"
+			++ 	"nameRules = [r | r <- nameRulesAll, not $ isPrefix \"feat_\" r]\n"
+			++ 	"dictRules = [item | item@(r, _) <- dictRulesAll, not $ isPrefix \"feat_\" r]\n"
+			++ 	"stmtRules :: [TransState -> CStatAnn -> [((String, CStatAnn, CStatAnn), TransState,[(String, CStatAnn)])]]\n" 
+			-- ++ "stmtRules = [" ++ rulStmtStr ++ "]\n"
+			++ 	"stmtRules = [r | (_, Right r) <- dictRules]\n"
+			++ 	"exprRules :: [TransState -> CExprAnn -> [((String, CExprAnn, CExprAnn), TransState,[(String, CStatAnn)])]]\n"
+			-- ++ "exprRules = [" ++ rulExpStr ++ "]\n" 
+			++ 	"exprRules = [r | (_, Left r) <- dictRules]\n" 
 		let pragmasRules = 
 			"pragmasRules = " ++ (show linkedPolcaAnn) ++ "\n"
 		let modHeader = 

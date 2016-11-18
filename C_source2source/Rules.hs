@@ -14,6 +14,8 @@ import Language.C.Data.Ident
 
 import Data.Generics
 
+nameRulesAll = []
+dictRulesAll = []
 nameRules = []
 dictRules = []
 stmtRules :: [TransState -> CStatAnn -> [((String, CStatAnn, CStatAnn), TransState,[(String, CStatAnn)])]]

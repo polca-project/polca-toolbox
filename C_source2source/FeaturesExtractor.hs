@@ -9,7 +9,7 @@ module FeaturesExtractor where
 
 import Main as M (featuresExtract)
 
-import Rules as R (nameRules)
+import Rules as R (nameRulesAll)
 
 import PragmaPolcaLib as PPL (trim)
 
@@ -29,7 +29,7 @@ detFileName args =
 			(args!!0)
 detListRules args = 
 	let 
-		allRules = R.nameRules
+		allRules = R.nameRulesAll
 	in 
 		case (args!!1) of 
 			"ALL" ->

@@ -1450,6 +1450,13 @@ addPositionInfoStmt label ostmt@(CFor _ _ _ _ _) =
 addPositionInfoStmt label stmt = 
 	changePositions label stmt 
 
+isPrefix pre str = 
+	case stripPrefix pre str of 
+		Nothing ->
+			False 
+		(Just _) ->
+			True
+
 ---------------------------------------------------------
 -- Simplification
 ---------------------------------------------------------
