@@ -797,7 +797,7 @@ getModifiedState name selected =
 			[(False, item) 
 			 | item@(_,((rule,_,_),_,[])) <- listChangesStmts0]
 		let allChanges = 
-			listChangesStmtsToStmts ++ listChangesExprsToStmts
+			listChangesExprsToStmts ++ listChangesStmtsToStmts
 		let (isExpr, (fun, ((_,oldS,newS),nstate,_))) = 
 				allChanges!!selected
 		let nfun_defs = 
@@ -1517,9 +1517,28 @@ applyruleInt state filename steps recalculate =
 applyRuleWithOracle filename state jsonChanges = 
 	do 
 		writeFile (filename ++ ".json") jsonChanges
+		let target = 
+			case (ast_to_transform state) of 
+				Nothing -> 
+					"none"
+				(Just (_, astDef, _)) ->
+					foldl 
+						(\current targ -> 
+							case current of 
+								"none" ->
+									case (isKernel targ (CBlockStmt astDef)) of 
+										True ->
+											targ
+										False ->
+											current 
+								_ ->
+									current
+						)
+						"none"
+						["opencl", "maxj", "mpi", "omp"]
 		let cmd = 
 			-- (oracle state) ++ " \"" ++ (intoString jsonChanges) ++ "\" > oracle_choice.txt"
-			(oracle state) ++ " " ++ (filename ++ ".json") ++ " > oracle_choice.txt"
+			(oracle state) ++ " " ++ (filename ++ ".json") ++ " " ++ target ++ " > oracle_choice.txt"
 		-- putStrLn cmd
 		checkResult <- system cmd
 		case checkResult of 

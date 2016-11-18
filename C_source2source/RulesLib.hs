@@ -1532,7 +1532,7 @@ simplifyOperation other =
 	other
 
 simplifyTernary (CCond cond1 (Just (CCond cond2 (Just t) e1 _)) e2 nI) = 
-	(CCond (CBinary CAndOp cond1 cond2 undefNodeAnn) (Just t) e2 nI)
+	(CCond (CBinary CLndOp cond1 cond2 undefNodeAnn) (Just t) e2 nI)
 simplifyTernary other = 
 	other
 

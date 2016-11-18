@@ -146,7 +146,8 @@ separateIO pragma =
 
 isKernel :: String -> CBlockItemAnn -> Bool
 isKernel typeKernel stmt  =  
-	isPragmaAnn ["kernel", typeKernel] stmt
+		(isPragmaAnn ["kernel", typeKernel] stmt )
+	|| 	(isPragmaAnn ["target", typeKernel] stmt )
 
 isIOAnn stmt  =  
 	isPragmaAnn ["io"] stmt
