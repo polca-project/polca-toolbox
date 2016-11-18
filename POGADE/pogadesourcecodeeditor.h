@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QDockWidget>
 #include <QTemporaryDir>
+#include <QSignalMapper>
 
 #include "sourcecodeeditor.h"
 #include "pogadeprojectsourcefile.h"
@@ -21,6 +22,8 @@
 #define SC_MARK_P_LINE 4
 #define SC_MARK_P_SYMB 5
 
+// Arrow marker
+#define SC_MARK_ARROW 8
 
 typedef struct {
   QString code;
@@ -65,6 +68,11 @@ public slots:
   void selectedPragmaAndScope(PolcaScope ps, PolcaPragma pp);
   void selectedScope(PolcaScope ps);
   void scopeSelectedUPProcess(int id);
+  //void test1(int);
+  //void test2(int, int);
+  void test3(int,int,Qt::KeyboardModifiers);
+  //void test4(int,int,int);
+  void transAction(QString id);
 
 signals:
   void printNumberElements();
@@ -73,6 +81,7 @@ signals:
   void createTR(PogadeProjectSourceFile*);
   void scopeSelectedDown(int);
   void repaint();
+  void transformationSelectedDown(int);
 
 private slots:
   void lineDoubleClick(int line);
@@ -87,7 +96,7 @@ private slots:
   void loadPolcaProcessingData(QString data);
   void loadPolcaTransformationsData(QString data);
   void showPragmas();
-  //void showTransformations();
+  void showTransformations();
   void viewTransformations();
   void viewGraph();
   void viewTree();
@@ -105,6 +114,8 @@ private:
   int _oldComboSelect = -1;
   PogadeGraphViewer *_gv = nullptr;
   QTemporaryDir *_tDir;
+
+  QSignalMapper *signalMapper = nullptr;
 };
 
 #endif // POGADESOURCECODEEDITOR_H

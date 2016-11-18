@@ -15,6 +15,7 @@
 #include <QDebug>
 #include <QJsonDocument>
 #include <QProcess>
+#include <QMenu>
 #include <QSettings>
 #include <vector>
 #include <tuple>
@@ -52,6 +53,9 @@ PogadeSourceCodeEditor::PogadeSourceCodeEditor(QWidget *parent) :
   se->setCaretLineVisible(true);
   se->setCaretLineBackgroundColor(QColor("#ffe4e4"));
 
+  // BraceMatching
+  se->setBraceMatching(QsciScintilla::SloppyBraceMatch);
+
   // Set Markers
   se->markerDefine(QsciScintilla::Background, SC_MARK_PSEL_LINE);
   se->setMarkerBackgroundColor(QColor("#a0e0a0"), SC_MARK_PSEL_LINE);
@@ -69,6 +73,22 @@ PogadeSourceCodeEditor::PogadeSourceCodeEditor(QWidget *parent) :
   se->setMarkerBackgroundColor(QColor("#90ff90"), SC_MARK_P_SYMB);
 
   // ******************************************************** //
+  se->setMarginSensitivity(1, true);
+  se->markerDefine(QsciScintilla::RightArrow, SC_MARK_ARROW);
+  se->setMarkerBackgroundColor(QColor("#ee1111"), SC_MARK_ARROW);
+
+  /*
+  connect(se, SIGNAL(doubleClick(int)),
+          this, SLOT(test1(int)));
+  connect(se, SIGNAL(cursorPositionChanged(int,int)),
+          this, SLOT(test2(int,int)));
+  */
+  connect(se, SIGNAL(marginClicked(int,int,Qt::KeyboardModifiers)),
+          this, SLOT(test3(int,int,Qt::KeyboardModifiers)));
+  //connect(se, SIGNAL(SCN_MARGINCLICK(int,int,int)),
+  //        this, SLOT(test4(int,int,int)));
+  // ******************************************************** //
+
   connect(se, SIGNAL(doubleClick(int)),
           this, SLOT(lineDoubleClick(int)));
 
@@ -76,6 +96,7 @@ PogadeSourceCodeEditor::PogadeSourceCodeEditor(QWidget *parent) :
 
   connect(ui->comboRevisions, SIGNAL(currentIndexChanged(int)),
           this, SLOT(revisionSelectionChanged(int)));
+
 
   updateGUI();
 }
@@ -87,6 +108,57 @@ PogadeSourceCodeEditor::~PogadeSourceCodeEditor() {
   delete ui;
   delete se;
 }
+
+/*
+void PogadeSourceCodeEditor::test1(int line) {
+  qDebug() << "TEST 1";
+  qDebug() << "DC: " << line;
+}
+
+void PogadeSourceCodeEditor::test2(int a, int b) {
+  qDebug() << "TEST 2";
+  qDebug() << "A: " << a << "   B: " << b;
+}
+*/
+
+void PogadeSourceCodeEditor::test3(int margin, int line, Qt::KeyboardModifiers) {
+  if(margin == 1) {
+    if(signalMapper)
+      delete signalMapper;
+    signalMapper = new QSignalMapper(this);
+
+
+    line++;
+    std::vector<PolcaTransformation*> v = sf->transformationsLine(line);
+    QMenu menu(this);
+    for(PolcaTransformation*pt : v) {
+      QAction *_a = menu.addAction(pt->ruleName(), signalMapper, SLOT(map()));
+      signalMapper->setMapping(_a, QString::number(pt->transformationId()) + " " + pt->ruleName());
+
+    }
+    connect(signalMapper, SIGNAL(mapped(QString)),
+                this, SLOT(transAction(QString)));
+
+    menu.exec(QCursor::pos());
+
+   //qDebug() << "TEST 3";
+    //qDebug() << "A: " << margin << "   B: " << line;
+  }
+
+
+  /*
+  QMenu menu(this);
+  menu.addAction(tr("Bla bla bla"), this, SLOT(test1(int)));
+  menu.exec(QCursor::pos());
+  */
+}
+
+/*
+void PogadeSourceCodeEditor::test4(int a, int b, int c) {
+  qDebug() << "TEST 4";
+  qDebug() << "A: " << a << "   B: " << b << "   C: " << c;
+}
+*/
 
 void PogadeSourceCodeEditor::revisionSelectionChanged(int newSelection) {
     if(_oldComboSelect == newSelection) {
@@ -332,14 +404,20 @@ void PogadeSourceCodeEditor::loadPolcaTransformationsData(QString data) {
   }
   /****************************************************************/
   /****************************************************************/
-  //showTransformations();
+  showTransformations();
 }
 
-/*
+
 void PogadeSourceCodeEditor::showTransformations() {
-
+  se->markerDeleteAll(SC_MARK_ARROW);
+  if(sf) {
+    for(PolcaTransformation &pt : sf->getTransformations()) {
+      qDebug() << pt.lineStart();
+      se->markerAdd(pt.lineStart()-1, SC_MARK_ARROW);
+    }
+  }
 }
-*/
+
 
 void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
   QJsonDocument doc = QJsonDocument::fromJson(data.toLatin1());
@@ -590,7 +668,6 @@ void PogadeSourceCodeEditor::selectedPragmaAndScope(PolcaScope ps, PolcaPragma p
     se->markerAdd(i, SC_MARK_PSEL_SYMB);
   }
 
-
   auto sls = ps.codeLineStart() -1;
   auto sle = ps.codeLineEnd()   -1;
   for(auto i = sls; i<=sle; ++i) {
@@ -626,4 +703,15 @@ void PogadeSourceCodeEditor::scopeSelectedUPProcess(int id) {
 void PogadeSourceCodeEditor::showMemory(int) {
   sf->setMemoryShow(ui->checkShowMemory->isChecked());
   emit repaint();
+}
+
+void PogadeSourceCodeEditor::transAction(QString id) {
+  QStringList l = id.split(' ', QString::SkipEmptyParts);
+
+  int tid = l[0].toInt();
+  QString trans = l[1];
+  qDebug() << tid;
+  qDebug() << trans;
+
+  emit transformationSelectedDown(tid);
 }

@@ -40,7 +40,6 @@ public:
 
   void setTransformationView(bool transformationView, QDockWidget* dock);
 
-
   bool scopeTransformations();
   void setScopeTransformations(bool scopeTransformations, QDockWidget* dock);
   QString code();
@@ -82,6 +81,8 @@ public:
   void addTransformation(PolcaTransformation pt);
   std::vector<PolcaTransformation> getTransformations();
   PolcaTransformation* transformation(int id);
+
+  std::vector<PolcaTransformation*> transformationsLine(int line);
 
 private:
   unsigned int _latestRev = 0;

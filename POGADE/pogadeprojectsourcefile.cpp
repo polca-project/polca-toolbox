@@ -410,7 +410,7 @@ PolcaScope* PogadeProjectSourceFile::findScopeFromLine(int line) {
   else {
     PolcaScope* selected = possibles[0];
     int size = selected->codeLineEnd() - selected->codeLineStart();
-    for(int i=1; i<possibles.size(); i++) {
+    for(unsigned int i=1; i<possibles.size(); i++) {
       int _size = possibles[i]->codeLineEnd() - possibles[i]->codeLineStart();
       if(_size < size) {
         size = size;
@@ -419,6 +419,18 @@ PolcaScope* PogadeProjectSourceFile::findScopeFromLine(int line) {
     }
     return selected;
   }
+}
+
+std::vector<PolcaTransformation*> PogadeProjectSourceFile::transformationsLine(int line) {
+  std::vector<PolcaTransformation*> v;
+
+  for(PolcaTransformation &pt : _transformations) {
+    if(pt.lineStart() == line) {
+      v.push_back(&pt);
+    }
+  }
+
+  return v;
 }
 
 bool PogadeProjectSourceFile::scopeTransformations() {

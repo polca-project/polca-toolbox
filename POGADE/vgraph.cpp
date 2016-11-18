@@ -87,7 +87,9 @@ void VGraph::generateGraph(int scopeId) {
         node w = findNode(toId);
         if(w) {
           // TODO: do something with the edge?
-          edge e = _G->newEdge(n, w);
+          if(n && w) {
+            edge e = _G->newEdge(n, w);
+          }
           //qDebug() << "EDGE: " << n->index() << " - " << w->index();
         }
       }

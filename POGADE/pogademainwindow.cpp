@@ -453,6 +453,7 @@ void PogadeMainWindow::newTR(PogadeProjectSourceFile* source) {
     PogadeTransformationView *we = (PogadeTransformationView*) w;
     we->setSourceFile(source);
     we->updateGUI();
+    we->setTDir(_project->getTDir());
 
     source->setTransformationView(true, _ntr);
     _dockTransformationsList << _ntr;
@@ -465,6 +466,8 @@ void PogadeMainWindow::newTR(PogadeProjectSourceFile* source) {
     actionTransformations->setCheckable(true);
     actionTransformations->setChecked(true);
 
+    connect((PogadeSourceCodeEditor*)source->getDock()->widget(), SIGNAL(transformationSelectedDown(int)),
+            we, SLOT(transformationUpProcess(int)));
     //////////////////////////////////////////////////
     //////////////////////////////////////////////////
     //////////////////////////////////////////////////

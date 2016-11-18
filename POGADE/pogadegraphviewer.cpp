@@ -90,8 +90,8 @@ void PogadeGraphViewer::rightClickNode(int id, QPoint p) {
   _workingNode = id;
 
   QMenu menu(this);
-  menu.addAction(tr("Expland Node"), this, SLOT(expandNode()));
-  menu.addAction(tr("Expland Node in new Window"), this, SLOT(expandNodeNewWindow()));
+  menu.addAction(tr("Expand Node"), this, SLOT(expandNode()));
+  menu.addAction(tr("Expand Node in new Window"), this, SLOT(expandNodeNewWindow()));
   menu.exec(p);
 
   connect(&menu, SIGNAL(destroyed(QObject*)), this, SLOT(test()));
