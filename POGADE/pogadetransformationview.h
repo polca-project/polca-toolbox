@@ -31,6 +31,10 @@ private slots:
   void processSelectionChanged(int);
   void applyTransform();
 
+signals:
+  void newTransformations();
+  void newTransformedCode(QString);
+
 private:
   Ui::PogadeTransformationView *ui;
   PogadeProjectSourceFile *_sf = nullptr;
@@ -38,7 +42,7 @@ private:
   SourceCodeEditor *seNew;
   QTemporaryDir *_tDir;
 
-  void processTransformationApplied(QString data);
+  //void processTransformationApplied(QString data);
 };
 
 #endif // POGADETRANSFORMATIONVIEW_H

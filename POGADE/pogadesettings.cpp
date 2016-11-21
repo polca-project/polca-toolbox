@@ -19,6 +19,8 @@ pogadeSettings::pogadeSettings(QWidget *parent) :
   ui->linePR->setText(settings.value("PTReader", POLCATOOLREADER).toString());
   ui->linePI->setText(settings.value("PTInit", POLCATOOLINIT).toString());
   ui->linePA->setText(settings.value("PTApply", POLCATOOLAPPLY).toString());
+  ui->lineASMC->setText(settings.value("PTASMC", POLCATOOLASMC).toString());
+
 
   // Load Language Settings
   ui->comboLanguage->addItem(tr("English"), QVariant(QLocale::English));
@@ -61,6 +63,15 @@ void pogadeSettings::chooseToolPA() {
   }
 }
 
+void pogadeSettings::chooseToolASMC() {
+  auto fileName = QFileDialog::getOpenFileName(this,
+    tr("Open Polca ASMCount Tool file"), "");
+
+  if(!fileName.isEmpty()) {
+    ui->lineASMC->setText(fileName);
+  }
+}
+
 void pogadeSettings::doApply() {
   // TODO: check tools after setting new ones
   qDebug() << "saving Setings "  << ui->comboLanguage->currentData().toInt();
@@ -69,6 +80,7 @@ void pogadeSettings::doApply() {
   settings.setValue("PTReader", ui->linePR->text());
   settings.setValue("PTInit", ui->linePI->text());
   settings.setValue("PTApply", ui->linePA->text());
+  settings.setValue("PTASMC", ui->lineASMC->text());
 
   // Save Language Settings
   settings.setValue("language", ui->comboLanguage->currentData().toInt());

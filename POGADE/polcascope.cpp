@@ -801,3 +801,21 @@ int PolcaScope::callLine() {
 ScopeNeighbourInfo PolcaScope::neighbours() {
   return _neighbours;
 }
+
+void PolcaScope::setASMWeightMine(int w) {
+  _ASMWeightMine = w;
+}
+
+int PolcaScope::getASMWeightMine() {
+  return _ASMWeightMine;
+}
+
+int PolcaScope::getASMWeightTotal() {
+  // TODO!!!
+  // TODO!!!
+  // TODO!!!
+
+  _ASMWeightTotal = 0;
+
+  return _ASMWeightTotal;
+}

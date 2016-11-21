@@ -1,5 +1,7 @@
 #include "polcatransformation.h"
 
+#include <QDebug>
+
 int PolcaTransformation::_idCount = 0;
 
 PolcaTransformation::PolcaTransformation()
@@ -54,6 +56,14 @@ void PolcaTransformation::setCodeNew(QString code) {
 
 QString PolcaTransformation::codeNew() {
   return _codeNew;
+}
+
+void PolcaTransformation::setCodeNewAll(QString code) {
+  _codeNewAll = code;
+}
+
+QString PolcaTransformation::codeNewAll() {
+  return _codeNewAll;
 }
 
 void PolcaTransformation::setCodeOld(QString code) {

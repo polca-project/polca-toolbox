@@ -129,6 +129,10 @@ public:
   void printIO(std::vector<ParChild> varsC);
   void getParPragmaFunc(int pos, QString *pragmaName, bool *in, bool *out);
 
+  void setASMWeightMine(int w);
+  int  getASMWeightMine();
+  int  getASMWeightTotal();
+
 private:
   std::vector<PolcaPragma> _pragmas;
   std::vector<ScopeChild> _children;
@@ -149,8 +153,10 @@ private:
   std::vector<ParPos> _parPosC;
 
   int _type;
-
   static int _idCount;
+
+  int _ASMWeightMine;
+  int _ASMWeightTotal;
 
   void addIOInfo(QString var, int type);
   void setIOFromPragma(PolcaPragma pragma);

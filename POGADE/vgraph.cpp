@@ -13,6 +13,10 @@ VGraph::VGraph(QObject *parent) : QObject(parent)
 }
 
 VGraph::~VGraph() {
+  delete _G;
+  _G = nullptr;
+  delete _GA;
+  _GA = nullptr;
   delete _fontMetrics;
 }
 
@@ -406,7 +410,6 @@ void VGraph::scopeExpandedDownProcess(int id) {
 int VGraph::sizeLongestString(QString s) {
   int maxSize = 0;
   QStringList sl = s.split(QRegExp("\n|\r\n|\r"));
-
 
   for(QString _s : sl) {
     int _size = _fontMetrics->width(_s);

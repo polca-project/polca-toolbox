@@ -9,6 +9,7 @@
 #include "scopeneighbourinfo.h"
 #include "pogadedefines.h"
 #include "toolswait.h"
+#include "asmcountdata.h"
 
 #include <Qsci/qscilexercpp.h>
 #include <QMessageBox>
@@ -77,17 +78,10 @@ PogadeSourceCodeEditor::PogadeSourceCodeEditor(QWidget *parent) :
   se->markerDefine(QsciScintilla::RightArrow, SC_MARK_ARROW);
   se->setMarkerBackgroundColor(QColor("#ee1111"), SC_MARK_ARROW);
 
-  /*
-  connect(se, SIGNAL(doubleClick(int)),
-          this, SLOT(test1(int)));
-  connect(se, SIGNAL(cursorPositionChanged(int,int)),
-          this, SLOT(test2(int,int)));
-  */
+
   connect(se, SIGNAL(marginClicked(int,int,Qt::KeyboardModifiers)),
-          this, SLOT(test3(int,int,Qt::KeyboardModifiers)));
-  //connect(se, SIGNAL(SCN_MARGINCLICK(int,int,int)),
-  //        this, SLOT(test4(int,int,int)));
-  // ******************************************************** //
+          this, SLOT(transformationClick(int,int,Qt::KeyboardModifiers)));
+
 
   connect(se, SIGNAL(doubleClick(int)),
           this, SLOT(lineDoubleClick(int)));
@@ -109,19 +103,8 @@ PogadeSourceCodeEditor::~PogadeSourceCodeEditor() {
   delete se;
 }
 
-/*
-void PogadeSourceCodeEditor::test1(int line) {
-  qDebug() << "TEST 1";
-  qDebug() << "DC: " << line;
-}
 
-void PogadeSourceCodeEditor::test2(int a, int b) {
-  qDebug() << "TEST 2";
-  qDebug() << "A: " << a << "   B: " << b;
-}
-*/
-
-void PogadeSourceCodeEditor::test3(int margin, int line, Qt::KeyboardModifiers) {
+void PogadeSourceCodeEditor::transformationClick(int margin, int line, Qt::KeyboardModifiers) {
   if(margin == 1) {
     if(signalMapper)
       delete signalMapper;
@@ -140,25 +123,9 @@ void PogadeSourceCodeEditor::test3(int margin, int line, Qt::KeyboardModifiers) 
                 this, SLOT(transAction(QString)));
 
     menu.exec(QCursor::pos());
-
-   //qDebug() << "TEST 3";
-    //qDebug() << "A: " << margin << "   B: " << line;
   }
-
-
-  /*
-  QMenu menu(this);
-  menu.addAction(tr("Bla bla bla"), this, SLOT(test1(int)));
-  menu.exec(QCursor::pos());
-  */
 }
 
-/*
-void PogadeSourceCodeEditor::test4(int a, int b, int c) {
-  qDebug() << "TEST 4";
-  qDebug() << "A: " << a << "   B: " << b << "   C: " << c;
-}
-*/
 
 void PogadeSourceCodeEditor::revisionSelectionChanged(int newSelection) {
     if(_oldComboSelect == newSelection) {
@@ -296,85 +263,165 @@ void PogadeSourceCodeEditor::setTDir(QTemporaryDir *tDir) {
   _tDir = tDir;
 }
 
-void PogadeSourceCodeEditor::polcaProcessCode() {
+void PogadeSourceCodeEditor::polcaProcessCodeScopes() {
   QSettings settings;
-  QString fileString = _tDir->path() + "/" + sf->name();
-  QFile file(fileString);
+
+  QString _fileString = _tDir->path() + "/" + sf->name();
+  // Write code in editor to file
+  QFile file(_fileString);
   bool r = file.open(QFile::WriteOnly | QFile::Text);
   if(r) {
-    file.write(sf->codeRev(sf->getRevInUse()).toLatin1());
+    //file.write(sf->codeRev(sf->getRevInUse()).toLatin1());
+    file.write(se->text().toLatin1());
     file.flush();
+    file.close();
   }
-  fileString.chop(2);
+  // need to remove the ".c"
+  _fileString.chop(2);
+
+  toolsWait *tw1 = new toolsWait();
+  tw1->show();
 
   QStringList argsReader;
-  argsReader << fileString;
+  argsReader << _fileString;
   QProcess toolReader;
   toolReader.start(settings.value("PTReader", POLCATOOLREADER).toString(), argsReader);
-
-
-  toolsWait *tw = new toolsWait();
-  tw->show();
-
-  //qDebug() << "AAA";
 
   if (!toolReader.waitForStarted(-1)) {
     qDebug() << "Wait For Started Reader Failed";
   }
 
-  //qDebug() << "BBB";
-
   while(!toolReader.waitForFinished(10)) {
     QCoreApplication::processEvents();
-    //qDebug() << "Loop";
   }
 
- //qDebug() << "CCC";
-
- QStringList argsInit;
- argsInit << fileString;
- QProcess toolInit;
- toolInit.start(settings.value("PTInit", POLCATOOLINIT).toString(), argsInit);
-
- if (!toolInit.waitForStarted(-1)) {
-   qDebug() << "Wait For Started Init Failed";
-   qDebug() << toolInit.readAllStandardOutput();
-   qDebug() << "------------------------";
-   qDebug() << toolInit.readAllStandardError();
- }
-
-  //qDebug() << "DDD";
-
-  while(!toolInit.waitForFinished(10)) {
-    QCoreApplication::processEvents();
-    //qDebug() << "Loop";
-  }
-
-  //qDebug() << "EEE";
-  /*
-  if (!tool.waitForFinished(-1)) {
-    qDebug() << "Wait For Finished Failed";
-  }
-  */
-
-  // Clouse wait window
-  delete tw;
+  delete tw1;
 
   QByteArray _dataReader =  toolReader.readAllStandardOutput();
   QString dataReader = _dataReader;
+  loadPolcaProcessingData(dataReader);
+
+  file.remove();
+}
+
+void PogadeSourceCodeEditor::polcaProcessCodeTransformations() {
+  QSettings settings;
+
+  QString fileString = _tDir->path() + "/" + sf->name();
+  // Write code in editor to file
+  QFile file(fileString);
+  bool r = file.open(QFile::WriteOnly | QFile::Text);
+  if(r) {
+    //file.write(sf->codeRev(sf->getRevInUse()).toLatin1());
+    file.write(se->text().toLatin1());
+    file.flush();
+    file.close();
+  }
+
+  toolsWait *tw2 = new toolsWait();
+  tw2->show();
+
+  QStringList argsInit;
+  argsInit << fileString;
+  QProcess toolInit;
+  toolInit.start(settings.value("PTInit", POLCATOOLINIT).toString(), argsInit);
+
+  if (!toolInit.waitForStarted(-1)) {
+    qDebug() << "Wait For Started Init Failed";
+  }
+
+  while(!toolInit.waitForFinished(10)) {
+    QCoreApplication::processEvents();
+  }
+
+  // Clouse wait window
+  delete tw2;
 
   QByteArray _dataInit =  toolInit.readAllStandardOutput();
   QString dataInit = _dataInit;
 
-  //qDebug() << dataInit;
-  //qDebug() << "------------------------";
-  //qDebug() << toolInit.readAllStandardError();
-
-  loadPolcaProcessingData(dataReader);
   loadPolcaTransformationsData(dataInit);
+
+  file.remove();
+}
+
+void PogadeSourceCodeEditor::polcaProcessCodeASMC() {
+  //Performance Code Evaluation
+
+  QString _fileString = _tDir->path() + "/" + sf->name();
+  // Write code in editor to file
+  QFile file(_fileString);
+  bool r = file.open(QFile::WriteOnly | QFile::Text);
+  if(r) {
+    //file.write(sf->codeRev(sf->getRevInUse()).toLatin1());
+    file.write(se->text().toLatin1());
+    file.flush();
+    file.close();
+  }
+
+  asmCountCode(_fileString, "");
+
+  file.remove();
+}
+
+void PogadeSourceCodeEditor::polcaProcessCode() {
+  polcaProcessCodeScopes();
+  polcaProcessCodeTransformations();
+  polcaProcessCodeASMC();
+}
+
+void PogadeSourceCodeEditor::asmCountCode(QString file, QString flags) {
+  QSettings settings;
+
+  QStringList argsASMC;
+  argsASMC << file;
+
+  if(flags != "") {
+    argsASMC << flags;
+  }
+
+  QProcess toolASMC;
+  toolASMC.start(settings.value("PTASMC", POLCATOOLASMC).toString(), argsASMC);
+
+  if (!toolASMC.waitForStarted(-1)) {
+    qDebug() << "Wait For Started ASMCount Failed";
+  }
+
+
+  if (!toolASMC.waitForFinished(-1)) {
+    qDebug() << "Wait For Finished ASMCount Failed";
+  }
+
+  QByteArray _dataASMC =  toolASMC.readAllStandardOutput();
+  QString dataASMC = _dataASMC;
+}
+
+void PogadeSourceCodeEditor::processASMCountCode(QString data) {
+  int nextId = 0;
+
+  QJsonDocument doc = QJsonDocument::fromJson(data.toLatin1());
+  if(doc.isEmpty()) {
+    return;
+  }
+
+  QJsonObject obj = doc.object();
+  QJsonArray scopes = obj.value("scopes").toArray();
+
+  std::vector<ASMCData> asmcdata = getScopes(scopes, &nextId, nullptr);
+  sf->setASMCData(asmcdata);
+}
+
+void PogadeSourceCodeEditor::replaceCode(QString newTCode) {
+  QString b = newTCode;
+  se->setText(b);
+  //updateGUI();
+  _currentChanged = true;
+
+  polcaProcessCodeTransformations();
 }
 
 void PogadeSourceCodeEditor::loadPolcaTransformationsData(QString data) {
+  sf->clearTransformations();
   QJsonDocument doc = QJsonDocument::fromJson(data.toLatin1());
   if(doc.isEmpty()) {
     ui->buttonTransformations->setEnabled(false);
@@ -387,7 +434,6 @@ void PogadeSourceCodeEditor::loadPolcaTransformationsData(QString data) {
 
   /****************************************************************/
   /****************************************************************/
-
   for(QJsonValue t : transformations) {
     PolcaTransformation *pt = new PolcaTransformation;
     pt->setId(PolcaTransformation::idNext());
@@ -396,6 +442,7 @@ void PogadeSourceCodeEditor::loadPolcaTransformationsData(QString data) {
     pt->setTransformationId(t.toObject().value("idChange").toInt());
     pt->setLineStart(t.toObject().value("line").toInt());
     pt->setCodeNew(t.toObject().value("newCode").toString());
+    pt->setCodeNewAll(t.toObject().value("newCodeAll").toString());
     pt->setCodeOld(t.toObject().value("oldCode").toString());
     pt->setRuleName(t.toObject().value("ruleName").toString());
 
@@ -412,10 +459,12 @@ void PogadeSourceCodeEditor::showTransformations() {
   se->markerDeleteAll(SC_MARK_ARROW);
   if(sf) {
     for(PolcaTransformation &pt : sf->getTransformations()) {
-      qDebug() << pt.lineStart();
+      //qDebug() << pt.lineStart();
       se->markerAdd(pt.lineStart()-1, SC_MARK_ARROW);
     }
   }
+
+  emit newTransformations();
 }
 
 

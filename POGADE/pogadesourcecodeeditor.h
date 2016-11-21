@@ -68,11 +68,18 @@ public slots:
   void selectedPragmaAndScope(PolcaScope ps, PolcaPragma pp);
   void selectedScope(PolcaScope ps);
   void scopeSelectedUPProcess(int id);
-  //void test1(int);
-  //void test2(int, int);
-  void test3(int,int,Qt::KeyboardModifiers);
-  //void test4(int,int,int);
+  void transformationClick(int,int,Qt::KeyboardModifiers);
   void transAction(QString id);
+  //void updateTransformations();
+  void showTransformations();
+  void replaceCode(QString newCode);
+  void asmCountCode(QString file, QString flags);
+  void processASMCountCode(QString data);
+  void polcaProcessCode();
+
+  void polcaProcessCodeScopes();
+  void polcaProcessCodeTransformations();
+  void polcaProcessCodeASMC();
 
 signals:
   void printNumberElements();
@@ -82,6 +89,7 @@ signals:
   void scopeSelectedDown(int);
   void repaint();
   void transformationSelectedDown(int);
+  void newTransformations();
 
 private slots:
   void lineDoubleClick(int line);
@@ -91,12 +99,10 @@ private slots:
   void resetComboRevision(int selectedRevision);
   void enableEdit(bool enable);
   void revisionSelectionChanged(int newSelection);
-  void polcaProcessCode();
   //void loadPolcaProcessing(QString file);
   void loadPolcaProcessingData(QString data);
   void loadPolcaTransformationsData(QString data);
   void showPragmas();
-  void showTransformations();
   void viewTransformations();
   void viewGraph();
   void viewTree();

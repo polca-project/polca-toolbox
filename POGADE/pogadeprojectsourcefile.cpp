@@ -453,7 +453,7 @@ void PogadeProjectSourceFile::setTransformationView(bool transformationView, QDo
 
 PolcaTransformation* PogadeProjectSourceFile::transformation(int id) {
   for(PolcaTransformation &pt : _transformations) {
-    if(pt.id() == id) {
+    if(pt.transformationId() == id) {
       return &pt;
     }
   }
@@ -477,7 +477,7 @@ bool PogadeProjectSourceFile::memoryShow() {
   return _showMemory;
 }
 
-void PogadeProjectSourceFile::clearTransformatios() {
+void PogadeProjectSourceFile::clearTransformations() {
   _transformations.clear();
 }
 
@@ -487,4 +487,12 @@ void PogadeProjectSourceFile::addTransformation(PolcaTransformation pt) {
 
 std::vector<PolcaTransformation> PogadeProjectSourceFile::getTransformations() {
   return _transformations;
+}
+
+std::vector<ASMCData> PogadeProjectSourceFile::getASMCData() {
+
+}
+
+void PogadeProjectSourceFile::setASMCData(std::vector<ASMCData>) {
+
 }

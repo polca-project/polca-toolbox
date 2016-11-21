@@ -26,6 +26,8 @@ public:
   int lineStart();
   void setCodeNew(QString code);
   QString codeNew();
+  void setCodeNewAll(QString code);
+  QString codeNewAll();
   void setCodeOld(QString code);
   QString codeOld();
   void setRuleName(QString name);
@@ -38,6 +40,7 @@ private:
   int _transformationId;
   int _lineStart;
   QString _codeNew;
+  QString _codeNewAll;
   QString _codeOld;
   QString _ruleName;
 };

@@ -6,6 +6,7 @@
 //#define POLCATOOLPRETTY "polca_pretty"
 #define POLCATOOLINIT "polca_init"
 #define POLCATOOLAPPLY "polca_apply"
+#define POLCATOOLASMC "ASMCount"
 #define POLCATOOLWAITTIME 100
 #define ORGANIZATION_NAME "POLCAProject"
 #define ORGANIZATION_DOMAIN "polca-project.eu"

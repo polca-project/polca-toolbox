@@ -12,6 +12,8 @@
 
 #include "polcascope.h"
 #include "polcatransformation.h"
+#include "asmcountdata.h"
+
 
 class PogadeProject;
 
@@ -37,7 +39,6 @@ public:
   void setVisualized(bool visualized, QDockWidget* dock);
   bool scopeTree();
   void setScopeTree(bool scopeTree, QDockWidget* dock);
-
   void setTransformationView(bool transformationView, QDockWidget* dock);
 
   bool scopeTransformations();
@@ -77,12 +78,15 @@ public:
   void setMemoryShow(bool show);
   bool memoryShow();
 
-  void clearTransformatios();
+  void clearTransformations();
   void addTransformation(PolcaTransformation pt);
   std::vector<PolcaTransformation> getTransformations();
   PolcaTransformation* transformation(int id);
 
   std::vector<PolcaTransformation*> transformationsLine(int line);
+
+  std::vector<ASMCData> getASMCData();
+  void setASMCData(std::vector<ASMCData>);
 
 private:
   unsigned int _latestRev = 0;
@@ -109,6 +113,8 @@ private:
   std::vector<ScopeChild> _rootChildren;
   ///////////////
   std::vector<PolcaTransformation> _transformations;
+
+  std::vector<ASMCData> _asmcData;
 };
 
 #endif // POGADEPROJECTSOURCEFILE_H

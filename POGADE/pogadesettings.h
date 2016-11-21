@@ -19,6 +19,7 @@ private slots:
   void chooseToolPR();
   void chooseToolPI();
   void chooseToolPA();
+  void chooseToolASMC();
   void doApply();
   void doOK();
   void doCancel();

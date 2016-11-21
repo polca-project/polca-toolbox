@@ -53,13 +53,17 @@ PogadeTransformationView::PogadeTransformationView(QWidget *parent) :
 void PogadeTransformationView::processSelectionChanged(int id) {
   ui->buttonTransform->setEnabled(true);
   PolcaTransformation* pt = _sf->transformation(id);
-  seNew->setText(pt->codeNew());
-  seOld->setText(pt->codeOld());
+  if(pt) {
+    seNew->setText(pt->codeNew());
+    seOld->setText(pt->codeOld());
+  }
 }
 
 void PogadeTransformationView::processSelectionChanged(QTreeWidgetItem* current, QTreeWidgetItem*) {
-  int id = current->text(0).toInt();
-  processSelectionChanged(id);
+  if(current) {
+    int id = current->text(1).toInt();
+    processSelectionChanged(id);
+  }
 }
 
 PogadeTransformationView::~PogadeTransformationView()
@@ -74,6 +78,10 @@ void PogadeTransformationView::setSourceFile(PogadeProjectSourceFile *sf) {
 
 void PogadeTransformationView::updateGUI() {
   ui->buttonTransform->setEnabled(false);
+  ui->treeTransformations->clear();
+  seNew->setText("");
+  seOld->setText("");
+
   if(_sf) {
     for(PolcaTransformation pt : _sf->getTransformations()) {
       QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeTransformations);
@@ -106,9 +114,39 @@ void PogadeTransformationView::setTDir(QTemporaryDir *tDir) {
 }
 
 void PogadeTransformationView::applyTransform() {
+  QString sid = "";
+  QTreeWidgetItemIterator it(ui->treeTransformations);
+  while (*it) {
+    if((*it)->isSelected()) {
+      sid = (*it)->text(1);
+    }
+    ++it;
+  }
+
+  if(sid == "") {
+    QMessageBox::critical(this, MYNAME, tr("No Transformation was selected<br>Please Select a transformation to apply"));
+  }
+  else {
+    PolcaTransformation* pt = _sf->transformation(sid.toInt());
+    //_sf->clearTransformations();
+    ui->treeTransformations->clear();
+    QString a = pt->codeNewAll();
+    emit newTransformedCode(a);
+  }
+}
+
+/*
+void PogadeTransformationView::applyTransform() {
   QSettings settings;
   QProcess toolApply;
   QString fileString = _tDir->path() + "/" + _sf->name();
+
+  QFile file(fileString);
+  bool r = file.open(QFile::WriteOnly | QFile::Text);
+  if(r) {
+    file.write(_sf->codeRev(_sf->getRevInUse()).toLatin1());
+    file.flush();
+  }
 
   QStringList argsApply;
   argsApply << fileString;
@@ -147,36 +185,50 @@ void PogadeTransformationView::applyTransform() {
 
   QByteArray _dataApply =  toolApply.readAllStandardOutput();
   QString dataApply = _dataApply;
-}
 
+  //qDebug() << dataApply;
+
+  processTransformationApplied(dataApply);
+}
+*/
+
+/*
 void PogadeTransformationView::processTransformationApplied(QString data) {
   QJsonDocument doc = QJsonDocument::fromJson(data.toLatin1());
   if(doc.isEmpty()) {
     return;
   }
   QJsonObject obj = doc.object();
-  QJsonValue newCode = obj.value("code").toString();
+  QString newCode = obj.value("code").toString();
 
+  //qDebug() << "-----------";
+  //qDebug() << data;
+  //qDebug() << "-----------";
+
+  // Set code
+  emit newTransformedCode(newCode);
 
   QJsonArray transformations = obj.value("changes").toArray();
 
+  _sf->clearTransformatios();
   for(QJsonValue t : transformations) {
-    PolcaTransformation *pt = new PolcaTransformation;
-    pt->setId(PolcaTransformation::idNext());
+    PolcaTransformation pt;
+    PolcaTransformation::idNextReset();
+    pt.setId(PolcaTransformation::idNext());
     PolcaTransformation::idNextIncrease();
 
-    pt->setTransformationId(t.toObject().value("idChange").toInt());
-    pt->setLineStart(t.toObject().value("line").toInt());
-    pt->setCodeNew(t.toObject().value("newCode").toString());
-    pt->setCodeOld(t.toObject().value("oldCode").toString());
-    pt->setRuleName(t.toObject().value("ruleName").toString());
+    pt.setTransformationId(t.toObject().value("idChange").toInt());
+    pt.setLineStart(t.toObject().value("line").toInt());
+    pt.setCodeNew(t.toObject().value("newCode").toString());
+    pt.setCodeOld(t.toObject().value("oldCode").toString());
+    pt.setRuleName(t.toObject().value("ruleName").toString());
 
 
     // TODO
-    /**********************/
-    /**********************/
-    //sf->addTransformation(*pt);
-    delete pt;
+    _sf->addTransformation(pt);
   }
+  updateGUI();
 
+  emit newTransformations();
 }
+*/

@@ -466,8 +466,15 @@ void PogadeMainWindow::newTR(PogadeProjectSourceFile* source) {
     actionTransformations->setCheckable(true);
     actionTransformations->setChecked(true);
 
-    connect((PogadeSourceCodeEditor*)source->getDock()->widget(), SIGNAL(transformationSelectedDown(int)),
+    PogadeSourceCodeEditor* sedit = (PogadeSourceCodeEditor*)source->getDock()->widget();
+    connect(we, SIGNAL(newTransformations()),
+            sedit, SLOT(showTransformations()));
+    connect(we, SIGNAL(newTransformedCode(QString)),
+            sedit, SLOT(replaceCode(QString)));
+    connect(sedit, SIGNAL(transformationSelectedDown(int)),
             we, SLOT(transformationUpProcess(int)));
+    connect(sedit, SIGNAL(newTransformations()),
+            we, SLOT(updateGUI()));
     //////////////////////////////////////////////////
     //////////////////////////////////////////////////
     //////////////////////////////////////////////////
@@ -558,6 +565,12 @@ int PogadeMainWindow::checkPolcaTool() {
   if (!tool.waitForFinished(-1))
     return -7;
 
+  polcaToolCommand = settings.value("PTASMC", POLCATOOLASMC).toString();
+  tool.start(polcaToolCommand, QStringList());
+  if (!tool.waitForStarted(-1))
+    return -6;
+  if (!tool.waitForFinished(-1))
+    return -7;
 
   return 0;
 }
