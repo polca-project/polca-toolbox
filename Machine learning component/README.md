@@ -60,7 +60,7 @@ with the following information:
 Please note that it is important to make the file as small as possible
 to allow us to find and fix the error soon.
 
-Original author Salvador Tamarit
+Original author Guillermo Vigueras
 Correspondence e-mail: <polca-project-madrid@software.imdea.org>
 
 Please send error reports for contributed files to the original authors.
