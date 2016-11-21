@@ -1,72 +1,70 @@
 * test1.c
-  - Proposito:
-  - Elementos:
-    - 1 variable global
-    - 1 llamada a funcion
-    - 1 if estatement
-    - 1 bucle for con limites staticos
+  - Purpose:
+  - Elements:
+    - 1 global variable
+    - 1 function call
+    - 1 if statement
+    - 1 for loop with static limits
 
 * test2.c
-  - Proposito: saber distinguir entre una definicion de variable
-  global y local
-  - Elementos:
-    - 1 variable global al principio (antes de la definicion de funciones)
-    - 1 variable global a mitad del codigo (entre definicion de funciones)
-    - 1 definicion de funcion
-    - 1 definicion de variable local dentro de funcion no main
-
+  - Purpose: distinguish between global and local variable
+  - Elements:
+    - 1 global variable at the begining of code
+    - 1 global variable in the middle of the code
+    - 1 function definition
+    - 1 definition of local variable within function different from main
+    
 * test3.c
-  - Proposito: saber calcular la maxima profundidad de anidacion de
-  bucles 
-  - Elementos:
-    - 2 bulces anidados
-    - 3 bucles anidados
-    - 2 bucles for no anidado
+  - Purpose: compute properly the maximum number of nested loops
+  - Elements:
+    - 2 nested for loops
+    - 3 nested for loops
+    - 2 non-nested for loops
 
 * test4.c
-  - Proposito: detectar bucles irregulares
+  - Purpose: detect irregular loops
 
 * test5.c
-  - Proposito: detectar bucles for con limite no estatico
-  - Devuelve:  0 bucles con limites no estaticos
+  - Purpose: detect for loops with non-static limits
+  - Returns:  0 loops with non-static limits
 
 * test6.c
-  - Proposito: detectar bucles for con limite no estatico
-  - Devuelve:  1 bucles con limites no estaticos
+  - Purpose: detect for loops with non-static limits
+  - Returns:  1 loops with non-static limits
 
 * test7.c
-  - Proposito: detectar bucles for con limite no estatico
-  - Devuelve:  1 bucles con limites no estaticos
+  - Purpose: detect for loops with non-static limits
+  - Returns:  1 loops with non-static limits
 
 * test8.c
-  - Proposito: detectar bucles for con alguna escritura en array con
-  offset (negativo o positivo) en cada iteracion
-  - Devuelve: No hay escrituras con offset (0)
+  - Purpose: detect for loops with array writes shifted
+  by negative or positive offset, for each iteration
+  - Returns: 0, no shifted array writes
 
 * test9.c
-  - Proposito: detectar bucles for con alguna escritura en array con
-  offset (negativo o positivo) en cada iteracion
-  - Devuelve:  Si hay escrituras con offset (1)
+  - Purpose: detect for loops with array writes shifted
+  by negative or positive offset, for each iteration
+  - Returns:  1, there are shifted array writes
 
 * test10.c
-  - Proposito: detectar bucles for con alguna escritura en array con
-  offset (negativo o positivo) en cada iteracion
-  - Devuelve:  Si hay escrituras con offset (1)
+  - Purpose: detect for loops with array writes shifted
+  by negative or positive offset, for each iteration
+  - Returns:  1, there are shifted array writes
 
 * test11.c
-  - Proposito: codigo de la funcion rgbImageFilter del program de ejemplo rgb_filter_9_8.c
+  - Purpose: check code features measurement for code rgb_filter_9_8.c
 
 * test12.c
-  - Proposito: codigo de la funcion rgbImageFilter del program de ejemplo rgb_filter_9_9.c
+  - Purpose: check code features measurement for code rgb_filter_9_9.c
 
 * test13.c
-  - Proposito: codigo de la funcion rgbImageFilter del program de ejemplo rgb_filter_9_10.c
+  - Purpose: check code features measurement for code rgb_filter_9_10.c
 
 * test14.c
-  - Proposito: codigo de la funcion rgbImageFilter del program de ejemplo rgb_filter_9_11.c
+  - Purpose: check code features measurement for code rgb_filter_9_11.c
 
 * test15.c
-  - Proposito: 
+  - Purpose: 
 
 * test16.c
   - Purpose: check that loop_schedule pragma is properly processed
