@@ -1082,7 +1082,11 @@ buildPragmas patPragmaDict matchedAST pragmasAst pragmaRule =
 					[] ->
 						[]
 					[nameNode] ->
-						pragmasAst
+						-- trace ((show pragmasAst) ++ " " ++ (show patPragmaDict)) 
+						-- pragmasAst
+						-- [["def","BLOCK_ABS"]]
+						-- ("input",["inputb2"],[["pos"],["vel"]],Name {nameId = 1292})
+						concat [[(hpr:p) | p <- pr] | (hpr,_,pr,_) <- patPragmaDict]
 			| ((string == "chunked") && (length pragmaRule > 1)) ->
 				let 
 					(CCompound _ listStmt _) = matchedAST

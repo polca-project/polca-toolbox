@@ -70,8 +70,8 @@ readFileInfo verbose name derive =
 		let linkedPolcaAnn_prev = linkPolcaAnn ast1 polcaAnn
 		--putStrLn (show linkedPolcaAnn_prev)
 		-- TODO: It should no remove them, instead it should fuse them
-		--let linkedPolcaAnn = removeDuplicatePragmas linkedPolcaAnn_prev
-		let linkedPolcaAnn = linkedPolcaAnn_prev
+		let linkedPolcaAnn = removeDuplicatePragmas linkedPolcaAnn_prev
+		-- let linkedPolcaAnn = linkedPolcaAnn_prev
 		--putStrLn (show linkedPolcaAnn)
 		if errors /= [] 
 		then error (unlines errors)
@@ -377,22 +377,39 @@ readPolcaAnn derive acc (numLine, line)
 		--	--words pragmaPolca
 		--	pragmaPolca
 
+expandPolcaAnn pa@("map") str = 
+	case 
+		stripPrefix (pa ++ " ") (trim str) 
+	of
+		Just args ->
+			case words args  of 
+				[input,output] ->
+					[str, "input " ++ input, "output " ++ output, "iteration_independent"]
+				[_,input,output] ->
+					[str, "input " ++ input, "output " ++ output, "iteration_independent"]
+		Nothing ->
+			[]
+expandPolcaAnn pa@("ZipWith") str = 
+	case 
+		stripPrefix (pa ++ " ") (trim str) 
+	of
+		Just args ->
+			case words args  of 
+				[input1, input2, output] ->
+					[str, "input " ++ input1, "input " ++ input2, "output " ++ output, "iteration_independent"]
+				[_,input1, input2, output] ->
+					[str, "input " ++ input1, "input " ++ input2, "output " ++ output, "iteration_independent"]
+		Nothing ->
+			[]
+
 getPragmaPolca derive line =
 	let 
 		polca_ann rest = 
-			case 
-				--trace 
-				--(show $ stripPrefix "map " (trim rest)) $ 
-				stripPrefix "map " (trim rest) 
-			of
-				Just args ->
-					case words args  of 
-						[input,output] ->
-							[rest, "input " ++ input, "output " ++ output, "iteration_independent"]
-						[_,input,output] ->
-							[rest, "input " ++ input, "output " ++ output, "iteration_independent"]
-				Nothing ->
+			case [ea | ea@(_:_) <- [expandPolcaAnn pa rest | pa <- ["map", "ZipWith"]]] of 
+				[] ->
 					[rest]
+				(eanns:_) ->
+					eanns
 	in 
 		case 
 			--trace 
@@ -750,11 +767,12 @@ storeLine n =
 
 
 removeDuplicatePragmas pragmas = 
-	let
-		names = nubBy (geq) [name | (name,_) <- pragmas] 
-		namePragmas = [(name, correctPragmas [pragma | (name_, pragma) <- pragmas, name_ == name])  | name <- names ]
-	in 
-		concat [[(name, pragma) | pragma <- pragmasName] | (name, pragmasName) <- namePragmas]
+	nubBy (geq) pragmas
+	-- let
+	-- 	names = nubBy (geq) [name | (name,_) <- pragmas] 
+	-- 	namePragmas = [(name, correctPragmas [pragma | (name_, pragma) <- pragmas, name_ == name])  | name <- names ]
+	-- in 
+	-- 	concat [[(name, pragma) | pragma <- pragmasName] | (name, pragmasName) <- namePragmas]
 
 trim :: String -> String
 trim = f . f
@@ -924,10 +942,14 @@ modifyPropertiesNode (pragma:pragmas) properties
 		scalarDependencesPrefix = stripGivenPrefix "scalar_dependences"
 		polcaAnns = 
 			[
-				"map", "init", "kernel", "def", 
-				"io", "type_size", "total_size", 
+				"map", "ZipWith", "fold",
+				"init", "def", 
+				"io", "type_size", "total_size",
+				"kernel", "target", 
 				"input", "output", "iteration_independent", 
-				"rolled-up", "target"]
+				-- Only to be used by the rules
+				"rolled-up", "same_properties"
+			]
 		polcaPrefix = 
 			or [(stripGivenPrefix polcaAnn) /= Nothing | polcaAnn <- polcaAnns]
 		stripGivenPrefix prefix = stripPrefix prefix (trim pragma)

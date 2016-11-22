@@ -193,6 +193,7 @@ ast2 name =
 expandAnns name = 
 	do
 		(ast, linkedPolcaAnn,includes) <- readFileInfo True name True
+		-- putStrLn (show linkedPolcaAnn)
 		let lastNode = getLastNode ast
 		let annAST = fmap (\nI -> Ann nI nodePropertiesDefault) ast
 		let changedAnnAST = changeAnnAST linkedPolcaAnn annAST
