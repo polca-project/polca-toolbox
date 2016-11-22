@@ -17,8 +17,9 @@ ROLLUP = polca_rollup
 PRETTY = polca_pretty
 RAN_ORACLE = random_oracle
 FEAT_EXTR = polca_features
+CHANGES_EXTR = polca_changes
 
-FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README README.md LICENSE.txt AUTHORS.txt rules.c rules_nbody.c vec_mult.c dps.c Translator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs RandomOracle.hs FeaturesExtractor.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs
+FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README README.md LICENSE.txt AUTHORS.txt rules.c rules_nbody.c vec_mult.c dps.c Translator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs RandomOracle.hs FeaturesExtractor.hs ChangesExtractor.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs
 DEMOFILES = demo/rgb_filter_input.c demo/rgb_filter_input_maxjready.c demo/ppmImage.c demo/ppmImage.h demo/ppmImage.c demo/ppmImage.c demo/lodepng.h demo/lodepng.c 
 CETUSMODIFIED = ../cetus/src/cetus/analysis/CallGraph.java ../cetus/src/cetus/analysis/DDGraph.java ../cetus/src/cetus/analysis/LoopTools.java ../cetus/src/cetus/analysis/IPPointsToAnalysis.java ../cetus/src/cetus/exec/Driver.java ../cetus/src/cetus/hir/STMLAnnotation.java ../cetus/src/cetus/hir/AccessSymbol.java ../cetus/src/cetus/hir/TranslationUnit.java 
 CETUSFILES = ../cetus.tar.gz cetus/cetus.sh cetus/cetus_stml.sh cetus/options.cetus ../cetus/polca_changes.txt 
@@ -104,6 +105,8 @@ interface:
 	ghc -main-is PrettyPrinter PrettyPrinter.hs -o $(PRETTY) $(GHC_FLAGS)
 	# Features extractor to be used by the machine learning component
 	ghc -main-is FeaturesExtractor FeaturesExtractor.hs -o $(FEAT_EXTR) $(GHC_FLAGS)
+	# Changes extractor to be used by POGADE
+	ghc -main-is ChangesExtractor ChangesExtractor.hs -o $(CHANGES_EXTR) $(GHC_FLAGS)
 
 # Do all the previous configuration needed before to build the executables
 configure:

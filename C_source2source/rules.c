@@ -1053,9 +1053,9 @@ remove_ternary
     }
     condition:
     {
-        // Evalauted twice in the resulting code
+        // Evaluated twice in the resulting code
         pure(cexpr(cond));
-        // Evaluated both in the resulting code while in the patter only one of them.
+        // Evaluated both in the resulting code while in the pattern only one of them.
         pure(cexpr(then_));
         pure(cexpr(else_));
     }
