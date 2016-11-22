@@ -632,7 +632,7 @@ for_loop_fusion_map_zipWith
         }
         cstmts(mid);
         #pragma polca def b
-        #pragma polca ZipWith funb inputb1 inputb2 outputb
+        #pragma polca zipWith funb inputb1 inputb2 outputb
         for(cexpr(j) = cexpr(init);cexpr(j) < cexpr(n);cexpr(j)++)
         {
             cstmts(bodyFOR2);
@@ -676,7 +676,7 @@ for_loop_fusion_zipWith_map
         cstmts(ini);
         #pragma polca def a
         // By annotations we know that accesses are compatible
-        #pragma polca ZipWith funa inputa1 inputa2 outputa
+        #pragma polca zipWith funa inputa1 inputa2 outputa
         for(cexpr(i) = cexpr(init);cexpr(i) < cexpr(n);cexpr(i)++)
         {
             cstmts(bodyFOR1);
@@ -727,14 +727,14 @@ for_loop_fusion_zipWith_zipWith
         cstmts(ini);
         #pragma polca def a
         // By annotations we know that accesses are compatible
-        #pragma polca ZipWith funa inputa1 inputa2 outputa
+        #pragma polca zipWith funa inputa1 inputa2 outputa
         for(cexpr(i) = cexpr(init);cexpr(i) < cexpr(n);cexpr(i)++)
         {
             cstmts(bodyFOR1);
         }
         cstmts(mid);
         #pragma polca def b
-        #pragma polca ZipWith funb inputb1 inputb2 outputb
+        #pragma polca zipWith funb inputb1 inputb2 outputb
         for(cexpr(j) = cexpr(init);cexpr(j) < cexpr(n);cexpr(j)++)
         {
             cstmts(bodyFOR2);

@@ -389,7 +389,7 @@ expandPolcaAnn pa@("map") str =
 					[str, "input " ++ input, "output " ++ output, "iteration_independent"]
 		Nothing ->
 			[]
-expandPolcaAnn pa@("ZipWith") str = 
+expandPolcaAnn pa str | pa == "ZipWith" || pa == "zipWith" = 
 	case 
 		stripPrefix (pa ++ " ") (trim str) 
 	of
@@ -405,7 +405,7 @@ expandPolcaAnn pa@("ZipWith") str =
 getPragmaPolca derive line =
 	let 
 		polca_ann rest = 
-			case [ea | ea@(_:_) <- [expandPolcaAnn pa rest | pa <- ["map", "ZipWith"]]] of 
+			case [ea | ea@(_:_) <- [expandPolcaAnn pa rest | pa <- ["map", "ZipWith", "zipWith"]]] of 
 				[] ->
 					[rest]
 				(eanns:_) ->
@@ -942,7 +942,7 @@ modifyPropertiesNode (pragma:pragmas) properties
 		scalarDependencesPrefix = stripGivenPrefix "scalar_dependences"
 		polcaAnns = 
 			[
-				"map", "ZipWith", "fold",
+				"map", "ZipWith", "fold", "zipWith",
 				"init", "def", 
 				"io", "type_size", "total_size",
 				"kernel", "target", 
