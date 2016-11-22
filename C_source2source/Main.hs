@@ -583,6 +583,11 @@ changesExtract filename block =
 featuresExtract filename rules block = 
 	jsonOutputGen filename rules block dictRulesAll
 
+jsonOutputGen :: String -> [String] -> (Maybe String) -> 
+		[(String, Either 
+					(TransState -> CExprAnn -> [((String, CExprAnn, CExprAnn), TransState,[(String, CStatAnn)])])
+					(TransState -> CStatAnn -> [((String, CStatAnn, CStatAnn), TransState,[(String, CStatAnn)])]))]
+		-> IO () 
 jsonOutputGen filename rules block dr =
 	do 
 		iniState <- initialStepsTrans False filename False
