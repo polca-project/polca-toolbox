@@ -1,4 +1,4 @@
-## Maxeler DFE platform
+## Maxeler DFE platform and MaxCompiler
 
 Maxeler provides hardware and software solutions for accelerating computing applications
 on dataflow engines (DFEs). 
@@ -45,4 +45,7 @@ provisioning tool set used during development.
 MaxCompiler, SLiC, MaxelerOS and MaxIDE have been developed by Maxeler
 Technologies. 
 
-For more details on these tools please check [Maxeler website](https://www.maxeler.com/products/software/)
+For more details on these tools please check [Maxeler's website](https://www.maxeler.com/products/software/).
+
+A wide variety of examples and their implementations are available at [Maxeler's AppGallery](http://appgallery.maxeler.com/#/).
+
