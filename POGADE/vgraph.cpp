@@ -27,12 +27,12 @@ void VGraph::generateGraph(PogadeProjectSourceFile *sf, int scopeId) {
 
 void VGraph::generateGraph(int scopeId) {
   if(_G) {
-    delete _G;
+    //delete _G;
     _G = nullptr;
   }
 
   if(_GA) {
-    delete _GA;
+    //delete _GA;
     _GA = nullptr;
   }
 
@@ -70,6 +70,11 @@ void VGraph::generateGraph(int scopeId) {
         QString s = ps->name();
         if(ps->nPragmas())
           s += '\n' + ps->pragmaTextAll();
+
+        qDebug() << ps->id() << " " << ps->name() <<" - W: " << ps->getASMWeightMine();
+        if(ps->getASMWeightMine()) {
+          s += "\n Weight: " + QString::number(ps->getASMWeightMine());
+        }
 
         _GA->label(n) = s.toLatin1().toStdString();
         int _n = s.split(QRegExp("\n|\r\n|\r")).size();
@@ -118,6 +123,11 @@ void VGraph::generateGraph(int scopeId) {
         QString s = ps->name();
         if(ps->nPragmas())
           s += '\n' + ps->pragmaTextAll();
+
+        qDebug() << ps->id() << " " << ps->name() <<" - W: " << ps->getASMWeightMine();
+        if(ps->getASMWeightMine()) {
+          s += "\n Weight: " + QString::number(ps->getASMWeightMine());
+        }
 
         _GA->label(n) = s.toLatin1().toStdString();
         int _n = s.split(QRegExp("\n|\r\n|\r")).size();

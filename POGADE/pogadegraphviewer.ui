@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>501</width>
     <height>359</height>
    </rect>
   </property>
@@ -18,20 +18,56 @@
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QPushButton" name="buttonZoomPlus">
+       <property name="minimumSize">
+        <size>
+         <width>60</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>60</width>
+         <height>16777215</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Plus</string>
+        <string>Zoom +</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="buttonZoomMinus">
+       <property name="minimumSize">
+        <size>
+         <width>60</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>60</width>
+         <height>16777215</height>
+        </size>
+       </property>
        <property name="text">
-        <string>Minus</string>
+        <string>Zoom -</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="buttonZoomReset">
+       <property name="minimumSize">
+        <size>
+         <width>60</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>60</width>
+         <height>16777215</height>
+        </size>
+       </property>
        <property name="text">
         <string>Reset</string>
        </property>
@@ -51,7 +87,39 @@
       </spacer>
      </item>
      <item>
+      <widget class="QPushButton" name="buttonDrawRoot">
+       <property name="text">
+        <string>Go to Root</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
       <widget class="QPushButton" name="buttonExport">
+       <property name="minimumSize">
+        <size>
+         <width>60</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>60</width>
+         <height>16777215</height>
+        </size>
+       </property>
        <property name="text">
         <string>Export</string>
        </property>
@@ -142,8 +210,25 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>buttonDrawRoot</sender>
+   <signal>clicked()</signal>
+   <receiver>PogadeGraphViewer</receiver>
+   <slot>drawRoot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>250</x>
+     <y>179</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>exportGraph()</slot>
+  <slot>drawRoot()</slot>
  </slots>
 </ui>

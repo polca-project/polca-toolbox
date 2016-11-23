@@ -8,7 +8,7 @@ std::vector<ASMCData> getScopes(QJsonArray scopes, int *nextId, std::vector<int>
     ASMCData d;
     d.id = *nextId;
     *nextId = d.id + 1;
-    if(!child){
+    if(child){
       child->push_back(d.id);
     }
     d.name = s.toObject().value("name").toString();
@@ -21,6 +21,7 @@ std::vector<ASMCData> getScopes(QJsonArray scopes, int *nextId, std::vector<int>
     for(ASMCData _ve : _v) {
       v.push_back(_ve);
     }
+    v.push_back(d);
   }
 
   return v;

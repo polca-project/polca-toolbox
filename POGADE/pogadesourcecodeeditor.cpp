@@ -15,6 +15,7 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <QJsonDocument>
+#include <QJsonArray>
 #include <QProcess>
 #include <QMenu>
 #include <QSettings>
@@ -394,6 +395,18 @@ void PogadeSourceCodeEditor::asmCountCode(QString file, QString flags) {
 
   QByteArray _dataASMC =  toolASMC.readAllStandardOutput();
   QString dataASMC = _dataASMC;
+
+  QJsonDocument doc = QJsonDocument::fromJson(dataASMC.toLatin1());
+  if(doc.isEmpty()) {
+    return;
+  }
+
+  QJsonObject obj = doc.object();
+  QJsonArray scopes = obj.value("scopes").toArray();
+  int nextId = 0;
+  std::vector<ASMCData> _pAsmcData = getScopes(scopes, &nextId, nullptr);
+
+  sf->setASMCData(_pAsmcData);
 }
 
 void PogadeSourceCodeEditor::processASMCountCode(QString data) {
@@ -602,6 +615,8 @@ void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
     sc.setCallLine(c.line);
     sc.setId(PolcaScope::idNext());
     PolcaScope::idNextIncrease();
+
+    sc.setParent(sf->findScopeFromLine(c.line)->id());
     sf->addScope(sc);
     c.scopeId = sc.id();
     sf->findScopeFromLine(c.line)->addChildScope(c.scopeId, c.line,
@@ -725,7 +740,6 @@ void PogadeSourceCodeEditor::selectedPragmaAndScope(PolcaScope ps, PolcaPragma p
   }
 
   //TODO: different color for pragmas inside selected scopes
-
   emit scopeSelectedDown(ps.id());
 }
 
@@ -742,7 +756,6 @@ void PogadeSourceCodeEditor::viewTree() {
 }
 
 void PogadeSourceCodeEditor::scopeSelectedUPProcess(int id) {
-  //qDebug() << "SCE Sel: " << id;
   if(sf) {
     PolcaScope *ps = sf->findScope(id);
     selectedScope(*ps);

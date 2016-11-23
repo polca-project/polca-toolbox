@@ -158,7 +158,7 @@ int PogadeProjectSourceFile::getRevInUse() {
   return _revInUse;
 }
 
-int PogadeProjectSourceFile::setRevInUse(int rev) {
+int PogadeProjectSourceFile::setRevInUse(unsigned int rev) {
   for(int i = 0; i< _revisions.size(); ++i) {
     if(_revisions.at(i) == rev) {
       _revInUse = rev;
@@ -316,17 +316,17 @@ std::vector<ScopeChild> PogadeProjectSourceFile::generateOrderedRootChildren() {
   return list;
 }
 
-/*
-PolcaScope *PogadeProjectSourceFile::findScope(QString name) {
+std::vector<PolcaScope*> PogadeProjectSourceFile::findScopes(QString name) {
+  std::vector<PolcaScope*> v;
+
   for(PolcaScope &s : _scopes) {
     if(s.name() == name) {
-      return &s;
+      v.push_back(&s);
     }
   }
 
-  return nullptr;
+  return v;
 }
-*/
 
 PolcaScope *PogadeProjectSourceFile::findScope(QString name, int line) {
   if(line < 0) {
@@ -490,9 +490,23 @@ std::vector<PolcaTransformation> PogadeProjectSourceFile::getTransformations() {
 }
 
 std::vector<ASMCData> PogadeProjectSourceFile::getASMCData() {
-
+  return _asmcData;
 }
 
-void PogadeProjectSourceFile::setASMCData(std::vector<ASMCData>) {
+void PogadeProjectSourceFile::setASMCData(std::vector<ASMCData> data) {
+  _asmcData = data;
 
+  // Clear previous data
+  for(PolcaScope &s : _scopes) {
+    s.setASMWeightMine(0);
+  }
+
+  // Set new data
+  for(ASMCData a : _asmcData) {
+    qDebug() << a.name << " - " << a.weight;
+    std::vector<PolcaScope*> vs = findScopes(a.name);
+    for(PolcaScope* ss : vs) {
+      ss->setASMWeightMine(a.weight);
+    }
+  }
 }

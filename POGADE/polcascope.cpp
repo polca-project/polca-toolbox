@@ -527,6 +527,7 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
       _p->posP.push_back(1);
       _p->input  = false;
       _p->output = true;
+      _p->size   = l[2][0];
       _pars.push_back(*_p);
       break;
     case POLCA_MEMFREE:

@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include "pogadeprojectsourcefile.h"
+#include "polcascope.h"
 #include "vgraph.h"
 #include "graphscene.h"
 
@@ -33,12 +34,10 @@ private slots:
   void scopeExpandedDownProcess(int id);
   void showContextMenu(const QPoint& pos);
   void rightClickNode(int, QPoint);
-
   void expandNode();
   void expandNodeNewWindow();
-
+  void drawRoot();
   void test();
-
 
 signals:
   void scopeSelectedDown(int);
@@ -54,6 +53,7 @@ private:
   VGraph _graph;
   GraphScene *_gs = nullptr;
   int _workingNode = -1;
+  int _lastNode = -1;
 };
 
 #endif // POGADEGRAPHVIEWER_H

@@ -28,6 +28,7 @@ typedef struct {
   std::vector<int> posP;
   bool input = false;
   bool output = false;
+  QString size = "";
 } ParPos;
 
 typedef struct {

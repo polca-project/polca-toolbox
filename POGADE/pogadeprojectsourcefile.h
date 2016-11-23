@@ -50,7 +50,7 @@ public:
   QDockWidget *getDockVisual();
   QDockWidget *getDockScopeTree();
   int getRevInUse();
-  int setRevInUse(int rev);
+  int setRevInUse(unsigned int rev);
   int saveCurrentRevision(QString text);
   QString getRevisionName(unsigned int rev);
   void addScope(PolcaScope ps);
@@ -67,10 +67,10 @@ public:
 
   PolcaScope findScopeAndCopy(QString name);
   PolcaScope* findScope(QString name, int line);
-  //PolcaScope* findScope(QString name);
   PolcaScope* findScope(int id);
   PolcaScope* findScope(int startLine, int endLine);
   PolcaScope* findScopeFromLine(int line);
+  std::vector<PolcaScope*> findScopes(QString name);
   void linkScopeChildren();
 
   std::vector<int> rootScopes();
@@ -86,7 +86,7 @@ public:
   std::vector<PolcaTransformation*> transformationsLine(int line);
 
   std::vector<ASMCData> getASMCData();
-  void setASMCData(std::vector<ASMCData>);
+  void setASMCData(std::vector<ASMCData> data);
 
 private:
   unsigned int _latestRev = 0;

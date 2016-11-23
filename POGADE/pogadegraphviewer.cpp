@@ -61,7 +61,7 @@ void PogadeGraphViewer::updateGUI() {
 }
 
 void PogadeGraphViewer::generateScene(int id) {
-  // TODO: finish this
+  _lastNode = id;
   _graph.generateGraph(_sf, id);
   _graph.processGraph();
   _gs->clear();
@@ -97,10 +97,17 @@ void PogadeGraphViewer::rightClickNode(int id, QPoint p) {
   connect(&menu, SIGNAL(destroyed(QObject*)), this, SLOT(test()));
 }
 
-
 void PogadeGraphViewer::expandNode() {
   scopeSelectedUpProcess(_workingNode);
   scopeExpandedDownProcess(_workingNode);
+}
+
+void PogadeGraphViewer::drawRoot() {
+  PolcaScope* s = _sf->findScope(_lastNode);
+  if(s) {
+    int parent = s->parent();
+    generateScene(parent);
+  }
 }
 
 void PogadeGraphViewer::expandNodeNewWindow() {
