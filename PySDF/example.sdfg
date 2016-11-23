@@ -1,0 +1,12 @@
+{
+    "type": "hsdf",
+    "actors" : [
+        {"name": "v0", "wcet": 1},
+        {"name": "v1", "wcet": 2},
+        {"name": "v2", "wcet": 1}],
+    "channels": [
+        {"from": "v0", "to": "v1", "capacity": 2},
+        {"from": "v0", "to": "v2", "capacity": 2},
+        {"from": "v2", "to": "v1", "capacity": 2},
+        {"from": "v1", "to": "v1", "tokens": 1}]
+}

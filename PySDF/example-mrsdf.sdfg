@@ -1,0 +1,10 @@
+{
+    "type": "csdf",
+    "actors" : [
+        {"name": "a", "wcet": 5},
+        {"name": "b", "wcet": 2},
+        {"name": "c", "wcet": 1}],
+    "channels": [
+        {"from": "a", "to": "b", "production": 2, "consumption": 3, "tokens": 0, "capacity": 4},
+        {"from": "b", "to": "c", "production": 4, "consumption": 5, "tokens": 0, "capacity": 60}]
+}
