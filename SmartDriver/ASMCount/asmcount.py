@@ -14,8 +14,8 @@ cLinesASM = []
 scopesNamesFuncLines = []
 cLinesASMCode = []
 
-_VERSION = "0.1.0"
-_DATE    = "13.10.16"
+_VERSION = "0.1.2"
+_DATE    = "08.11.16"
 ########################
 
 def addSpaces(level):
@@ -38,15 +38,17 @@ class Scope:
         return str(self.lstart) + "\t\t" + str(self.lend) + "\t" + str(self.work) + "\t\t" + nstr
     
     def toJson(self, s, level):
+        jsf = ""
         nstr = "*"
         if(len(self.name)>0):
             nstr = self.name
         
-        print addSpaces(level) + '{ "name" : "' + nstr + '",'
-        print addSpaces(level) + '  "count" : ' +  str(self.work)
-        print addSpaces(level) + '  "lstart" : ' +  str(self.lstart)
-        print addSpaces(level) + '  "lend" : ' +  str(self.lend)
-        print addSpaces(level) + '  "scopes" : ['
+        jsf = jsf + addSpaces(level) + '{ "name" : "' + nstr + '",'
+        jsf = jsf + addSpaces(level) + '  "weight" : ' +  str(self.work) + ","
+        jsf = jsf + addSpaces(level) + '  "lstart" : ' +  str(self.lstart) + ","
+        jsf = jsf + addSpaces(level) + '  "lend" : ' +  str(self.lend) + ","
+        jsf = jsf + addSpaces(level) + '  "scopes" : ['
+        thereIsOne = False
         while(len(s) > 0):
             sm = s.pop(0)
             sc = []
@@ -55,16 +57,22 @@ class Scope:
                 if(s[i].lstart >= sm.lstart and s[i].lend <= sm.lend):
                     sc.append(s[i])
                     si.insert(0, i)
-            sm.toJson(sc, level+1)
+            thereIsOne = True
+            jsf = jsf + sm.toJson(sc, level+1)
+            #jsf = jsf[:-1]
             for i in si:
                 s.pop(i)
-        print addSpaces(level) + ']},'
+        if(thereIsOne):
+            jsf = jsf[:-1]
+        jsf = jsf + addSpaces(level) + ']},'
+        return jsf
 
 def printJson(s):
     level = 1
     s.sort(key=lambda x: x.lstart, reverse=False)
-    print '{'
-    print addSpaces(level) + ' "scopes" : ['
+    jsf = ""
+    jsf = jsf + "{\n"
+    jsf = jsf + addSpaces(level) + ' "scopes" : ['
 
     while(len(s) > 0):
         sm = s.pop(0)
@@ -75,14 +83,15 @@ def printJson(s):
                 sc.append(s[i])
                 si.insert(0, i)
 
-        sm.toJson(sc, 2)
+        jsf = jsf + sm.toJson(sc, 2)
+        #jsf = jsf[:-1]
         for i in si:
             s.pop(i)
-
-    print addSpaces(level) + ']'
-    print '}'
-    
-    
+    jsf = jsf[:-1]
+    jsf = jsf + addSpaces(level) + "]\n"
+    jsf = jsf + "}\n"
+    return jsf
+        
 def isFourHex(s):
     if(len(s)==4):
         r = True
@@ -193,9 +202,12 @@ def processASMCount(lines, fname):
                         polcaScopeName = l[5]
                         if(not dictPragma.has_key(polcaScopeName)):
                             dictPragma[polcaScopeName] = cline
-                
-               
+                             
             elif (l[1] == '.globl'):
+                if(len(l) == 3):
+                    funcStartScope = l[2]
+
+            elif (l[1] == '.global'):
                 if(len(l) == 3):
                     funcStartScope = l[2]
                     
@@ -276,9 +288,8 @@ if __name__ == "__main__":
     # for i in range(len(scopes)):
     #     print scopes[i].toStr()
 
-    printJson(scopes)
+    print printJson(scopes)
         
     # print "\nLine\tASM Ins\tCode"
     # for i in range(len(cLinesASM)):
     #     print str(i) + "\t" + str(cLinesASM[i]) + "\t" + cLinesASMCode[i]
-    
