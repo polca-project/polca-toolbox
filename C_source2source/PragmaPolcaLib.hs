@@ -788,6 +788,12 @@ parseMyFile input_file =
 			Left parse_err -> error (show parse_err)
 			Right ast      -> return ast
 
+extract_rel_directory filename = 
+	reverse (dropWhile (\x -> x /= '/') (reverse filename))
+
+extract_filename filename = 
+	reverse (takeWhile (\x -> x /= '/') (reverse filename))
+
 getAllNodes ((nodeId,ann):xs) ast = 
 		result
 	where

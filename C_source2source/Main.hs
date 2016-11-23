@@ -217,7 +217,8 @@ expandAnns name =
 				print_id = 0,
 				seq_id = -1,
 				acc_steps = [],
-				oracle = ""
+				oracle = "",
+				nameFile = name
 			}
 		--writeFile (filename ++ "_transformed.c") (prettyMyASTIncludes ast)
 		writeFileWithPragmas (name ++ ".ann.c") state
@@ -246,7 +247,8 @@ pretty_program name =
 				print_id = 0,
 				seq_id = -1,
 				acc_steps = [],
-				oracle = ""
+				oracle = "",
+				nameFile = name
 			}
 		-- writeFileWithPragmas (name ++ ".ann.c") state
 		putStrLn (printWithoutPragmas state)
@@ -277,7 +279,8 @@ only_translate name =
 				print_id = 0,
 				seq_id = -1,
 				acc_steps = [],
-				oracle = ""
+				oracle = "",
+				nameFile = name
 			}
 		--writeFile (filename ++ "_transformed.c") (prettyMyASTIncludes ast)
 		to_platform name state
@@ -528,6 +531,8 @@ data CodeAndChanges =
 	CodeAndChanges
 	{ 
 		code :: String,
+		fileName :: String,
+		fileDir :: String,
 		-- codeBlock :: String,
 		-- codeFun :: String,
 		changes :: [ChangeCode]
@@ -549,6 +554,8 @@ instance FromJSON ChangeCode where
 instance FromJSON CodeAndChanges where
     parseJSON (Object v) = CodeAndChanges <$>
     					   v .: DT.pack "code" <*>
+    					   v .: DT.pack "fileName" <*>
+    					   v .: DT.pack "fileDir" <*>
     					   -- v .: DT.pack "codeBlock" <*>
     					   -- v .: DT.pack "codeFun" <*>
                            v .: DT.pack "changes"
@@ -569,9 +576,11 @@ instance ToJSON ChangeCode where
     			]
 
 instance ToJSON CodeAndChanges where
-    toJSON (CodeAndChanges code changes) = 
+    toJSON (CodeAndChanges code fileName fileDir changes) = 
     	object [
-    			DT.pack "code" .= code, 
+    			DT.pack "code" .= code,
+    			DT.pack "fileName" .= fileName,
+    			DT.pack "fileDir" .= fileDir, 
     			-- DT.pack "codeBlock" .= codeBlock, 
     			-- DT.pack "codeFun" .= codeFun, 
     			DT.pack "changes" .= changes
@@ -757,6 +766,10 @@ buildJSON state0 (listChangesStmts,listChangesExprs) =
 				{
 				 code = 
 				 	strProg,
+				 fileName = 
+				 	extract_filename (nameFile state),
+				 fileDir = 
+				 	extract_rel_directory (nameFile state),
 				 -- codeBlock = 
 				 -- 	strBlock,
 				 -- codeFun = 
@@ -954,7 +967,8 @@ initialStepsTransInt verbose name seqId printId runCetus =
 								print_id = printId,
 								seq_id = seqId,
 								acc_steps = [],
-								oracle = ""
+								oracle = "",
+								nameFile = name
 							} 
 						writeFile (name ++ ".cetus") (printWithPragmasWithoutStdLib initialState00)
 						--writeFile (name ++ ".cetus") ((unlines includes0) ++ "\n\n" ++ (prettyMyAST ast00) ++ "\n")
@@ -1004,7 +1018,8 @@ initialStepsTransInt verbose name seqId printId runCetus =
 				print_id = printId,
 				seq_id = seqId,
 				acc_steps = [],
-				oracle = ""
+				oracle = "",
+				nameFile = name
 			} 
 		--DBin.encodeFile "temp" initialState0
 		--initialState <- DBin.decodeFile "temp" 

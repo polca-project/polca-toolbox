@@ -88,6 +88,7 @@ trans_platform_internal name mode includes ast1 =
 -- 		_ ->
 -- 			""	
 includesMode mode filename
+	-- Original OpenCL includes
 	-- | mode == "opencl" = 
 	-- 	["#include <fcntl.h>",
 	-- 	"#include <string.h>",
@@ -306,11 +307,7 @@ lookForAssignVar _ _ =
 	[]
 
 
-extract_rel_directory filename = 
-	reverse (dropWhile (\x -> x /= '/') (reverse filename))
 
-extract_filename filename = 
-	reverse (takeWhile (\x -> x /= '/') (reverse filename))
 
 ---------------------------------------------------------
 -- OpenCL functions

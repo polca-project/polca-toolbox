@@ -257,17 +257,18 @@ data TransState =
 		print_id :: Int,
 		seq_id :: Int,
 		acc_steps :: [(String, Int)],
-		oracle :: String
+		oracle :: String,
+		nameFile :: String
     }
     deriving (Show, Data, Typeable)
 
 
 -- TODO: rewrite instances so they have sense
 instance Eq TransState where
-  (TransState f1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ ) == (TransState f2 _ _ _ _ _ _ _ _ _ _ _ _ _ _) = f1 == f2
+  (TransState f1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) == (TransState f2 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) = f1 == f2
 
 instance Ord TransState where
-  (TransState f1 _ _ _ _ _ _ _ _ _ _ _ _ _ _) `compare` (TransState f2 _ _ _ _ _ _ _ _ _ _ _ _ _ _) = f1 `compare` f2
+  (TransState f1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) `compare` (TransState f2 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) = f1 `compare` f2
 
 
 getAnnotation (CLabel _ _ _ (Ann _ np)) = np 
