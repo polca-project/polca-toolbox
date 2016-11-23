@@ -16,14 +16,17 @@ main = do
 	args <- getArgs
 	case length args of 
 		0 -> 
-			putStrLn "Two expressions are needed."
+			putStrLn "Two expressions and a directory to store temp files are needed."
 		1 -> 
-			putStrLn "Another expression is needed."
+			putStrLn "Another expression and a directory to store temp files is needed."
+		2 -> 
+			putStrLn "A directory to store temp files is needed."
 		_ ->
 			-- TODO: Needs previuos parsing
 			do 
-				a0 <- parseExp (args!!0)
-				a1 <- parseExp (args!!1)
+				let dir = (args!!2)
+				a0 <- parseExp (args!!0) dir
+				a1 <- parseExp (args!!1) dir
 				case (a0, a1) of 
 					(Just a0_, Just a1_) ->
 						case isRollable  a0_ a1_ of 
@@ -35,10 +38,11 @@ main = do
 						putStrLn "-1"
 			 
 
-parseExp e = 
+parseExp e dir = 
 	do
-		writeFile "temp_file_read.c" ("main(){" ++ e ++ ";}")
-		ast <- parseMyFile "temp_file_read.c"
+		let tempFile = dir ++ "temp_file_read.c"
+		writeFile tempFile ("main(){" ++ e ++ ";}")
+		ast <- parseMyFile tempFile
 		case (fmap (\nI -> Ann nI nodePropertiesDefault) ast) of
 			(CTranslUnit 
 				[(CFDefExt (CFunDef _ _ _ 
