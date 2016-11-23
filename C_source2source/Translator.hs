@@ -61,7 +61,7 @@ trans_platform_internal name mode includes ast1 =
 -- - Declarations disapear in the resulting code
 -- - Need a useless declaration to be correctly read. 
 				"opencl" ->
-					toOpenCLFromAST ast1
+					toOpenCLFromASTDemo name ast1
 				--"maxj" ->
 				--	toMaxJFromAST name linkedPolcaAnn ast1
 				--"mpi" ->
@@ -70,8 +70,9 @@ trans_platform_internal name mode includes ast1 =
 				--	toOMPFromAST linkedPolcaAnn ast1
 		let trans_name = name ++ "_" ++ mode ++".c"
 		writeFile trans_name
-			((unlines includes) ++ (printStdLib includes) 
-			++ (unlines (includesMode mode)) 
+			((unlines includes)
+			-- ++ (printStdLib includes) 
+			++ (unlines (includesMode mode name)) 
 			++ "\n" ++ result)
 		putStrLn ("Transformed " ++ mode ++ " code stored in " ++ trans_name)
 
@@ -86,14 +87,21 @@ trans_platform_internal name mode includes ast1 =
 -- 			"#include <stdlib.h>\n"
 -- 		_ ->
 -- 			""	
-includesMode mode
+includesMode mode filename
+	-- | mode == "opencl" = 
+	-- 	["#include <fcntl.h>",
+	-- 	"#include <string.h>",
+	-- 	"#include <unistd.h>",
+	-- 	"#include <sys/types.h>",
+	-- 	"#include <sys/stat.h>",
+	-- 	"#include <OpenCL/opencl.h>"]
 	| mode == "opencl" = 
-		["#include <fcntl.h>",
-		"#include <string.h>",
-		"#include <unistd.h>",
-		"#include <sys/types.h>",
-		"#include <sys/stat.h>",
-		"#include <OpenCL/opencl.h>"]
+		["#include \"common_OpenCL.h\"",
+		 "const char kernel1Name[] = \"./" ++ filename ++ "_kernel1.cl\";",
+		 "const char kernel1Func[] = \"kernel1\";",
+		 "const char kernel2Name[] = \"./" ++ filename ++ "_kernel2.cl\";",
+		 "const char kernel2Func[] = \"kernel2\";",
+		 "const char compileFlags[] = \"\";"]
 	| mode == "maxj" = 
 		["#include <MaxSLiCInterface.h>",
 		 "#include \"Maxfiles.h\""]
@@ -592,6 +600,103 @@ readResultsGPU outs =
 		    "\texit(1);",
 		    "}"])
 
+---------------------------------------------------------
+-- OpenCL functions Demo
+---------------------------------------------------------
+
+
+toOpenCLFromASTDemo filename ast = 
+	do 
+		let (astTarget:_) = (applyRulesGeneral (search_target "opencl") ast)
+		let (astEncFor:_) = (applyRulesGeneral (search_enclosing_for astTarget) ast)
+		let ppAstEncFor = prettyMyASTAnn astEncFor
+		let base = prettyMyASTAnn ast
+		let firstPpAstEncFor = trim $ head $ lines ppAstEncFor
+		let nbase = unlines $ emptyEnclFor (lines base) firstPpAstEncFor
+		let kernelLoops = getKernelLoops astTarget 
+		writeKernelLoops filename kernelLoops
+		return $ nbase
+
+writeKernelLoops:: String -> [(Integer, CStatAnn)] -> IO (String)
+writeKernelLoops _ [] =
+	return ""
+writeKernelLoops filename ((iden, kernel):rest) = 
+	do 
+		let nameKernel = filename ++ "_kernel" ++ (show iden) ++ ".cl"
+		let kernelStr = (unlines $ headKernel iden) ++ (prettyMyASTAnn kernel)
+		writeFile nameKernel kernelStr
+		putStrLn ("OpenCL kernel stored in " ++ nameKernel)
+		writeKernelLoops filename rest
+
+search_target :: String -> CStatAnn -> [CStatAnn]
+search_target target stmt = 
+	case [t | t@("target":target1:_) <- (extractPolcaPragmas (getAnnotation stmt)), target1 == target] of
+		[] ->
+			[]
+		_ ->
+			[stmt]
+
+search_enclosing_for :: CStatAnn -> CStatAnn -> [CStatAnn]
+search_enclosing_for ast forStmt@(CFor _ _ _ (CCompound _ body _) _) = 
+	case (applyRulesGeneral (search_included ast) forStmt) of 
+		[] ->
+			[]
+		_ ->
+			[forStmt]
+search_enclosing_for _ _ = 
+	[]
+
+search_included :: CStatAnn -> CStatAnn -> [CStatAnn]
+search_included ast astEnc = 
+	case (geq ast astEnc) of 
+		True ->
+			[astEnc]
+		False ->
+			[]
+
+emptyEnclFor (line:liness) searched = 
+	case (trim line) == searched of 
+		True -> 
+			let 
+				restProgram = (beforeLoop ++ (line:(head liness):(searchClosingBracket [] 0 (tail liness))))
+				(prev, lastLines) = splitAt ((length restProgram) - 1) restProgram
+			in 
+				prev ++ beforeGo ++ lastLines
+		False ->
+			(line:(emptyEnclFor liness searched))
+
+
+searchClosingBracket prev 0 (('}':resLine):liness) = 
+	inLoop ++ (((reverse prev) ++ ('}':resLine)):afterLoop) ++ liness
+searchClosingBracket prev n (('}':resLine):liness) = 
+	searchClosingBracket ('}':prev) (n - 1) (resLine:liness)
+searchClosingBracket prev n (('{':resLine):liness) = 
+	searchClosingBracket ('{':prev) (n + 1) (resLine:liness)
+searchClosingBracket prev n ((other:resLine):liness) = 
+	searchClosingBracket (other:prev) n (resLine:liness)
+searchClosingBracket prev n ([]:liness) = 
+	searchClosingBracket [] n liness 
+searchClosingBracket prev n [] = 
+	[]
+
+getKernelLoops (CCompound _ blocks _) = 
+	searchFors 1 [] blocks
+
+globalIdCall = 
+	(CCall (CVar (Ident "get_global_id" 0 undefNode) undefNodeAnn) [(intConstant 0)] undefNodeAnn)
+	
+blockGlobalCall iter = 
+	(CBlockStmt (CExpr (Just  (CAssign CAssignOp iter globalIdCall undefNodeAnn)) undefNodeAnn) ) 
+
+searchFors iden prevDecl (b@(CBlockStmt (CFor (Left (Just (CAssign CAssignOp iter _ _))) _ _ (CCompound _ body _) _)):blocks) =  
+	(iden, (CCompound [] ((reverse ((blockGlobalCall iter):prevDecl)) ++ body) undefNodeAnn)):(searchFors (iden + 1) [] blocks)
+searchFors iden prevDecl ((CBlockStmt _):blocks) =
+	searchFors iden prevDecl blocks
+searchFors iden prevDecl (b@(CBlockDecl _):blocks) = 
+	searchFors iden (b:prevDecl) blocks
+searchFors _ _ [] = 
+	[]
+
 -----------------------------------------------------------
 ---- MaxJ functions
 -----------------------------------------------------------
@@ -1089,3 +1194,122 @@ readResultsGPU outs =
 --	| otherwise =
 --		prettyMyAST block
 
+
+beforeLoop = 
+	["\tsize_t local;",
+	"\tcl_kernel kernel1,kernel2;",
+	"\tcl_int error = CL_SUCCESS;", 
+	"\tsize_t global;",
+	"\tcl_mem pStructDev;",
+	"\tcl_mem fStructDev;",
+	"\tunsigned int elemsInput;",
+	"\tunsigned int sizeInput;",
+	"\tcl_mem vStructDev;", 
+	"\tunsigned int elemsOutput;",
+	"\tunsigned int sizeOutput;",  
+	"\tinitOpenCLVars();",
+	"\tselectOpenCLDevice(&platformIdCount,&platformIds,&deviceIdCount,&deviceIds);",
+	"\tcreateOpenCLContext(platformIds,deviceIdCount,deviceIds,&context);",
+	"\tcreateOpenCLQueue(deviceIds,context,&queue);",
+	"\tcreateOpenCLKernel(kernel1Func,kernel1Name,compileFlags,deviceIds,context,&kernel1);",
+	"\tcreateOpenCLKernel(kernel2Func,kernel2Name,compileFlags,deviceIds,context,&kernel2);",
+	"\telemsInput = N*3;", 
+	"\tsizeInput = sizeof(float) * elemsInput;",
+	"\tpStructDev = clCreateBuffer(context,  CL_MEM_READ_WRITE, sizeInput, NULL, NULL);",
+	"\tfStructDev = clCreateBuffer(context,  CL_MEM_READ_WRITE, sizeInput, NULL, NULL);",
+	"\telemsOutput = N*3;", 
+	"\tsizeOutput = sizeof(float) * elemsOutput;",
+	"\tvStructDev = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeOutput, NULL, NULL);",
+	"\tif (!pStructDev || !vStructDev || !fStructDev)",
+	"\t{",
+	"\t\tprintf(\"Error: Failed to allocate device memory!\\n\");",
+	"\t\texit(1);",
+	"\t}",
+	"\terror  = 0;",
+	"\terror  = clSetKernelArg(kernel1, 0, sizeof(cl_mem), &pStructDev);",
+	"\terror |= clSetKernelArg(kernel1, 1, sizeof(cl_mem), &fStructDev);",
+	"\terror |= clSetKernelArg(kernel1, 2, sizeof(cl_int), &nBodies);",
+	"#if DEBUG == 1",
+	"\tif (error != CL_SUCCESS)",
+	"\t{",
+	"\t\tprintf(\"Error: Failed to set kernel arguments! %d\\n\", error);",
+	"\t\texit(1);",
+	"\t}",
+	"#endif",
+	"\terror  = 0;",
+	"\terror  = clSetKernelArg(kernel2, 0, sizeof(cl_mem), &pStructDev);",
+	"\terror |= clSetKernelArg(kernel2, 1, sizeof(cl_mem), &vStructDev);",
+	"\terror |= clSetKernelArg(kernel2, 2, sizeof(cl_mem), &fStructDev);",
+	"\terror |= clSetKernelArg(kernel2, 3, sizeof(cl_float),  &dt);",
+	"\terror |= clSetKernelArg(kernel2, 4, sizeof(cl_int), &nBodies);",
+	"#if DEBUG == 1",
+	"\tif (error != CL_SUCCESS)",
+	"\t{",
+	"\t\tprintf(\"Error: Failed to set kernel arguments! %d\\n\", error);",
+	"\t\texit(1);",
+	"\t}",
+	"#endif",
+	"\terror  = clEnqueueWriteBuffer(queue, pStructDev, CL_TRUE, 0, sizeInput, pStruct, 0, NULL, NULL);",
+	"\terror  = clEnqueueWriteBuffer(queue, vStructDev, CL_TRUE, 0, sizeOutput, vStruct, 0, NULL, NULL);",
+	"#if DEBUG == 1",
+	"\tif (error != CL_SUCCESS)",
+	"\t{",
+	"\t\tprintf(\"Error: Failed to write to source array!\\n\");",
+	"\t\texit(1);",
+	"\t}",
+	"#endif"]
+
+afterLoop = 
+	["\tclFinish(queue);",
+	"\terror =  clEnqueueReadBuffer( queue, pStructDev, CL_TRUE, 0, sizeOutput, pStruct, 0, NULL, NULL );",
+	"\terror |= clEnqueueReadBuffer( queue, vStructDev, CL_TRUE, 0, sizeOutput, vStruct, 0, NULL, NULL );",
+	"#if DEBUG == 1",
+	"\tif (error != CL_SUCCESS)",
+	"\t{",
+	"\t\tprintf(\"Error: Failed to read output array! %d\\n\", error);",
+	"\t\texit(1);",
+	"\t}",
+	"#endif"]
+
+inLoop = 
+	["\t\tlocal = 1;",
+	"\t\tglobal = nBodies;",
+	"\t\terror = clEnqueueNDRangeKernel(queue, kernel1, 1, NULL, &global, NULL, 0, NULL, NULL);",
+	"#if DEBUG == 1",
+	"\t\tif (error)",
+	"\t\t{",
+	"\t\t\tprintf(\"Error: Failed to execute kernel!\\n\");",
+	"\t\t\treturn EXIT_FAILURE;",
+	"\t\t}",
+	"#endif",
+	"\t\terror = clEnqueueNDRangeKernel(queue, kernel2, 1, NULL, &global, NULL, 0, NULL, NULL);",
+	"#if DEBUG == 1",
+	"\t\tif (error)",
+	"\t\t{",
+	"\t\t\tprintf(\"Error: Failed to execute kernel!\\n\");",
+	"\t\t\treturn EXIT_FAILURE;",
+	"\t\t}",
+	"#endif"]
+
+beforeGo = 
+	["\tclReleaseMemObject(pStructDev);",
+	"\tclReleaseMemObject(vStructDev);",
+	"\tclReleaseMemObject(fStructDev);",
+	"\tclReleaseKernel(kernel1);",
+	"\tclReleaseKernel(kernel2);",
+	"\tclReleaseCommandQueue(queue);",
+	"\tclReleaseContext(context);"]
+
+headKernel:: Integer -> [String]
+headKernel 1 = 
+	["__kernel void kernel1(",
+	"\t__global float*   pStruct,",
+	"\t__global float*   fStruct,",
+	"\tconst    int      nBodies)"]
+headKernel 2 = 
+	["__kernel void kernel2(",
+	"\t__global float* pStruct,",
+	"\t__global float* vStruct,",
+	"\t__global float* fStruct,",
+	"\tconst float dt,",
+	"\tconst int nBodies)"]

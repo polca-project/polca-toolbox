@@ -1,4 +1,50 @@
 
+// Remove a ternary operator 
+remove_ternary
+{
+    pattern:
+    {
+        cexpr(cond)?cexpr(then_):cexpr(else_);
+    }
+    condition:
+    {
+        // Evalauted twice in the resulting code
+        pure(cexpr(cond));
+        // Evaluated both in the resulting code while in the patter only one of them.
+        pure(cexpr(then_));
+        pure(cexpr(else_));
+    }
+    generate:
+    {
+        cexpr(cond) * cexpr(then_) + (1 - cexpr(cond)) * cexpr(else_);
+    }
+}
+
+
+//Removes a useless if statement
+remove_empty_if
+{
+    pattern:
+    {
+        cstmts(ini);
+        if(cexpr(cond))
+        {}
+        cstmts(end);
+    }
+    condition:
+    {
+        // Because it is going to dissapear.
+        // An alternative would be to replace the if-statement by cond.
+        pure(cexpr(cond));
+    }
+    generate:
+    {
+        cstmts(ini);
+        cstmts(end);
+    }
+}
+
+
 // rule to normalize iteration step of a for loop, for example:
 // for(i=0;i<N;i+=3){body}
 // becomes

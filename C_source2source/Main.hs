@@ -89,7 +89,7 @@ to_platform name state0 =
 		let platforms = 
 			[
 			"opencl",
-			"mpi",
+			-- "mpi",
 			"omp",
 			"maxj",
 			"plain c (with all anotations)",
@@ -193,6 +193,7 @@ ast2 name =
 expandAnns name = 
 	do
 		(ast, linkedPolcaAnn,includes) <- readFileInfo True name True
+		-- putStrLn (show linkedPolcaAnn)
 		let lastNode = getLastNode ast
 		let annAST = fmap (\nI -> Ann nI nodePropertiesDefault) ast
 		let changedAnnAST = changeAnnAST linkedPolcaAnn annAST
@@ -576,7 +577,18 @@ instance ToJSON CodeAndChanges where
     			DT.pack "changes" .= changes
     			]
 
+changesExtract filename block = 
+	jsonOutputGen filename nameRules block dictRules
+
 featuresExtract filename rules block = 
+	jsonOutputGen filename rules block dictRulesAll
+
+jsonOutputGen :: String -> [String] -> (Maybe String) -> 
+		[(String, Either 
+					(TransState -> CExprAnn -> [((String, CExprAnn, CExprAnn), TransState,[(String, CStatAnn)])])
+					(TransState -> CStatAnn -> [((String, CStatAnn, CStatAnn), TransState,[(String, CStatAnn)])]))]
+		-> IO () 
+jsonOutputGen filename rules block dr =
 	do 
 		iniState <- initialStepsTrans False filename False
 		let astsDef = 
@@ -586,7 +598,7 @@ featuresExtract filename rules block =
 				Nothing ->
 					[]
 		let funs = 
-			[f | (rule1, f) <- dictRulesAll, elem rule1 rules]
+			[f | (rule1, f) <- dr, elem rule1 rules]
 		case astsDef of 
 			[] ->
 				-- putStrLn $ buildJSON  iniState (getApplicableChangesSpecRules iniState rules)
@@ -2566,4 +2578,3 @@ elemIndexChanges p1 (p2:tail_) n
 --		--	ast = parseMyFile (name ++ ".c")
 --		--in
 --		--	nameGraph (vacuum ast)
-

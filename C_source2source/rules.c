@@ -567,21 +567,174 @@ for_loop_fission
 }
 
 // Fusion of two for-loops into a single one using pragma info
-for_loop_fusion_mapmap
+for_loop_fusion_map_map
 {
     pattern:
     {
         cstmts(ini);
         #pragma polca def a
-        // By map we know that accesses are compatible
-        #pragma polca map inputa outputa
+        // By annotations we know that accesses are compatible
+        #pragma polca map funa inputa outputa
         for(cexpr(i) = cexpr(init);cexpr(i) < cexpr(n);cexpr(i)++)
         {
             cstmts(bodyFOR1);
         }
         cstmts(mid);
         #pragma polca def b
-        #pragma polca map inputb outputb
+        #pragma polca map funb inputb outputb
+        for(cexpr(j) = cexpr(init);cexpr(j) < cexpr(n);cexpr(j)++)
+        {
+            cstmts(bodyFOR2);
+        }
+        cstmts(fin);
+    }
+    condition:
+    {
+        // bodyFOR1 cannot modify control var of second loop
+        no_writes(cexpr(j),cstmts(bodyFOR1));
+        // Rest of control var cannot be modified, because that could change the iteration space
+        no_writes(cexpr(j),cstmts(bodyFOR2)); 
+        no_writes(cexpr(i),cstmts(bodyFOR1)); 
+        no_writes(cexpr(i),cstmts(bodyFOR2));  
+        // mid does not read vars that can be modify by the first loop
+        no_reads_in_written(cstmts(mid),cstmts(bodyFOR1));
+        // To prevent side-effects
+        not(has_calls(bodyFOR1));
+    }
+    generate:
+    {
+        cstmts(ini);
+        cexpr(i) = cexpr(init) < cexpr(n)? cexpr(n) : cexpr(init);
+        cstmts(mid);
+        #pragma polca same_properties a
+        #pragma polca same_properties b
+        for(cexpr(j) = cexpr(init);cexpr(j) < cexpr(n);cexpr(j))
+        {
+            subs(cstmts(bodyFOR1), cexpr(i), cexpr(j));
+            cstmts(bodyFOR2);
+        }
+        cstmts(fin);
+    }
+}
+
+// Fusion of two for-loops into a single one using pragma info
+for_loop_fusion_map_zipWith
+{
+    pattern:
+    {
+        cstmts(ini);
+        #pragma polca def a
+        // By annotations we know that accesses are compatible
+        #pragma polca map funa inputa outputa
+        for(cexpr(i) = cexpr(init);cexpr(i) < cexpr(n);cexpr(i)++)
+        {
+            cstmts(bodyFOR1);
+        }
+        cstmts(mid);
+        #pragma polca def b
+        #pragma polca zipWith funb inputb1 inputb2 outputb
+        for(cexpr(j) = cexpr(init);cexpr(j) < cexpr(n);cexpr(j)++)
+        {
+            cstmts(bodyFOR2);
+        }
+        cstmts(fin);
+    }
+    condition:
+    {
+        // bodyFOR1 cannot modify control var of second loop
+        no_writes(cexpr(j),cstmts(bodyFOR1));
+        // Rest of control var cannot be modified, because that could change the iteration space
+        no_writes(cexpr(j),cstmts(bodyFOR2)); 
+        no_writes(cexpr(i),cstmts(bodyFOR1)); 
+        no_writes(cexpr(i),cstmts(bodyFOR2));  
+        // mid does not read vars that can be modify by the first loop
+        no_reads_in_written(cstmts(mid),cstmts(bodyFOR1));
+        // To prevent side-effects
+        not(has_calls(bodyFOR1));
+    }
+    generate:
+    {
+        cstmts(ini);
+        cexpr(i) = cexpr(init) < cexpr(n)? cexpr(n) : cexpr(init);
+        cstmts(mid);
+        #pragma polca same_properties a
+        #pragma polca same_properties b
+        for(cexpr(j) = cexpr(init);cexpr(j) < cexpr(n);cexpr(j))
+        {
+            subs(cstmts(bodyFOR1), cexpr(i), cexpr(j));
+            cstmts(bodyFOR2);
+        }
+        cstmts(fin);
+    }
+}
+
+// Fusion of two for-loops into a single one using pragma info
+for_loop_fusion_zipWith_map
+{
+    pattern:
+    {
+        cstmts(ini);
+        #pragma polca def a
+        // By annotations we know that accesses are compatible
+        #pragma polca zipWith funa inputa1 inputa2 outputa
+        for(cexpr(i) = cexpr(init);cexpr(i) < cexpr(n);cexpr(i)++)
+        {
+            cstmts(bodyFOR1);
+        }
+        cstmts(mid);
+        #pragma polca def b
+        #pragma polca map funb inputb outputb
+        for(cexpr(j) = cexpr(init);cexpr(j) < cexpr(n);cexpr(j)++)
+        {
+            cstmts(bodyFOR2);
+        }
+        cstmts(fin);
+    }
+    condition:
+    {
+        // bodyFOR1 cannot modify control var of second loop
+        no_writes(cexpr(j),cstmts(bodyFOR1));
+        // Rest of control var cannot be modified, because that could change the iteration space
+        no_writes(cexpr(j),cstmts(bodyFOR2)); 
+        no_writes(cexpr(i),cstmts(bodyFOR1)); 
+        no_writes(cexpr(i),cstmts(bodyFOR2));  
+        // mid does not read vars that can be modify by the first loop
+        no_reads_in_written(cstmts(mid),cstmts(bodyFOR1));
+        // To prevent side-effects
+        not(has_calls(bodyFOR1));
+    }
+    generate:
+    {
+        cstmts(ini);
+        cexpr(i) = cexpr(init) < cexpr(n)? cexpr(n) : cexpr(init);
+        cstmts(mid);
+        #pragma polca same_properties a
+        #pragma polca same_properties b
+        for(cexpr(j) = cexpr(init);cexpr(j) < cexpr(n);cexpr(j))
+        {
+            subs(cstmts(bodyFOR1), cexpr(i), cexpr(j));
+            cstmts(bodyFOR2);
+        }
+        cstmts(fin);
+    }
+}
+
+// Fusion of two for-loops into a single one using pragma info
+for_loop_fusion_zipWith_zipWith
+{
+    pattern:
+    {
+        cstmts(ini);
+        #pragma polca def a
+        // By annotations we know that accesses are compatible
+        #pragma polca zipWith funa inputa1 inputa2 outputa
+        for(cexpr(i) = cexpr(init);cexpr(i) < cexpr(n);cexpr(i)++)
+        {
+            cstmts(bodyFOR1);
+        }
+        cstmts(mid);
+        #pragma polca def b
+        #pragma polca zipWith funb inputb1 inputb2 outputb
         for(cexpr(j) = cexpr(init);cexpr(j) < cexpr(n);cexpr(j)++)
         {
             cstmts(bodyFOR2);
@@ -1053,9 +1206,9 @@ remove_ternary
     }
     condition:
     {
-        // Evalauted twice in the resulting code
+        // Evaluated twice in the resulting code
         pure(cexpr(cond));
-        // Evaluated both in the resulting code while in the patter only one of them.
+        // Evaluated both in the resulting code while in the pattern only one of them.
         pure(cexpr(then_));
         pure(cexpr(else_));
     }
