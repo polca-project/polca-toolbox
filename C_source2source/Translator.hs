@@ -96,12 +96,15 @@ includesMode mode filename
 	-- 	"#include <sys/stat.h>",
 	-- 	"#include <OpenCL/opencl.h>"]
 	| mode == "opencl" = 
-		["#include \"common_OpenCL.h\"",
-		 "const char kernel1Name[] = \"./" ++ filename ++ "_kernel1.cl\";",
-		 "const char kernel1Func[] = \"kernel1\";",
-		 "const char kernel2Name[] = \"./" ++ filename ++ "_kernel2.cl\";",
-		 "const char kernel2Func[] = \"kernel2\";",
-		 "const char compileFlags[] = \"\";"]
+		let 
+			onlyName = extract_filename filename
+		in 
+			["#include \"common_OpenCL.h\"",
+			 "const char kernel1Name[] = \"" ++ onlyName ++ "_kernel1.cl\";",
+			 "const char kernel1Func[] = \"kernel1\";",
+			 "const char kernel2Name[] = \"" ++ onlyName ++ "_kernel2.cl\";",
+			 "const char kernel2Func[] = \"kernel2\";",
+			 "const char compileFlags[] = \"\";"]
 	| mode == "maxj" = 
 		["#include <MaxSLiCInterface.h>",
 		 "#include \"Maxfiles.h\""]
@@ -305,6 +308,9 @@ lookForAssignVar _ _ =
 
 extract_rel_directory filename = 
 	reverse (dropWhile (\x -> x /= '/') (reverse filename))
+
+extract_filename filename = 
+	reverse (takeWhile (\x -> x /= '/') (reverse filename))
 
 ---------------------------------------------------------
 -- OpenCL functions
