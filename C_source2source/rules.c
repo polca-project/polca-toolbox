@@ -214,7 +214,7 @@ loop_interchange
         // Controls are not modified in body
         no_rw(cexpr(i),cexpr(body));
         no_rw(cexpr(j),cexpr(body));
-        //for loop should be annotated with iteration_idependent
+        //for loop should be annotated with iteration_independent
         //i.e. it has not loop carried dependecies
     }
     generate:
@@ -237,7 +237,7 @@ loop_interchange_pragma
     pattern:
     {
         cstmts(ini);
-        #pragma polca iteration_idependent
+        #pragma polca iteration_independent
         #pragma polca def a
         for(cexpr(i) = cexpr(init_i);cexpr(cond_i) < cexpr(n_i);cexpr(i)++)
         {
@@ -262,7 +262,7 @@ loop_interchange_pragma
     generate:
     {   
         cstmts(ini);
-        #pragma polca iteration_idependent
+        #pragma polca iteration_independent
         #pragma polca same_properties a
         for(cexpr(j) = cexpr(init_j);cexpr(j) < cexpr(n_j);cexpr(j)++)
         {
@@ -827,11 +827,13 @@ for_loop_fusion
     pattern:
     {
         cstmts(ini);
+        #pragma polca def a
         for(cexpr(i) = cexpr(init);cexpr(i) < cexpr(n);cexpr(i)++)
         {
             cstmts(bodyFOR1);
         }
         cstmts(mid);
+        #pragma polca def b
         for(cexpr(j) = cexpr(init);cexpr(j) < cexpr(n);cexpr(j)++)
         {
             cstmts(bodyFOR2);
@@ -864,6 +866,8 @@ for_loop_fusion
         cstmts(ini);
         cexpr(i) = cexpr(init) < cexpr(n)? cexpr(n) : cexpr(init);
         cstmts(mid);
+        #pragma polca same_properties a
+        #pragma polca same_properties b
         for(cexpr(j) = cexpr(init);cexpr(j) < cexpr(n);cexpr(j)++)
         {
             subs(cstmts(bodyFOR1), cexpr(i), cexpr(j));

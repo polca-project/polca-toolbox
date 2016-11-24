@@ -1072,8 +1072,8 @@ matchPragmas nameNode ((prall@(hpr:pr)):pragmasRule) pragmasNode
 				in 
 					-- (TypePragma, VarPragma, ValuesPragma, nameNodeValues)
 					(matchs, (hpr, pr, pn, nameNode):matching)
-matchPragmas _ [] pragmasNode = 
-	(True, [])
+matchPragmas nameNode [] pragmasNode = 
+	(True, [(hpn, pn, [pn], nameNode) |(hpn:pn)  <- pragmasNode])
 
 buildPragmas patPragmaDict matchedAST pragmasAst pragmaRule = 
 	case (head pragmaRule) of 
@@ -1083,7 +1083,7 @@ buildPragmas patPragmaDict matchedAST pragmasAst pragmaRule =
 					[] ->
 						[]
 					[nameNode] ->
-						-- trace ((show pragmasAst) ++ " " ++ (show patPragmaDict)) 
+						-- trace ((show pragmasAst) ++ " " ++ (show patPragmaDict)) $ 
 						-- pragmasAst
 						-- [["def","BLOCK_ABS"]]
 						-- ("input",["inputb2"],[["pos"],["vel"]],Name {nameId = 1292})

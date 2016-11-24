@@ -431,11 +431,13 @@ for_loop_fusion
     pattern:
     {
         cstmts(ini);
+        #pragma polca def a
         for(cexpr(i) = cexpr(init);cexpr(i) < cexpr(n);cexpr(i)++)
         {
             cstmts(bodyFOR1);
         }
         cstmts(mid);
+        #pragma polca def b
         for(cexpr(j) = cexpr(init);cexpr(j) < cexpr(n);cexpr(j)++)
         {
             cstmts(bodyFOR2);
@@ -468,6 +470,8 @@ for_loop_fusion
         cstmts(ini);
         cexpr(i) = cexpr(init) < cexpr(n)? cexpr(n) : cexpr(init);
         cstmts(mid);
+        #pragma polca same_properties a
+        #pragma polca same_properties b
         for(cexpr(j) = cexpr(init);cexpr(j) < cexpr(n);cexpr(j)++)
         {
             subs(cstmts(bodyFOR1), cexpr(i), cexpr(j));

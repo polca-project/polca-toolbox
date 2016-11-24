@@ -66,8 +66,8 @@ trans_platform_internal name mode includes ast1 =
 					toMaxJFromASTDemo name ast1
 				--"mpi" ->
 				--	toMPIFromAST linkedPolcaAnn ast1
-				--"omp" ->
-				--	toOMPFromAST linkedPolcaAnn ast1
+				"omp" ->
+					toOMPFromASTDemo name ast1
 		let trans_name = name ++ "_" ++ mode ++".c"
 		writeFile trans_name
 			((unlines includes)
@@ -114,7 +114,8 @@ includesMode mode filename
 	| mode == "mpi" = 
 		["#include <mpi.h>"]
 	| mode == "omp" = 
-		["#include <omp.h>"]
+		-- ["#include <omp.h>"]
+		[]
 	| otherwise = 
 		[]
 
@@ -748,6 +749,76 @@ rebuilPrgMaxj name (line:liness) searched astTarget =
 				
 		False ->
 			(line:(rebuilPrgMaxj name liness searched astTarget))
+
+
+---------------------------------------------------------
+-- OpenMP functions Demo
+---------------------------------------------------------
+
+
+toOMPFromASTDemo filename ast = 
+	do 
+		let (astTarget:_) = (applyRulesGeneral (search_target "omp") ast)
+		-- search parallizable loops (has iteration_independent pragma)
+		let parallizableLoops = (applyRulesGeneral (searchParLoop) astTarget)
+		let parallizableLoopsInfo = 
+		-- Extract vars that are not arrays
+			[	
+				(	
+					pl, 
+					trim $ head $ lines $ prettyMyASTAnn pl, 
+					((nub $ applyRulesGeneral searchAssigns pl) \\ [(extractIter pl)])
+				)
+			 | pl <- parallizableLoops]
+		-- Place pragma before definition
+		return $ unlines $ placeOpenMPPragma (lines (prettyMyASTAnn ast)) parallizableLoopsInfo
+
+searchParLoop :: CStatAnn -> [CStatAnn]
+searchParLoop stmt = 
+	let 
+		ann = annotation stmt 
+	in 
+		case (has_pragmas (NodeProperties {_term_position = "", _hasSideEffects = PropertyInfo {_pragmaType = STML, _definedBy = CETUS, _value = Nothing}, _readIn = PropertyInfo {_pragmaType = STML, _definedBy = CETUS, _value = Nothing}, _writeIn = PropertyInfo {_pragmaType = STML, _definedBy = CETUS, _value = Nothing}, _localSymbols = PropertyInfo {_pragmaType = STML, _definedBy = CETUS, _value = Nothing}, _rangeInfo = PropertyInfo {_pragmaType = STML, _definedBy = CETUS, _value = Nothing}, _isCanonical = PropertyInfo {_pragmaType = STML, _definedBy = CETUS, _value = Nothing}, _isPerfectNest = PropertyInfo {_pragmaType = STML, _definedBy = CETUS, _value = Nothing}, _hasLoops = PropertyInfo {_pragmaType = STML, _definedBy = CETUS, _value = Nothing}, _hasFunctionCalls = PropertyInfo {_pragmaType = STML, _definedBy = CETUS, _value = Nothing}, _hasControlFlowModifiers = PropertyInfo {_pragmaType = STML, _definedBy = CETUS, _value = Nothing}, _scalarDependences = PropertyInfo {_pragmaType = STML, _definedBy = CETUS, _value = Nothing}, _polcaPragmas = PropertyInfo {_pragmaType = POLCA, _definedBy = USER, _value = Just [["iteration_independent"]]}, _allPragmas = PropertyInfo {_pragmaType = STML, _definedBy = CETUS, _value = Just ["iteration_independent"]}}) ann) of 
+			(True,_) -> 
+				[stmt]
+			_ ->
+				[]
+
+searchVarsNames :: CExprAnn -> [String]
+searchVarsNames (CVar (Ident v _ _) _) = 
+	[v]
+searchVarsNames _ =
+	[]
+
+searchAssigns :: CExprAnn -> [String]
+searchAssigns (CAssign _ lhs _ _) =
+	(applyRulesGeneral searchVarsNames lhs)
+searchAssigns _ =
+	[]
+
+extractIter (CFor (Left (Just (CAssign CAssignOp (CVar (Ident v _ _) _) _ _))) _ _ _ _) = 
+	v
+
+placeOpenMPPragma (line:liness) pli@((_, searched, pvs):rpli) = 
+	case (trim line) == searched of 
+		True -> 
+			let 
+				privateInfo = 
+					case pvs of
+						[] ->
+							""
+						_ ->
+							"private(" ++ (intercalate ", " pvs) ++ ")"
+			in
+				(("#pragma omp parallel for " ++ privateInfo) 
+				:(line:(placeOpenMPPragma liness rpli)))
+				
+		False ->
+			(line:(placeOpenMPPragma liness pli ))
+placeOpenMPPragma (line:liness) [] =
+	(line:(placeOpenMPPragma liness [] ))
+placeOpenMPPragma [] _ = 
+	[]
 
 -----------------------------------------------------------
 ---- MaxJ functions
