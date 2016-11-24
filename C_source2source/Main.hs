@@ -190,6 +190,7 @@ ast2 name =
 		--writeFile (name ++ ".ast") (Gr.groom (fmap (\_ -> ()) ast))
 		writeFile (name ++ ".ast") (Gr.groom idAST)
 
+
 expandAnns name = 
 	do
 		(ast, linkedPolcaAnn,includes) <- readFileInfo True name True

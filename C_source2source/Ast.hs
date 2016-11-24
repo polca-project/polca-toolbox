@@ -5,7 +5,7 @@
 
 module Ast where 
 
-import Main as M (ast2)
+import Main as M (ast)
 
 import System.Environment( getArgs )
 
@@ -17,7 +17,7 @@ main = do
 		_ ->
 			case (take 2 (reverse (args!!0))) of 
 				('c':('.':_)) ->
-					M.ast2 (reverse (drop 2 (reverse (args!!0))))
+					M.ast (reverse (drop 2 (reverse (args!!0))))
 				_ ->
-					M.ast2 (args!!0)	
+					M.ast (args!!0)	
 			 

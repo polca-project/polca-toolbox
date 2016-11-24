@@ -62,8 +62,8 @@ trans_platform_internal name mode includes ast1 =
 -- - Need a useless declaration to be correctly read. 
 				"opencl" ->
 					toOpenCLFromASTDemo name ast1
-				--"maxj" ->
-				--	toMaxJFromAST name linkedPolcaAnn ast1
+				"maxj" ->
+					toMaxJFromASTDemo name ast1
 				--"mpi" ->
 				--	toMPIFromAST linkedPolcaAnn ast1
 				--"omp" ->
@@ -106,9 +106,11 @@ includesMode mode filename
 			 "const char kernel2Name[] = \"" ++ onlyName ++ "_kernel2.cl\";",
 			 "const char kernel2Func[] = \"kernel2\";",
 			 "const char compileFlags[] = \"\";"]
+	-- | mode == "maxj" = 
+	-- 	-- ["#include <MaxSLiCInterface.h>",
+	-- 	--  "#include \"Maxfiles.h\""]
 	| mode == "maxj" = 
-		["#include <MaxSLiCInterface.h>",
-		 "#include \"Maxfiles.h\""]
+		[]
 	| mode == "mpi" = 
 		["#include <mpi.h>"]
 	| mode == "omp" = 
@@ -626,7 +628,7 @@ writeKernelLoops _ [] =
 writeKernelLoops filename ((iden, kernel):rest) = 
 	do 
 		let nameKernel = filename ++ "_kernel" ++ (show iden) ++ ".cl"
-		let kernelStr = (unlines $ headKernel iden) ++ (prettyMyASTAnn kernel)
+		let kernelStr = (unlines $ headKernelOpenCL iden) ++ (prettyMyASTAnn kernel)
 		writeFile nameKernel kernelStr
 		putStrLn ("OpenCL kernel stored in " ++ nameKernel)
 		writeKernelLoops filename rest
@@ -661,25 +663,25 @@ emptyEnclFor (line:liness) searched =
 	case (trim line) == searched of 
 		True -> 
 			let 
-				restProgram = (beforeLoop ++ (line:(head liness):(searchClosingBracket [] 0 (tail liness))))
+				restProgram = (beforeLoopOpenCL ++ (line:(head liness):(searchClosingBracket inLoopOpenCL afterLoopOpenCL [] 0 (tail liness))))
 				(prev, lastLines) = splitAt ((length restProgram) - 1) restProgram
 			in 
-				prev ++ beforeGo ++ lastLines
+				prev ++ beforeGoOpenCL ++ lastLines
 		False ->
 			(line:(emptyEnclFor liness searched))
 
 
-searchClosingBracket prev 0 (('}':resLine):liness) = 
-	inLoop ++ (((reverse prev) ++ ('}':resLine)):afterLoop) ++ liness
-searchClosingBracket prev n (('}':resLine):liness) = 
-	searchClosingBracket ('}':prev) (n - 1) (resLine:liness)
-searchClosingBracket prev n (('{':resLine):liness) = 
-	searchClosingBracket ('{':prev) (n + 1) (resLine:liness)
-searchClosingBracket prev n ((other:resLine):liness) = 
-	searchClosingBracket (other:prev) n (resLine:liness)
-searchClosingBracket prev n ([]:liness) = 
-	searchClosingBracket [] n liness 
-searchClosingBracket prev n [] = 
+searchClosingBracket toAddInside toPlaceAfter prev 0 (('}':resLine):liness) = 
+	toAddInside ++ (((reverse prev) ++ ('}':resLine)):toPlaceAfter) ++ liness
+searchClosingBracket toAddInside toPlaceAfter prev n (('}':resLine):liness) = 
+	searchClosingBracket toAddInside toPlaceAfter('}':prev) (n - 1) (resLine:liness)
+searchClosingBracket toAddInside toPlaceAfter prev n (('{':resLine):liness) = 
+	searchClosingBracket toAddInside toPlaceAfter ('{':prev) (n + 1) (resLine:liness)
+searchClosingBracket toAddInside toPlaceAfter prev n ((other:resLine):liness) = 
+	searchClosingBracket toAddInside toPlaceAfter (other:prev) n (resLine:liness)
+searchClosingBracket toAddInside toPlaceAfter prev n ([]:liness) = 
+	searchClosingBracket toAddInside toPlaceAfter [] n liness 
+searchClosingBracket toAddInside toPlaceAfter prev n [] = 
 	[]
 
 getKernelLoops (CCompound _ blocks _) = 
@@ -699,6 +701,53 @@ searchFors iden prevDecl (b@(CBlockDecl _):blocks) =
 	searchFors iden (b:prevDecl) blocks
 searchFors _ _ [] = 
 	[]
+
+---------------------------------------------------------
+-- MaxJ functions Demo
+---------------------------------------------------------
+
+
+toMaxJFromASTDemo filename ast = 
+	do 
+		return ""
+		let (astTarget:_) = (applyRulesGeneral (search_target "maxj") ast)
+		let (astEncFor:_) = (applyRulesGeneral (search_enclosing_for astTarget) ast)
+		let ppAstEncFor = prettyMyASTAnn astEncFor
+		let base = prettyMyASTAnn ast
+		let onlyName = extract_filename filename
+		let firstPpAstEncFor = trim $ head $ lines ppAstEncFor
+		let nbase = unlines $ resizeFunMaxj ++ (rebuilPrgMaxj onlyName (lines base) firstPpAstEncFor astTarget)
+		-- let kernelLoops = getKernelLoops astTarget 
+		writeFile (filename ++ "Manager.maxj") (unlines (maxjManager onlyName))
+		putStrLn ("MaxJ manager stored in " ++ (filename ++ "Manager.maxj"))
+		writeFile (filename ++ "Kernel.maxj") (unlines (maxjKernel onlyName))
+		putStrLn ("MaxJ kernel stored in " ++ (filename ++ "Kernel.maxj"))
+		return $ nbase
+
+
+replaceFirstForBlock name (CCompound i bis ann) = 
+	(CCompound i (replaceFirstFor name bis) ann)
+
+replaceFirstFor name ((CBlockStmt for@(CFor _ _ _ _ _)):rest) =
+	(CBlockStmt (CExpr (Just (CCall (cvar name) [(cvar "posDevElems"), (cvar "posInput"), (cvar "velInput"), (cvar "velOutput")] undefNodeAnn)) undefNodeAnn)):rest
+replaceFirstFor name (b:rest) =
+	b:(replaceFirstFor name rest)
+replaceFirstFor _ [] =
+	[]
+
+
+cvar name = 
+	(CVar (Ident name 0 undefNode) undefNodeAnn)
+
+
+rebuilPrgMaxj name (line:liness) searched astTarget = 
+	case (trim line) == searched of 
+		True -> 
+				beforeLoopMaxj 
+			++ (line:(head liness):(searchClosingBracket (map (\s -> ('\t':s)) $ lines  $ prettyMyASTAnn $ replaceFirstForBlock name astTarget) [] [] 0 (tail liness)))
+				
+		False ->
+			(line:(rebuilPrgMaxj name liness searched astTarget))
 
 -----------------------------------------------------------
 ---- MaxJ functions
@@ -1198,7 +1247,7 @@ searchFors _ _ [] =
 --		prettyMyAST block
 
 
-beforeLoop = 
+beforeLoopOpenCL = 
 	["\tsize_t local;",
 	"\tcl_kernel kernel1,kernel2;",
 	"\tcl_int error = CL_SUCCESS;", 
@@ -1262,7 +1311,7 @@ beforeLoop =
 	"\t}",
 	"#endif"]
 
-afterLoop = 
+afterLoopOpenCL = 
 	["\tclFinish(queue);",
 	"\terror =  clEnqueueReadBuffer( queue, pStructDev, CL_TRUE, 0, sizeOutput, pStruct, 0, NULL, NULL );",
 	"\terror |= clEnqueueReadBuffer( queue, vStructDev, CL_TRUE, 0, sizeOutput, vStruct, 0, NULL, NULL );",
@@ -1274,7 +1323,7 @@ afterLoop =
 	"\t}",
 	"#endif"]
 
-inLoop = 
+inLoopOpenCL = 
 	["\t\tlocal = 1;",
 	"\t\tglobal = nBodies;",
 	"\t\terror = clEnqueueNDRangeKernel(queue, kernel1, 1, NULL, &global, NULL, 0, NULL, NULL);",
@@ -1294,7 +1343,7 @@ inLoop =
 	"\t\t}",
 	"#endif"]
 
-beforeGo = 
+beforeGoOpenCL = 
 	["\tclReleaseMemObject(pStructDev);",
 	"\tclReleaseMemObject(vStructDev);",
 	"\tclReleaseMemObject(fStructDev);",
@@ -1303,16 +1352,155 @@ beforeGo =
 	"\tclReleaseCommandQueue(queue);",
 	"\tclReleaseContext(context);"]
 
-headKernel:: Integer -> [String]
-headKernel 1 = 
+headKernelOpenCL:: Integer -> [String]
+headKernelOpenCL 1 = 
 	["__kernel void kernel1(",
 	"\t__global float*   pStruct,",
 	"\t__global float*   fStruct,",
 	"\tconst    int      nBodies)"]
-headKernel 2 = 
+headKernelOpenCL 2 = 
 	["__kernel void kernel2(",
 	"\t__global float* pStruct,",
 	"\t__global float* vStruct,",
 	"\t__global float* fStruct,",
 	"\tconst float dt,",
 	"\tconst int nBodies)"]
+
+resizeFunMaxj =
+	["void resize(void *arr, int nDim, int *dimSizes, int elemSize, void **newArr, int *newDimSizes) ",
+	"{",
+	"\tint dim0Size = dimSizes[0] * elemSize;",
+	"\tint paddedSize;",
+	"\tpaddedSize = dim0Size + (16 - (dim0Size % 16));",
+	"\tint totalNElems = 1;",
+	"\tint oldNElems = 1;",
+	"\tfor(int i=0;i<nDim;i++)",
+	"\t{",
+	"\t\tnewDimSizes[i] = i==0 ? paddedSize/elemSize : dimSizes[i];",
+	"\t\ttotalNElems *= newDimSizes[i];",
+	"\t\toldNElems   *= dimSizes[i];",
+	"\t}",
+	"\tint totalSize = totalNElems * elemSize;",
+	"\tint oldSize   = oldNElems * elemSize;",
+	"\tprintf(\"\\nPtr. resize from %dB (%d) to %dB (%d)\\n\\n\", oldSize, oldNElems, totalSize, totalNElems);",
+	"\t*(newArr) = (void*) malloc(totalSize);",
+	"\tmemcpy(*newArr,arr,(size_t)oldSize);",
+	"}"]
+
+beforeLoopMaxj = 
+	["\tint nDim = 2;",
+	"\tint posDim[2],velDim[2];",
+	"\tfloat *posInput,*posOutput;",
+	"\tfloat *velInput,*velOutput;",
+	"\tint posDevDim[2],velDevDim[2];",
+	"\tint posDevElems,velDevElems;",
+	"\tposDim[0] = nBodies;",
+	"\tposDim[1] = DIM;",
+	"\tvelDim[0] = nBodies;",
+	"\tvelDim[1] = DIM;",
+	"\tresize(pStruct, nDim, posDim, sizeof(float), &posInput, posDevDim);",
+	"\tresize(vStruct, nDim, velDim, sizeof(float), &velInput, velDevDim);",
+	"\tposDevElems = posDevDim[0] * posDevDim[1];",
+	"\tvelDevElems = velDevDim[0] * velDevDim[1];",
+	"\tposOutput = (float*)malloc(posDevElems * sizeof(float));",
+	"\tvelOutput = (float*)malloc(velDevElems * sizeof(float));"]
+
+maxjKernel name = 
+	["package "  ++ name ++ ";",
+	"",
+	"import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;",
+	"import com.maxeler.maxcompiler.v2.kernelcompiler.KernelParameters;",
+	"import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.CounterChain;",
+	"import com.maxeler.maxcompiler.v2.kernelcompiler.stdlib.core.Stream.OffsetExpr;",
+	"import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEType;",
+	"import com.maxeler.maxcompiler.v2.kernelcompiler.types.base.DFEVar;",
+	"",
+	"class " ++ name ++ "Kernel extends Kernel {",
+	"\tfinal DFEType scalarType = dfeFloat(8, 24);",
+	"",
+	"\t" ++ name ++ "Kernel(KernelParameters parameters, int nBodiesOrig,int nBodies, int DIM) {",
+	"\t\tsuper(parameters);",
+	"\t\tfloat SOFTENING = 1e-9f;",
+	"\t\tfloat DT\t\t= 0.01f;",
+	"\t\tOffsetExpr loopLength = stream.makeOffsetAutoLoop(\"loopLength\");",
+	"\t\tDFEVar loopLengthVal = loopLength.getDFEVar(this, dfeUInt(8));",
+	"\t\tDFEVar lLV32 = loopLengthVal.cast(dfeInt(32));",
+	"\t\tint lLVInt = 2;",
+	"\t\tCounterChain chain = control.count.makeCounterChain();",
+	"\t\tDFEVar iv_i_6 = chain.addCounter(nBodies, 1);",
+	"\t\tDFEVar iv_j_1 = chain.addCounter(nBodies, 1);",
+	"\t\tDFEVar iv_iv_iv_i_9_11_16 = chain.addCounter(DIM, 1);",
+	"\t\tDFEVar iv_iv_i_13_14 = chain.addCounter(DIM, 1);",
+	"\t\tDFEVar loopCounter = chain.addCounter(loopLengthVal, 1);",
+	"\t\tDFEVar iv_i_6_32 = iv_i_6.cast(dfeInt(32));",
+	"\t\tDFEVar iv_j_1_32 = iv_j_1.cast(dfeInt(32));",
+	"\t\tDFEVar iv_iv_iv_i_9_11_16_32 = iv_iv_iv_i_9_11_16.cast(dfeInt(32));",
+	"\t\tDFEVar iv_iv_i_13_14_32 = iv_iv_i_13_14.cast(dfeInt(32));",
+	"\t\tDFEVar pStruct = io.input(\"pStructIn\", scalarType, iv_iv_i_13_14===0 & iv_i_6===0 & loopCounter === (loopLengthVal-1));",
+	"\t\tDFEVar iv_d_2 = iv_iv_i_13_14===0 ? stream.offset(pStruct,-(iv_i_6_32 * nBodies*DIM*DIM*lLV32 + iv_iv_i_13_14_32), -((nBodies*nBodies*DIM*DIM*lLVInt)), 0) -",
+	"\t\t\t\t\t\t   stream.offset(pStruct,-(iv_i_6_32 * (nBodies-1)*DIM*DIM*lLV32 + iv_j_1_32 *DIM*DIM*lLV32 + iv_iv_i_13_14_32), -((nBodies*nBodies*DIM*DIM*lLVInt)), 0)",
+	"\t\t\t\t\t\t : 0.0f;",
+	"\t\tDFEVar iv_distSqr_3 = iv_iv_i_13_14===0 & iv_iv_iv_i_9_11_16===2 ? stream.offset(iv_d_2, -6*lLV32, -((nBodies*nBodies*DIM*DIM*lLVInt)-1), 0) *",
+	"\t\t\t\t\t\t\t\t\t\t stream.offset(iv_d_2, -6*lLV32, -((nBodies*nBodies*DIM*DIM*lLVInt)-1), 0) +",
+	"\t\t\t\t\t\t\t\t\t\t stream.offset(iv_d_2, -3*lLV32, -((nBodies*nBodies*DIM*DIM*lLVInt)-1), 0) *",
+	"\t\t\t\t\t\t\t\t\t\t stream.offset(iv_d_2, -3*lLV32, -((nBodies*nBodies*DIM*DIM*lLVInt)-1), 0) +",
+	"\t\t\t\t\t\t\t\t\t\t stream.offset(iv_d_2,  0*lLV32, -((nBodies*nBodies*DIM*DIM*lLVInt)-1), 0) *",
+	"\t\t\t\t\t\t\t\t\t\t stream.offset(iv_d_2,  0*lLV32, -((nBodies*nBodies*DIM*DIM*lLVInt)-1), 0) +",
+	"\t\t\t\t\t\t\t\t\t\t SOFTENING",
+	"\t\t\t\t\t\t\t\t\t   : 0.0f;",
+	"\t\tDFEVar iv_invDist_4 = iv_iv_i_13_14===0 & iv_iv_iv_i_9_11_16===2 ? 1.0f / iv_distSqr_3 : 0.0f;",
+	"\t\tDFEVar iv_invDist3_5 = iv_iv_i_13_14===0 & iv_iv_iv_i_9_11_16===2 ? iv_invDist_4 * iv_invDist_4 * iv_invDist_4 : 0.0f;",
+	"\t\tDFEVar carriedfStruct = scalarType.newInstance(this);", 
+	"\t\tDFEVar fStruct = iv_iv_iv_i_9_11_16===2 ? (iv_j_1 === 0 ? 0.0 : carriedfStruct) +",
+	"\t\t\t\t\t\t\tstream.offset(iv_d_2, -((-2 * iv_iv_i_13_14_32 + 6)*lLV32), -((nBodies*nBodies*DIM*DIM*lLVInt)-1), 0) *",
+	"\t\t\t\t\t\t\tstream.offset(iv_invDist3_5, -(iv_iv_i_13_14_32*lLV32), -((nBodies*nBodies*DIM*DIM*lLVInt)-1), 0)",
+	"\t\t\t\t\t\t  : carriedfStruct ;",
+	"\t\tDFEVar fStructOffset = stream.offset(fStruct, -9*loopLength);",
+	"\t\tcarriedfStruct <== fStructOffset;",
+	"\t\tDFEVar vStruct = io.input(\"vStructIn\", scalarType,iv_iv_iv_i_9_11_16===2 & iv_j_1===((nBodiesOrig)-1) & loopCounter === (loopLengthVal-1));",
+	"\t\tio.output(\"vStructOut\", vStruct + fStruct * DT, scalarType,iv_iv_iv_i_9_11_16===2 & iv_j_1===((nBodiesOrig)-1) & loopCounter === (loopLengthVal-1));",
+	"",
+	"\t}",
+	"}"]
+
+maxjManager name = 
+	["package " ++ name ++ ";",
+	"",
+	"import com.maxeler.maxcompiler.v2.build.EngineParameters;",
+	"import com.maxeler.maxcompiler.v2.kernelcompiler.Kernel;",
+	"import com.maxeler.maxcompiler.v2.managers.engine_interfaces.CPUTypes;",
+	"import com.maxeler.maxcompiler.v2.managers.engine_interfaces.EngineInterface;",
+	"import com.maxeler.maxcompiler.v2.managers.engine_interfaces.InterfaceParam;",
+	"import com.maxeler.maxcompiler.v2.managers.standard.Manager;",
+	"import com.maxeler.maxcompiler.v2.managers.standard.Manager.IOType;",
+	"",
+	"class " ++ name ++ "Manager {",
+	"",
+	"\tprivate static final int nBodiesOrig = 3;",
+	"\tprivate static final int nBodies = 4;", 
+	"\tprivate static final int DIM = 3;", 
+	"",
+	"\tpublic static void main(String[] args) {",
+	"\t\tManager manager = new Manager(new EngineParameters(args));",
+	"\t\tKernel kernel = new " ++ name ++ "Kernel(manager.makeKernelParameters(), nBodiesOrig, nBodies, DIM);",
+	"\t\tmanager.setKernel(kernel);",
+	"\t\tmanager.setIO(IOType.ALL_CPU);",
+	"\t\tmanager.createSLiCinterface(interfaceDefault());",
+	"\t\tmanager.addMaxFileConstant(\"nBodies\", nBodies);",
+	"\t\tmanager.build();",
+	"\t}",
+	"",
+	"\tprivate static EngineInterface interfaceDefault() {",
+	"\t\tEngineInterface ei = new EngineInterface();",
+	"\t\tInterfaceParam length = ei.addParam(\"length\", CPUTypes.INT);",
+	"\t\tInterfaceParam lengthInBytes = length * CPUTypes.FLOAT.sizeInBytes();",
+	"\t\tInterfaceParam loopLength = ei.getAutoLoopOffset(\"" ++ name ++ "Kernel\", \"loopLength\");",
+	"\t\tei.ignoreAutoLoopOffset(\"" ++ name ++ "Kernel\", \"loopLength\");",
+	"\t\tei.setTicks(\"" ++ name ++ "Kernel\", (length/DIM) * (length/DIM) * DIM * DIM * loopLength);",
+	"\t\tei.setStream(\"pStructIn\", CPUTypes.FLOAT, lengthInBytes);",
+	"\t\tei.setStream(\"vStructIn\", CPUTypes.FLOAT, lengthInBytes);",
+	"\t\tei.setStream(\"vStructOut\", CPUTypes.FLOAT, lengthInBytes);",
+	"\t\treturn ei;",
+	"\t}",
+	"",
+	"}"]
