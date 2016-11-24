@@ -1505,9 +1505,8 @@ applyruleInt state filename steps recalculate =
 		-- JSON printing
 		let jsonChanges = 
 			-- trace (show $ (length listChangesStmts) + (length listChangesExprs)) 
-			buildJSON state changes	
-		-- putStrLn "arriba2"	
-		writeFile (filename ++ (buildSuffix state ".json")) jsonChanges
+			buildJSON state changes		
+		-- writeFile (filename ++ (buildSuffix state ".json")) jsonChanges
 
 		let rules = nub $
 				[rule | (_,((rule,_,_),_,_)) <- listChangesStmts] 
@@ -1563,7 +1562,7 @@ applyRuleWithOracle filename state jsonChanges =
 									current
 						)
 						"none"
-						["opencl", "maxj", "mpi", "omp"]
+						["opencl", "maxj", "mpi", "openmp"]
 		let cmd = 
 			-- (oracle state) ++ " \"" ++ (intoString jsonChanges) ++ "\" > oracle_choice.txt"
 			(oracle state) ++ " " ++ (filename ++ ".json") ++ " " ++ target ++ " > oracle_choice.txt"

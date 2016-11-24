@@ -18,7 +18,6 @@ import Language.C.System.GCC   -- preprocessor used
 import System.IO 
 
 import Data.Generics
-import Data.Char (isSpace)
 import Data.List
 import Data.List.Split
 import Data.Either
@@ -774,10 +773,6 @@ removeDuplicatePragmas pragmas =
 	-- in 
 	-- 	concat [[(name, pragma) | pragma <- pragmasName] | (name, pragmasName) <- namePragmas]
 
-trim :: String -> String
-trim = f . f
-   where f = reverse . dropWhile isSpace
-
 parseMyFile :: FilePath -> IO CTranslUnit
 parseMyFile input_file =
 	  -- do parse_result <- parseCFile (newGCC "gcc") Nothing ["-fdirectives-only"] input_file
@@ -951,7 +946,7 @@ modifyPropertiesNode (pragma:pragmas) properties
 				"map", "ZipWith", "fold", "zipWith",
 				"init", "def", 
 				"io", "type_size", "total_size",
-				"kernel", "target", 
+				"kernel", "target", "adapt", 
 				"input", "output", "iteration_independent", 
 				-- Only to be used by the rules
 				"rolled-up", "same_properties"

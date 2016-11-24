@@ -18,13 +18,12 @@ import Language.C.Data.Name
 import Language.C.Data.Position
 import Language.C.Data.Node
 
-
-
-
 import Data.Generics
 import Data.Data
+import Data.Char (isSpace)
 import Data.Binary
 import Data.List
+import Data.List.Utils
 import Data.Maybe
 import Data.Set (Set)
 import Data.String.Utils
@@ -288,6 +287,23 @@ getAnnotation (CBreak (Ann _ np)) = np
 getAnnotation (CReturn _ (Ann _ np)) = np
 getAnnotation (CAsm _ (Ann _ np)) = np
 
+setAnnotation nnp (CLabel a b c (Ann ni _)) = (CLabel a b c (Ann ni nnp)) 
+setAnnotation nnp (CCase a b (Ann ni _)) = (CCase a b (Ann ni nnp))
+setAnnotation nnp (CCases a b c (Ann ni _)) = (CCases a b c (Ann ni nnp))
+setAnnotation nnp (CDefault a (Ann ni _)) = (CDefault a (Ann ni nnp))
+setAnnotation nnp (CExpr a (Ann ni _)) = (CExpr a (Ann ni nnp))
+setAnnotation nnp (CCompound a b (Ann ni _)) = (CCompound a b (Ann ni nnp))
+setAnnotation nnp (CIf a b c (Ann ni _)) = (CIf a b c (Ann ni nnp))
+setAnnotation nnp (CSwitch a b (Ann ni _)) = (CSwitch a b (Ann ni nnp))
+setAnnotation nnp (CWhile a b c (Ann ni _)) = (CWhile a b c (Ann ni nnp))
+setAnnotation nnp (CFor a b c d (Ann ni _)) = (CFor a b c d (Ann ni nnp))
+setAnnotation nnp (CGoto a (Ann ni _)) = (CGoto a (Ann ni nnp))
+setAnnotation nnp (CGotoPtr a (Ann ni _)) = (CGotoPtr a (Ann ni nnp))
+setAnnotation nnp (CCont (Ann ni _)) = (CCont (Ann ni nnp))
+setAnnotation nnp (CBreak (Ann ni _)) = (CBreak (Ann ni nnp))
+setAnnotation nnp (CReturn a (Ann ni _)) = (CReturn a (Ann ni nnp))
+setAnnotation nnp (CAsm a (Ann ni _)) = (CAsm a (Ann ni nnp))
+
 nameOfNodeAnn (Ann ni _) = 
 	nameOfNode ni
 
@@ -495,6 +511,67 @@ substituteExpr expr_searched expr_substitution expr_found
 	| (exprEqual expr_found expr_searched) =
 	[(expr_found,expr_substitution)]
 substituteExpr _ _ _ = []
+
+
+substituteInPragmas ::  (Data b) => b -> CExprAnn -> CExprAnn -> b
+substituteInPragmas ast expr_searched expr_substitution =
+	let substitutions = 
+			nubBy 
+				(\(o1,n1) (o2,n2) -> (geq o1 o2) && (geq n1 n2)) 
+				(applyRulesGeneral (substituteInPragmasExpr expr_searched expr_substitution) ast)
+	in 
+		--trace (show substitutions) 
+		(foldl (\current_ast change -> changeAST change current_ast) 
+			ast substitutions)
+
+substituteInPragmasExpr :: CExprAnn -> CExprAnn -> CStatAnn -> [(CStatAnn, CStatAnn)]
+substituteInPragmasExpr (CVar (Ident v1 _ _) _) new stmt = 
+	let  
+		prop = getAnnotation stmt
+	in 
+		case (prop^.polcaPragmas.value, prop^.allPragmas.value) of 
+			(Nothing, Nothing) -> 
+				[]
+			(Just pp, Just ap) ->
+				let 
+					npp = changeInAnnPolcaPragmas v1 (prettyMyASTAnn new) pp
+					-- nap = changeInAnnSinglePragma v1 (prettyMyASTAnn new) ap
+					-- nprop = (allPragmas.value .~ (Just nap)) $ (polcaPragmas.value .~ (Just npp)) prop
+					nprop = (polcaPragmas.value .~ (Just npp)) prop
+				in 
+					[(stmt, setAnnotation nprop stmt)]
+substituteInPragmasExpr _ _ _ = 
+	[]
+
+changeInAnnPolcaPragmas old new pp = 
+	[changeInAnnSinglePragma old new lp | lp <- pp]
+
+changeInAnnSinglePragma old new pp =
+	[	
+	let 
+		(sWO, sAccess) = woArrayAccess (trim s)
+	in 
+		-- trace ((trim old)++ " " ++ sWO) $ 
+		case (trim old) == sWO of 
+			True ->
+				new ++ sAccess
+			False -> 
+				s
+	| s <- pp]
+
+woArrayAccess str = 
+	removeArrayAccess [] $ reverse str 
+
+removeArrayAccess prev ('[':rest) = 
+	(reverse rest, ('[':prev))
+removeArrayAccess prev (other:rest) = 
+	removeArrayAccess (other:prev) rest
+removeArrayAccess prev [] = 
+	(prev,[]) 
+
+
+
+
 
 changeAccessFlatten ::  (Data b) => b -> CExprAnn -> (Int, CExprAnn) -> b
 -- TODO: This kind of functions (very repeated) should be generalized
@@ -771,6 +848,10 @@ hasCallsBlock _ _ =
 hasCalls state list =
 	checkCondUnkList (map (hasCallsBlock state) list)
 
+trim :: String -> String
+trim = f . f
+   where f = reverse . dropWhile isSpace
+
 noEmpty [] = 
 	(False, [])
 noEmpty _ = 
@@ -869,18 +950,16 @@ inline state stmt =
 
 --inlineCall :: CStat -> [(String, (CTypeSpec, [CDecl], ([CDeclSpec], CDeclr, [CDecl], NodeInfo)), CStat)] -> (String, [CExpr], CExpr) -> TransState -> (CStat, TransState)
 inlineCall stmt defs (name, args, call) state =
-	-- TODO: only works with void functions
 	case [(fun_params, fun_body) | item@(fun_name, ((CVoidType _), fun_params, _), fun_body) <- defs, fun_name == name] of 
 		((pars,body):_) ->
 			let
 				ncall0 = substituteParArgs body pars args 
 				ncall = substituteReturn (intConstant 0) ncall0
-				-- If we decide inlinning should rename vars, uncomment these two lines an the one in "in" section
+				-- If we decide inlining should rename vars, uncomment these two lines
 				--varDecl = (applyRulesGeneral searchDeclr body)
 				--(nstmt, nstate) = foldl (\(nstmt,nstate) var -> renameVars var nstmt nstate) (body,state) varDecl
 			in 
 				(substituteCall stmt call ncall, state)
-				--trace (prettyMyASTAnn ncall) (substituteCall stmt call ncall, state)
 		[] ->
 			(stmt, state)
 
@@ -899,7 +978,8 @@ substituteParArgs body (par:pars) (arg:args) =
 	let 
 		(CDecl _ [((Just (CDeclr (Just identPar) _ _ _ _) ), _, _)] _) = par 
 		parVar = (CVar identPar undefNodeAnn)
-		nbody = substitute body parVar arg
+		nbody0 = substitute body parVar arg
+		nbody = substituteInPragmas nbody0 parVar arg
 	in 
 		substituteParArgs nbody pars args
 substituteParArgs body [] [] = 
@@ -1048,7 +1128,8 @@ has_pragmas ruleProperties (Ann nI nP) =
 			(Just nameNode) -> 
 				matchPragmas nameNode polcaPragmasRule polcaPragmasAst
 			Nothing -> 
-				(False, [])
+				-- (False, [])
+				matchPragmas (head newNameSupply) polcaPragmasRule polcaPragmasAst
 
 matchPragmas nameNode ((prall@(hpr:pr)):pragmasRule) pragmasNode 
 	-- "def" annotation is not be mandatory. Just to identify in STML. 

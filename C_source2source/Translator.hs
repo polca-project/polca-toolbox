@@ -163,6 +163,7 @@ isKernel :: String -> CBlockItemAnn -> Bool
 isKernel typeKernel stmt  =  
 		(isPragmaAnn ["kernel", typeKernel] stmt )
 	|| 	(isPragmaAnn ["target", typeKernel] stmt )
+	|| 	(isPragmaAnn ["adapt", typeKernel] stmt )
 
 isIOAnn stmt  =  
 	isPragmaAnn ["io"] stmt
@@ -636,7 +637,7 @@ writeKernelLoops filename ((iden, kernel):rest) =
 
 search_target :: String -> CStatAnn -> [CStatAnn]
 search_target target stmt = 
-	case [t | t@("target":target1:_) <- (extractPolcaPragmas (getAnnotation stmt)), target1 == target] of
+	case [t | t@("adapt":target1:_) <- (extractPolcaPragmas (getAnnotation stmt)), target1 == target] of
 		[] ->
 			[]
 		_ ->
@@ -758,7 +759,7 @@ rebuilPrgMaxj name (line:liness) searched astTarget =
 
 toOMPFromASTDemo filename ast = 
 	do 
-		let (astTarget:_) = (applyRulesGeneral (search_target "omp") ast)
+		let (astTarget:_) = (applyRulesGeneral (search_target "openmp") ast)
 		-- search parallizable loops (has iteration_independent pragma)
 		let parallizableLoops = (applyRulesGeneral (searchParLoop) astTarget)
 		let parallizableLoopsInfo = 
