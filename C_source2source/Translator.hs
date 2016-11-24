@@ -764,7 +764,7 @@ toOMPFromASTDemo filename ast =
 				(	
 					pl, 
 					trim $ head $ lines $ prettyMyASTAnn pl, 
-					((nub $ applyRulesGeneral searchAssigns pl) \\ [(extractIter pl)])
+					((nub $ applyRulesGeneral searchAssigns pl) \\ ((extractIter pl):(extractInOuts pl)))
 				)
 			 | pl <- parallizableLoops]
 		-- Place pragma before definition
@@ -795,6 +795,16 @@ searchAssigns _ =
 
 extractIter (CFor (Left (Just (CAssign CAssignOp (CVar (Ident v _ _) _) _ _))) _ _ _ _) = 
 	v
+
+extractInOuts (CFor _ _ _ _ (Ann _ nP)) = 
+	let 
+		pp = (extractPolcaPragmas nP)
+	in 
+		concat 
+			[
+				[item | (tag1:item:_) <- pp, tag1 == tag] 
+				| tag <- ["input", "output"]
+			]
 
 placeOpenMPPragma (line:liness) pli@((_, searched, pvs):rpli) = 
 	case (trim line) == searched of 
