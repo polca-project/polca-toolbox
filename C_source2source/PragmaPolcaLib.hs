@@ -582,14 +582,6 @@ lookForFunDef line pragma (CFunDef _ (CDeclr (Just ide) [(CFunDeclr (Right (para
 lookForFunDef _ _ _ = 
 	[]
 
-mapfoldl f current (x:xs) = 
-	let 
-		(nx, ncurrent) = f x current
-		(nxs, fcurrent) = mapfoldl f ncurrent xs
-	in 
-		((nx:nxs), fcurrent)
-mapfoldl f current [] = 
-	([], current)
 
 readInfoOriCode mapProgram (pragmaAst, ann, line, minLine) = 
 	let 

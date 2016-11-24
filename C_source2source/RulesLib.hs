@@ -556,7 +556,15 @@ changeInAnnSinglePragma old new pp =
 			True ->
 				new ++ sAccess
 			False -> 
-				s
+				case length sAccess > 2 of 
+					True -> 
+						case (trim old) == (trim $ tail $ init $ sAccess) of 
+							True -> 
+								sWO ++ "[" ++ new ++ "]"
+							False -> 
+								s
+					False ->
+						s
 	| s <- pp]
 
 woArrayAccess str = 
@@ -852,6 +860,15 @@ trim :: String -> String
 trim = f . f
    where f = reverse . dropWhile isSpace
 
+mapfoldl f current (x:xs) = 
+	let 
+		(nx, ncurrent) = f x current
+		(nxs, fcurrent) = mapfoldl f ncurrent xs
+	in 
+		((nx:nxs), fcurrent)
+mapfoldl f current [] = 
+	([], current)
+
 noEmpty [] = 
 	(False, [])
 noEmpty _ = 
@@ -1014,20 +1031,34 @@ searchDeclr (CDeclr (Just (ident@(Ident name _ _))) _ _ _ _) =
 searchDeclr _ = 
 	[]
 
-renameVars (name,ident@(Ident _ a _)) stmt state = 
+renameVars (name,ident@(Ident oldName a _)) stmt state = 
 	let 
 		(freeVar, (Ident freename _ _), _, nstate) =  buildFreeVar name state 
 		nident = (Ident freename a undefNode)
 		nstmt = changeAST (ident, nident) stmt 
 		nnstmt = substitute nstmt (CVar ident undefNodeAnn) freeVar
 	in 
-		(nnstmt, nstate)
+		((cvar oldName, cvar freename), (nnstmt, nstate))
+
 
 fresh_vars state stmt = 
-	foldl 
-		(\(nstmt,nstate) var -> renameVars var nstmt nstate) 
-		(stmt,state) 
-		(applyRulesGeneral searchDeclr stmt)
+	let 
+		(changes, (renamedStmt, fstate)) = 
+			mapfoldl 
+				(\var (nstmt,nstate) -> renameVars var nstmt nstate) 
+				(stmt,state) 
+				(applyRulesGeneral searchDeclr stmt)
+		fstmt = 
+			foldl
+				(\nstmt (vold, vnew) -> substituteInPragmas nstmt vold vnew)
+				renamedStmt
+				changes
+	in 
+		(fstmt, fstate)
+
+
+cvar name = 
+	(CVar (Ident name 0 undefNode) undefNodeAnn)
 
 createFreshNodeInfo state0@TransState{free_node_id = nId} = 
 	-- (Ann (mkNodeInfo nopos (head (namesStartingFrom nId))) nodePropertiesDefault,

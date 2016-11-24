@@ -738,10 +738,6 @@ replaceFirstFor _ [] =
 	[]
 
 
-cvar name = 
-	(CVar (Ident name 0 undefNode) undefNodeAnn)
-
-
 rebuilPrgMaxj name (line:liness) searched astTarget = 
 	case (trim line) == searched of 
 		True -> 

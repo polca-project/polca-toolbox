@@ -475,7 +475,6 @@ collapse_2_for_loops
 {
     pattern:
     {
-        // #pragma polca def a
         for(cexpr(i) = cexpr(initial_value); cexpr(i) < cexpr(limit1); cexpr(i)++)
        {
             cstmts(prelude);
@@ -1224,7 +1223,7 @@ remove_ternary
 }
 
 
-// Removes a block of code and introduces fresh varaibles to avoid clashes. 
+// Removes a block of code and introduces fresh variables to avoid clashes. 
 remove_block
 {
     pattern:

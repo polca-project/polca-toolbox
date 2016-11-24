@@ -91,7 +91,6 @@ collapse_2_for_loops
 {
     pattern:
     {
-        // #pragma polca def a
         for(cexpr(i) = cexpr(initial_value); cexpr(i) < cexpr(limit1); cexpr(i)++)
        {
             cstmts(prelude);
