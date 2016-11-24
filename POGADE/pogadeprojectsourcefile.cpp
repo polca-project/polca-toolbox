@@ -287,7 +287,7 @@ std::vector<ScopeChild> PogadeProjectSourceFile::generateOrderedRootChildren() {
     }
   }
 
-  // sort using a custom function object
+  //sort using a custom function object
   struct {
     bool operator()(PolcaScope* a, PolcaScope* b) {
       return a->codeLineStart() < b->codeLineStart();
@@ -489,6 +489,40 @@ std::vector<PolcaTransformation> PogadeProjectSourceFile::getTransformations() {
   return _transformations;
 }
 
+std::vector<MemInfo> PogadeProjectSourceFile::rootMemory() {
+  return _rootMemory;
+}
+
+void PogadeProjectSourceFile::addRootMemory(MemInfo mem) {
+  _rootMemory.push_back(mem);
+}
+
+MemInfo *PogadeProjectSourceFile::findMemory(QString name) {
+  for(MemInfo &m : _rootMemory) {
+    if(m.name == name)
+      return &m;
+  }
+  return nullptr;
+}
+
+void PogadeProjectSourceFile::setRootMemory() {
+  for(PolcaScope &ps : _scopes) {
+    if(ps.root() && ps.getType() == POLCA_MEMALLOC) {
+      addRootMemory(ps.getMemoryInfo());
+    }
+  }
+}
+
+void PogadeProjectSourceFile::setMemoryInScopes() {
+  for(PolcaScope &ps : _scopes) {
+    for(ScopeChild &sc : ps.children()) {
+      if(sc.cscope->getType() == POLCA_MEMALLOC) {
+        ps.addChildMemory(sc.cscope->getMemoryInfo());
+      }
+    }
+  }
+}
+
 std::vector<ASMCData> PogadeProjectSourceFile::getASMCData() {
   return _asmcData;
 }
@@ -503,10 +537,38 @@ void PogadeProjectSourceFile::setASMCData(std::vector<ASMCData> data) {
 
   // Set new data
   for(ASMCData a : _asmcData) {
-    qDebug() << a.name << " - " << a.weight;
-    std::vector<PolcaScope*> vs = findScopes(a.name);
-    for(PolcaScope* ss : vs) {
-      ss->setASMWeightMine(a.weight);
+    if(a.name != "*") {
+      std::vector<PolcaScope*> vs = findScopes(a.name);
+      for(PolcaScope* ss : vs) {
+        ss->setASMWeightMine(a.weight);
+      }
+    }
+    else {
+      //qDebug() << "Searching: " << a.lstart;
+      PolcaScope *ps = this->findScopeFromLine(a.lstart);
+      if(ps) {
+        //qDebug() << "FOUND: " << ps->name();
+      }
+    }
+  }
+}
+
+void PogadeProjectSourceFile::propagateMemoryInfo() {
+  for(PolcaScope &s : _scopes) {
+    if(s.root()) {
+      // Set Memory Info for root scopes
+      for(ParPos &pp : s.fParameters()) {
+        MemInfo *mi = findMemory(pp.var);
+        if(mi) {
+          pp.numberElements = mi->elements;
+          pp.sizeElement    = mi->eSize;
+        }
+      }
+
+      // Propagate Memory in children of root scopes
+      for(ScopeChild &sc : s.children()) {
+        sc.cscope->setMemoryInfoFromParent();
+      }
     }
   }
 }

@@ -51,6 +51,8 @@ void PogadeScopeList::updateGUI() {
         treeItem->setText(0, QString::number(s->id()));
         treeItem->setText(1, s->name());
         treeItem->setText(2, s->pragmaTextAll());
+        treeItem->setText(3, QString::number(s->getASMWeightMine()));
+        treeItem->setText(4, s->getASMWeightTotal());
 
         toVisitId.push(r);
         toVisitItem.push(treeItem);
@@ -66,6 +68,8 @@ void PogadeScopeList::updateGUI() {
       treeNow->setText(0, QString::number(s->id()));
       treeNow->setText(1, s->name());
       treeNow->setText(2, s->pragmaTextAll());
+      treeNow->setText(3, QString::number(s->getASMWeightMine()));
+      treeNow->setText(4, s->getASMWeightTotal());
 
       std::vector<ScopeChild> children = s->children();
       for(ScopeChild c : children) {

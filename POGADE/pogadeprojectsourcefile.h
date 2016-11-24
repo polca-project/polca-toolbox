@@ -58,12 +58,16 @@ public:
   void clearScopes();
   void setValidScope(bool valid);
   bool validScope();
-  //void analyzeCurrentScopes();
   void findRootScopes();
   std::vector<ScopeChild> generateOrderedRootChildren();
   void generateTreeScopes();
   void automaticNamesScopes();
   void processIOparamsScopes();
+  void propagateMemoryInfo();
+
+  std::vector<MemInfo> rootMemory();
+  void addRootMemory(MemInfo mem);
+  MemInfo* findMemory(QString name);
 
   PolcaScope findScopeAndCopy(QString name);
   PolcaScope* findScope(QString name, int line);
@@ -77,6 +81,7 @@ public:
   PogadeProject* getProject();
   void setMemoryShow(bool show);
   bool memoryShow();
+  void setRootMemory();
 
   void clearTransformations();
   void addTransformation(PolcaTransformation pt);
@@ -87,6 +92,8 @@ public:
 
   std::vector<ASMCData> getASMCData();
   void setASMCData(std::vector<ASMCData> data);
+
+  void setMemoryInScopes();
 
 private:
   unsigned int _latestRev = 0;
@@ -110,10 +117,10 @@ private:
   std::vector<PolcaScope> _scopes;
   bool _validScopes = false;
   bool _showMemory = true;
-  std::vector<ScopeChild> _rootChildren;
+  //std::vector<ScopeChild> _rootChildren;
+  std::vector<MemInfo> _rootMemory;
   ///////////////
   std::vector<PolcaTransformation> _transformations;
-
   std::vector<ASMCData> _asmcData;
 };
 

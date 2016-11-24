@@ -71,9 +71,9 @@ void VGraph::generateGraph(int scopeId) {
         if(ps->nPragmas())
           s += '\n' + ps->pragmaTextAll();
 
-        qDebug() << ps->id() << " " << ps->name() <<" - W: " << ps->getASMWeightMine();
-        if(ps->getASMWeightMine()) {
-          s += "\n Weight: " + QString::number(ps->getASMWeightMine());
+        //qDebug() << ps->id() << " " << ps->name() <<" - W: " << ps->getASMWeightTotal();
+        if(ps->getASMWeightTotal() != "") {
+          s += "\n Weight: " + ps->getASMWeightTotal();
         }
 
         _GA->label(n) = s.toLatin1().toStdString();
@@ -124,9 +124,8 @@ void VGraph::generateGraph(int scopeId) {
         if(ps->nPragmas())
           s += '\n' + ps->pragmaTextAll();
 
-        qDebug() << ps->id() << " " << ps->name() <<" - W: " << ps->getASMWeightMine();
-        if(ps->getASMWeightMine()) {
-          s += "\n Weight: " + QString::number(ps->getASMWeightMine());
+        if(ps->getASMWeightTotal() != "") {
+          s += "\n Weight: " + ps->getASMWeightTotal();
         }
 
         _GA->label(n) = s.toLatin1().toStdString();

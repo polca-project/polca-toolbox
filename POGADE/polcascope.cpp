@@ -327,24 +327,8 @@ std::vector<QStringList> PolcaScope::splitParameters(QString params) {
     }
   }
 
-
   return v;
 }
-
-/*
-void PolcaScope::automaticType() {
-  int type = 0;
-  for(PolcaPragma p : _pragmas) {
-    QStringList l = p.text().split(' ', QString::SkipEmptyParts);
-    type = stringToType(l[0]);
-    if(type) {
-      this->_parPosC = processPragmaIO(type, l);
-      break;
-    }
-  }
-  _type = type;
-}
-*/
 
 void PolcaScope::automaticType() {
   int type = 0;
@@ -469,6 +453,55 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
       }
       break;
     case POLCA_ITN:
+      for(QString _l : l[2]) {
+        p = getParPosWithName(_pars, _l);
+        if(p) {
+          p->posP.push_back(1);
+          p->input = true;
+        } else {
+          _p = new ParPos;
+          _p->var    = _l;
+          _p->posC   = _pars.size()+1;
+          _p->posP.push_back(1);
+          _p->input  = true;
+          _p->output = false;
+          _pars.push_back(*_p);
+        }
+      }
+
+      for(QString _l : l[3]) {
+        p = getParPosWithName(_pars, _l);
+        if(p) {
+          p->posP.push_back(2);
+          p->input = true;
+        } else {
+          _p = new ParPos;
+          _p->var    = _l;
+          _p->posC   = _pars.size()+1;
+          _p->posP.push_back(2);
+          _p->input  = true;
+          _p->output = false;
+          _repeat = _l;
+          _pars.push_back(*_p);
+        }
+      }
+
+      for(QString _l : l[4]) {
+        p = getParPosWithName(_pars, _l);
+        if(p) {
+          p->posP.push_back(2);
+          p->output = true;
+        } else {
+          _p = new ParPos;
+          _p->var    = _l;
+          _p->posC   = _pars.size()+1;
+          _p->posP.push_back(3);
+          _p->input  = false;
+          _p->output = true;
+          _pars.push_back(*_p);
+        }
+      }
+      break;
     case POLCA_ZIPWITH:
     case POLCA_FOLDL:
       for(QString _l : l[2]) {
@@ -520,6 +553,7 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
       }
       break;
     case POLCA_MEMALLOC:
+      // TODO: ADD memory size
       _l1 = l[3];
       _p = new ParPos;
       _p->var    = _l1[0];
@@ -527,7 +561,11 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
       _p->posP.push_back(1);
       _p->input  = false;
       _p->output = true;
-      _p->size   = l[2][0];
+      _p->numberElements = l[2][0];
+      _p->sizeElement    = l[1][0];
+      _mem.name     = l[3][0];
+      _mem.elements = l[2][0];
+      _mem.eSize    = l[1][0];
       _pars.push_back(*_p);
       break;
     case POLCA_MEMFREE:
@@ -549,115 +587,6 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
   return _pars;
 }
 
-/*
-std::vector<ParPos> PolcaScope::processPragmaIO(int type, QStringList l) {
-  std::vector<ParPos> _pars;
-  ParPos* p;
-  ParPos* _p;
-
-  switch(type) {
-    case POLCA_MAP:
-      p = getParPosWithName(_pars, l[2]);
-      if(p) {
-        p->posP.push_back(1);
-        p->input = true;
-      } else {
-        _p = new ParPos;
-        _p->var    = l[2];
-        _p->posC   = _pars.size()+1;
-        _p->posP.push_back(1);
-        _p->input  = true;
-        _p->output = false;
-        _pars.push_back(*_p);
-      }
-
-      p = getParPosWithName(_pars, l[3]);
-      if(p) {
-        p->posP.push_back(2);
-        p->output = true;
-      } else {
-        _p = new ParPos;
-        _p->var    = l[3];
-        _p->posC   = _pars.size()+1;
-        _p->posP.push_back(2);
-        _p->input  = false;
-        _p->output = true;
-        _pars.push_back(*_p);
-      }
-      break;
-    case POLCA_ITN:
-    case POLCA_ZIPWITH:
-    case POLCA_FOLDL:
-      p = getParPosWithName(_pars, l[2]);
-      if(p) {
-        p->posP.push_back(1);
-        p->input = true;
-      } else {
-        _p = new ParPos;
-        _p->var    = l[2];
-        _p->posC   = _pars.size()+1;
-        _p->posP.push_back(1);
-        _p->input  = true;
-        _p->output = false;
-        _pars.push_back(*_p);
-      }
-
-      p = getParPosWithName(_pars, l[3]);
-      if(p) {
-        p->posP.push_back(2);
-        p->input = true;
-      } else {
-        _p = new ParPos;
-        _p->var    = l[3];
-        _p->posC   = _pars.size()+1;
-        _p->posP.push_back(2);
-        _p->input  = true;
-        _p->output = false;
-        _pars.push_back(*_p);
-      }
-
-      p = getParPosWithName(_pars, l[4]);
-      if(p) {
-        p->posP.push_back(2);
-        p->output = true;
-      } else {
-        _p = new ParPos;
-        _p->var    = l[4];
-        _p->posC   = _pars.size()+1;
-        _p->posP.push_back(3);
-        _p->input  = false;
-        _p->output = true;
-        _pars.push_back(*_p);
-      }
-      break;
-    case POLCA_MEMALLOC:
-      _p = new ParPos;
-      _p->var    = l[3];
-      _p->posC   = _pars.size()+1;
-      _p->posP.push_back(1);
-      _p->input  = false;
-      _p->output = true;
-      _pars.push_back(*_p);
-      break;
-    case POLCA_MEMFREE:
-      _p = new ParPos;
-      _p->var    = l[1];
-      _p->posC   = _pars.size()+1;
-      _p->posP.push_back(1);
-      _p->input  = true;
-      _p->output = true;
-      _pars.push_back(*_p);
-      break;
-    default:
-      //p->input  = false;
-      //p->output = false;
-      break;
-  }
-
-  return _pars;
-}
-*/
-
 void PolcaScope::setIOPar(ParPos*p, int type) {
   //p->input  = false;
   //p->output = false;
@@ -674,6 +603,15 @@ void PolcaScope::setIOPar(ParPos*p, int type) {
         }
         break;
       case POLCA_ITN:
+        if(pos == 1) {
+          p->input  = true;
+        } else if(pos == 2) {
+          p->input = true;
+        } else if(pos == 3) {
+          p->output = true;
+        } else {
+        }
+        break;
       case POLCA_ZIPWITH:
       case POLCA_FOLDL:
         if(pos == 1) {
@@ -808,15 +746,99 @@ void PolcaScope::setASMWeightMine(int w) {
 }
 
 int PolcaScope::getASMWeightMine() {
-  return _ASMWeightMine;
+  if(_ASMWeightMine) {
+    return _ASMWeightMine;
+  }
+  else {
+    switch(_type) {
+      case POLCA_MEMALLOC:
+        return 9;
+        break;
+      case POLCA_MEMFREE:
+        return 4;
+        break;
+    }
+
+    return 3;
+  }
 }
 
-int PolcaScope::getASMWeightTotal() {
-  // TODO!!!
-  // TODO!!!
-  // TODO!!!
+QString PolcaScope::getASMWeightTotal() {
+  /*
+  if(this->children().empty()) {
+    _ASMWeightTotal = QString::number(getASMWeightMine());
+  }
+  else {
+  */
+    switch(_type) {
+      case POLCA_ITN:
+        _ASMWeightTotal = QString::number(getASMWeightMine());
+        _ASMWeightTotal += " + " + _repeat + "(";
 
-  _ASMWeightTotal = 0;
+        for(ScopeChild sc : _children) {
+          _ASMWeightTotal += sc.cscope->getASMWeightTotal();
+        }
+
+        _ASMWeightTotal += ")";
+        break;
+      case POLCA_MAP:
+      case POLCA_ZIPWITH:
+      case POLCA_FOLDL:
+        _ASMWeightTotal = QString::number(getASMWeightMine()) + " + N*(";
+
+        for(ScopeChild sc : _children) {
+          _ASMWeightTotal += sc.cscope->getASMWeightTotal();
+        }
+
+        _ASMWeightTotal += ")";
+        break;
+      case POLCA_MEMALLOC:
+        _ASMWeightTotal = QString::number(getASMWeightMine()) + " + OS_CALL_MALLOC";
+        break;
+      case POLCA_MEMFREE:
+        _ASMWeightTotal = QString::number(getASMWeightMine()) + " + OS_CALL_FREE";
+        break;
+      default:
+        _ASMWeightTotal = QString::number(getASMWeightMine()) + " + ";
+        for(ScopeChild sc : _children) {
+          QString nv = sc.cscope->getASMWeightTotal();
+          if(nv != "0") {
+            _ASMWeightTotal += nv;
+            _ASMWeightTotal += " + ";
+          }
+        }
+        _ASMWeightTotal.chop(3);
+        break;
+    }
+  //}
 
   return _ASMWeightTotal;
+}
+
+MemInfo PolcaScope::getMemoryInfo() {
+  return _mem;
+}
+
+void PolcaScope::addChildMemory(MemInfo mem) {
+  _childMem.push_back(mem);
+}
+
+void PolcaScope::clearChildMemory() {
+  _childMem.clear();
+}
+
+std::vector<MemInfo> PolcaScope::getChildMem() {
+  return _childMem;
+}
+
+MemInfo *PolcaScope::findMemName(QString name) {
+  for(MemInfo &m :_childMem ) {
+    if(m.name == name)
+      return &m;
+  }
+  return nullptr;
+}
+
+void PolcaScope::setMemoryInfoFromParent() {
+  // TODO:
 }

@@ -79,10 +79,8 @@ PogadeSourceCodeEditor::PogadeSourceCodeEditor(QWidget *parent) :
   se->markerDefine(QsciScintilla::RightArrow, SC_MARK_ARROW);
   se->setMarkerBackgroundColor(QColor("#ee1111"), SC_MARK_ARROW);
 
-
   connect(se, SIGNAL(marginClicked(int,int,Qt::KeyboardModifiers)),
           this, SLOT(transformationClick(int,int,Qt::KeyboardModifiers)));
-
 
   connect(se, SIGNAL(doubleClick(int)),
           this, SLOT(lineDoubleClick(int)));
@@ -91,7 +89,6 @@ PogadeSourceCodeEditor::PogadeSourceCodeEditor(QWidget *parent) :
 
   connect(ui->comboRevisions, SIGNAL(currentIndexChanged(int)),
           this, SLOT(revisionSelectionChanged(int)));
-
 
   updateGUI();
 }
@@ -544,12 +541,14 @@ void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
       QJsonArray paramPos  = funInfo.value("paramPos").toArray();
       for(QJsonValue pp : paramPos) {
         _p.paramVarName.push_back(pp.toObject().value("varName").toString());
+        //qDebug() << pp.toObject().value("varName").toString();
         _p.paramVarPos.push_back(pp.toObject().value("varPos").toInt());
       }
 
       QJsonArray pragmaPos = funInfo.value("pragmaPos").toArray();
       for(QJsonValue pp : pragmaPos) {
         _p.pragmaVarName.push_back(pp.toObject().value("parName").toString());
+        //qDebug() << pp.toObject().value("parName").toString();
         _p.pragmaVarPos.push_back(pp.toObject().value("parPosPragma").toInt());
       }
     }
@@ -596,9 +595,10 @@ void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
     }
 
     ps->pragmaAdd(pp);
-
-    if(newscope) {
+    if(ps->getType() == POLCA_NONE) {
       ps->automaticType();
+    }
+    if(newscope) {
       sf->addScope(*ps);
       delete ps;
     }
@@ -628,14 +628,10 @@ void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
   sf->findRootScopes();
 
   std::vector<ScopeChild> _rootChildren = sf->generateOrderedRootChildren();
+  sf->setRootMemory();
+  sf->setMemoryInScopes();
+  sf->propagateMemoryInfo();
   PolcaScope::linkChildren(_rootChildren);
-
-  /*
-  qDebug() << "==========================";
-  for(unsigned int i = 0; i< _rootScopes.size(); i++) {
-    qDebug() << _rootScopes[i]->name() << " " << _rootScopes[i]->id();
-  }
-  */
 
   showPragmas();
 }

@@ -15,6 +15,12 @@ class PolcaScope;
 #define PAROUT 2
 
 typedef struct {
+  QString name;
+  QString eSize;
+  QString elements;
+} MemInfo;
+
+typedef struct {
   QString fun;
   int scopeId;
   int line;
@@ -28,7 +34,8 @@ typedef struct {
   std::vector<int> posP;
   bool input = false;
   bool output = false;
-  QString size = "";
+  QString numberElements = "";
+  QString sizeElement = "";
 } ParPos;
 
 typedef struct {
@@ -106,6 +113,11 @@ public:
 
   QString pragmaTextAll();
 
+  void clearChildMemory();
+  void addChildMemory(MemInfo mem);
+  std::vector<MemInfo> getChildMem();
+  MemInfo *findMemName(QString name);
+
   /***************************************/
   /* STATIC MEMBERS                      */
   /***************************************/
@@ -120,27 +132,28 @@ public:
   static bool isParInput(ScopeChild& sc, QString par);
   static bool isParOutput(ScopeChild& sc, QString par);
   /***************************************/
-  //static std::vector<ParPos> processPragmaIO(int type, QStringList l);
-  static std::vector<ParPos> processPragmaIO(int type, std::vector<QStringList> l);
   static ParPos* getParPosWithName(std::vector<ParPos> &list, QString varName);
   /***************************************/
   static std::vector<QStringList> splitParameters(QString params);
   /***************************************/
+  std::vector<ParPos> processPragmaIO(int type, std::vector<QStringList> l);
 
   void printIO(std::vector<ParChild> varsC);
   void getParPragmaFunc(int pos, QString *pragmaName, bool *in, bool *out);
 
   void setASMWeightMine(int w);
   int  getASMWeightMine();
-  int  getASMWeightTotal();
+  QString  getASMWeightTotal();
+
+  MemInfo getMemoryInfo();
+
+  void setMemoryInfoFromParent();
 
 private:
   std::vector<PolcaPragma> _pragmas;
   std::vector<ScopeChild> _children;
   int _parent;
-
   ScopeNeighbourInfo _neighbours;
-
   int _id;
   QString _name;
   int _codeLineStart;
@@ -153,14 +166,18 @@ private:
   static void setIOPar(ParPos*p, int type);
   std::vector<ParPos> _parPosC;
 
-  int _type;
+  int _type = POLCA_NONE;
   static int _idCount;
 
   int _ASMWeightMine;
-  int _ASMWeightTotal;
+  QString _ASMWeightTotal = "";
+
+  QString _repeat = "";
 
   void addIOInfo(QString var, int type);
   void setIOFromPragma(PolcaPragma pragma);
+  MemInfo _mem;
+  std::vector<MemInfo> _childMem;
 };
 
 #endif // POLCASCOPE_H
