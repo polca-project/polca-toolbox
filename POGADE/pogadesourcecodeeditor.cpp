@@ -616,7 +616,7 @@ void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
     sc.setId(PolcaScope::idNext());
     PolcaScope::idNextIncrease();
 
-    sc.setParent(sf->findScopeFromLine(c.line)->id());
+    sc.setParent(sf->findScopeFromLine(c.line));
     sf->addScope(sc);
     c.scopeId = sc.id();
     sf->findScopeFromLine(c.line)->addChildScope(c.scopeId, c.line,
@@ -630,8 +630,8 @@ void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
   std::vector<ScopeChild> _rootChildren = sf->generateOrderedRootChildren();
   sf->setRootMemory();
   sf->setMemoryInScopes();
-  sf->propagateMemoryInfo();
   PolcaScope::linkChildren(_rootChildren);
+  sf->propagateMemoryInfo();
 
   showPragmas();
 }
@@ -767,9 +767,9 @@ void PogadeSourceCodeEditor::transAction(QString id) {
   QStringList l = id.split(' ', QString::SkipEmptyParts);
 
   int tid = l[0].toInt();
-  QString trans = l[1];
-  qDebug() << tid;
-  qDebug() << trans;
+  //QString trans = l[1];
+  //qDebug() << tid;
+  //qDebug() << trans;
 
   emit transformationSelectedDown(tid);
 }

@@ -114,16 +114,24 @@ std::vector<PolcaPragma> PolcaScope::getPragmas() {
   return _pragmas;
 }
 
-int PolcaScope::parent() {
+int PolcaScope::parentId() {
+  if(_parent) {
+    return _parent->id();
+  }
+
+  return -1;
+}
+
+PolcaScope* PolcaScope::parent() {
   return _parent;
 }
 
-void PolcaScope::setParent(int parent) {
+void PolcaScope::setParent(PolcaScope* parent) {
   _parent = parent;
 }
 
 void PolcaScope::clearParent() {
-  _parent = -1;
+  _parent = nullptr;
 }
 
 void PolcaScope::addChildScope(int child, int line, PolcaScope* pscope,
@@ -154,6 +162,7 @@ void PolcaScope::addChildScope(int child, int line, PolcaScope* pscope,
     par.parPragmaName = pragmaName;
     _sc.vars.push_back(par);
   }
+  _sc.cscope->setParent(this);
   _children.push_back(_sc);
 
 
@@ -276,8 +285,8 @@ void PolcaScope::addfParameter(ParPos p) {
   _parPosC.push_back(p);
 }
 
-std::vector<ParPos> PolcaScope::fParameters() {
-  return _parPosC;
+std::vector<ParPos>* PolcaScope::fParameters() {
+  return &_parPosC;
 }
 
 std::vector<QStringList> PolcaScope::splitParameters(QString params) {
@@ -401,8 +410,8 @@ int PolcaScope::stringToType(QString s) {
   }
 }
 
-ParPos* PolcaScope::getParPosWithName(std::vector<ParPos> &list, QString varName) {
-  for(ParPos &p : list) {
+ParPos* PolcaScope::getParPosWithName(std::vector<ParPos>* list, QString varName) {
+  for(ParPos& p : *list) {
     if(p.var == varName) {
       return &p;
     }
@@ -421,7 +430,7 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
   switch(type) {
     case POLCA_MAP:
       for(QString _l : l[2]) {
-        p = getParPosWithName(_pars, _l);
+        p = getParPosWithName(&_pars, _l);
         if(p) {
           p->posP.push_back(1);
           p->input = true;
@@ -437,7 +446,7 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
       }
 
       for(QString _l : l[3]) {
-        p = getParPosWithName(_pars, _l);
+        p = getParPosWithName(&_pars, _l);
         if(p) {
           p->posP.push_back(2);
           p->output = true;
@@ -454,7 +463,7 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
       break;
     case POLCA_ITN:
       for(QString _l : l[2]) {
-        p = getParPosWithName(_pars, _l);
+        p = getParPosWithName(&_pars, _l);
         if(p) {
           p->posP.push_back(1);
           p->input = true;
@@ -470,7 +479,7 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
       }
 
       for(QString _l : l[3]) {
-        p = getParPosWithName(_pars, _l);
+        p = getParPosWithName(&_pars, _l);
         if(p) {
           p->posP.push_back(2);
           p->input = true;
@@ -487,7 +496,7 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
       }
 
       for(QString _l : l[4]) {
-        p = getParPosWithName(_pars, _l);
+        p = getParPosWithName(&_pars, _l);
         if(p) {
           p->posP.push_back(2);
           p->output = true;
@@ -505,7 +514,7 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
     case POLCA_ZIPWITH:
     case POLCA_FOLDL:
       for(QString _l : l[2]) {
-        p = getParPosWithName(_pars, _l);
+        p = getParPosWithName(&_pars, _l);
         if(p) {
           p->posP.push_back(1);
           p->input = true;
@@ -521,7 +530,7 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
       }
 
       for(QString _l : l[3]) {
-        p = getParPosWithName(_pars, _l);
+        p = getParPosWithName(&_pars, _l);
         if(p) {
           p->posP.push_back(2);
           p->input = true;
@@ -537,7 +546,7 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
       }
 
       for(QString _l : l[4]) {
-        p = getParPosWithName(_pars, _l);
+        p = getParPosWithName(&_pars, _l);
         if(p) {
           p->posP.push_back(2);
           p->output = true;
@@ -773,7 +782,7 @@ QString PolcaScope::getASMWeightTotal() {
     switch(_type) {
       case POLCA_ITN:
         _ASMWeightTotal = QString::number(getASMWeightMine());
-        _ASMWeightTotal += " + " + _repeat + "(";
+        _ASMWeightTotal += " + " + _repeat + "*(";
 
         for(ScopeChild sc : _children) {
           _ASMWeightTotal += sc.cscope->getASMWeightTotal();
@@ -784,7 +793,13 @@ QString PolcaScope::getASMWeightTotal() {
       case POLCA_MAP:
       case POLCA_ZIPWITH:
       case POLCA_FOLDL:
+        if(this->_repeat != "") {
+          _ASMWeightTotal = QString::number(getASMWeightMine());
+          _ASMWeightTotal += " + " + _repeat + "*(";
+        }
+        else {
         _ASMWeightTotal = QString::number(getASMWeightMine()) + " + N*(";
+        }
 
         for(ScopeChild sc : _children) {
           _ASMWeightTotal += sc.cscope->getASMWeightTotal();
@@ -810,7 +825,6 @@ QString PolcaScope::getASMWeightTotal() {
         _ASMWeightTotal.chop(3);
         break;
     }
-  //}
 
   return _ASMWeightTotal;
 }
@@ -841,4 +855,89 @@ MemInfo *PolcaScope::findMemName(QString name) {
 
 void PolcaScope::setMemoryInfoFromParent() {
   // TODO:
+  PolcaScope* parent = this->_parent;
+  if(!_parent) {
+    return;
+  }
+
+  std::vector<ParPos>* mem = parent->fParameters();
+  for(ParPos &pp : _parPosC) {
+    ParPos *matchedpp = getParPosWithName(mem, pp.var);
+    if(matchedpp) {
+      pp.numberElements = matchedpp->numberElements;
+      pp.sizeElement = matchedpp->sizeElement;
+    }
+  }
+
+  std::vector<ParPos>* memChild = parent->fParameters();
+  for(ScopeChild &sc : _children) {
+    for(ParChild &pc : sc.vars) {
+      ParPos *matchedpp = getParPosWithName(memChild, pc.parName);
+      if(matchedpp) {
+        pc.numberElements = matchedpp->numberElements;
+        pc.sizeElement = matchedpp->sizeElement;
+      }
+    }
+
+    sc.cscope->matchMemInfoParPragma(&(sc.vars));
+    sc.cscope->setMemoryInfoFromParent();
+    sc.cscope->analyzeRepetitions();
+
+  }
+}
+
+void PolcaScope::analyzeRepetitions() {
+  switch(_type) {
+    case POLCA_ITN:
+      // this one should be already solved
+      break;
+    case POLCA_MAP:
+      for(ParPos &pp : _parPosC) {
+        for(int pos : pp.posP) {
+          if(pos == 1 || pos == 2) {
+            if(pp.numberElements != "") {
+              this->_repeat = pp.numberElements;
+              break;
+            }
+          }
+        }
+      }
+      break;
+    case POLCA_ZIPWITH:
+      for(ParPos &pp : _parPosC) {
+        for(int pos : pp.posP) {
+          if(pos == 1 || pos == 2 || pos == 3) {
+            if(pp.numberElements != "") {
+              this->_repeat = pp.numberElements;
+              break;
+            }
+          }
+        }
+      }
+      break;
+    case POLCA_FOLDL:
+      for(ParPos &pp : _parPosC) {
+        for(int pos : pp.posP) {
+          if(pos == 2) {
+            if(pp.numberElements != "") {
+              this->_repeat = pp.numberElements;
+              break;
+            }
+          }
+        }
+      }
+      break;
+    default:
+      break;
+  }
+}
+void PolcaScope::matchMemInfoParPragma(std::vector<ParChild> *pvars) {
+  for(ParPos &pp : _parPosC) {
+    for(ParChild &pc : *pvars) {
+      if(pc.parPragmaName == pp.var) {
+        pp.numberElements = pc.numberElements;
+        pp.sizeElement = pc.sizeElement;
+      }
+    }
+  }
 }

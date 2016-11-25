@@ -105,7 +105,7 @@ void PogadeGraphViewer::expandNode() {
 void PogadeGraphViewer::drawRoot() {
   PolcaScope* s = _sf->findScope(_lastNode);
   if(s) {
-    int parent = s->parent();
+    int parent = s->parentId();
     generateScene(parent);
   }
 }

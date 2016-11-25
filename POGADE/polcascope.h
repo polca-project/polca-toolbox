@@ -43,6 +43,8 @@ typedef struct {
   QString parName;
   bool input = false;
   bool output = false;
+  QString numberElements = "";
+  QString sizeElement = "";
 } ParChild;
 
 typedef struct {
@@ -86,8 +88,9 @@ public:
   int codeLineStart();
   int codeLineEnd();
 
-  int parent();
-  void setParent(int parent);
+  int parentId();
+  PolcaScope* parent();
+  void setParent(PolcaScope *parent);
   void clearParent();
 
   void setIsFunction(bool function);
@@ -103,7 +106,7 @@ public:
 
   void clearfParameters();
   void addfParameter(ParPos p);
-  std::vector<ParPos> fParameters();
+  std::vector<ParPos>* fParameters();
   void procesIOparams();
 
   void setCallLine(int line);
@@ -132,7 +135,7 @@ public:
   static bool isParInput(ScopeChild& sc, QString par);
   static bool isParOutput(ScopeChild& sc, QString par);
   /***************************************/
-  static ParPos* getParPosWithName(std::vector<ParPos> &list, QString varName);
+  static ParPos* getParPosWithName(std::vector<ParPos> *list, QString varName);
   /***************************************/
   static std::vector<QStringList> splitParameters(QString params);
   /***************************************/
@@ -147,12 +150,14 @@ public:
 
   MemInfo getMemoryInfo();
 
+  void matchMemInfoParPragma(std::vector<ParChild> *pvars);
   void setMemoryInfoFromParent();
+  void analyzeRepetitions();
 
 private:
   std::vector<PolcaPragma> _pragmas;
   std::vector<ScopeChild> _children;
-  int _parent;
+  PolcaScope* _parent = nullptr;
   ScopeNeighbourInfo _neighbours;
   int _id;
   QString _name;

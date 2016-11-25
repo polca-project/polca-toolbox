@@ -260,7 +260,7 @@ void PogadeProjectSourceFile::generateTreeScopes() {
     for(PolcaScope *s2 : children) {
       std::vector<QString> _noVars;
       s1.addChildScope(s2->id(), s2->codeLineStart(), s2, _noVars);
-      s2->setParent(s1.id());
+      s2->setParent(&s1);
     }
   }
 }
@@ -302,7 +302,8 @@ std::vector<ScopeChild> PogadeProjectSourceFile::generateOrderedRootChildren() {
     sc.cid    = _ps->id();
     sc.cline  = _ps->codeLineStart();
     sc.cscope = _ps;
-    for(ParPos pp : _ps->fParameters()) {
+    //sc.cscope->setParent(_ps);
+    for(ParPos &pp : *(_ps->fParameters())) {
       ParChild pc;
       pc.parName = pp.var;
       pc.parPragmaName = pp.var;
@@ -557,7 +558,11 @@ void PogadeProjectSourceFile::propagateMemoryInfo() {
   for(PolcaScope &s : _scopes) {
     if(s.root()) {
       // Set Memory Info for root scopes
-      for(ParPos &pp : s.fParameters()) {
+      if(s.id() == 11) {
+        qDebug() << "FOUND";
+      }
+
+      for(ParPos &pp : *(s.fParameters())) {
         MemInfo *mi = findMemory(pp.var);
         if(mi) {
           pp.numberElements = mi->elements;
