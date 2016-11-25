@@ -170,6 +170,12 @@ trans_inter file =
 trans_auto file =
 	trans file "aut" 0
 
+
+justAnnotate name = 
+	do
+		state <- initialStepsTransInt True name 0 0 True
+		writeTransFileInt name state "" "_ann.c"
+
 ast name = 
 	do
 		ast <- parseMyFile (name ++ ".c")

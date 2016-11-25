@@ -11,7 +11,7 @@ import Main as M (featuresExtract)
 
 import Rules as R (nameRulesAll)
 
-import PragmaPolcaLib as PPL (trim)
+import RulesLib as PPL (trim)
 
 import System.Environment( getArgs )
 

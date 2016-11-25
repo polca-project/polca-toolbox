@@ -17,8 +17,9 @@ import System.Random
 
 main = 
 	do
-		(json:_) <- getArgs 
-		case JSON.decode (BSL.pack json) of 
+		(jsonFile:_) <- getArgs 
+		contents <- readFile jsonFile
+		case JSON.decode (BSL.pack contents) of 
 			Nothing ->
 				do 
 					putStrLn "A problem occured while reading the JSON expression"

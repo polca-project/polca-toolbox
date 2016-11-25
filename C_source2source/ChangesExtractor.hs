@@ -9,7 +9,7 @@ module ChangesExtractor where
 
 import Main as M (changesExtract)
 
-import PragmaPolcaLib as PPL (trim)
+import RulesLib as PPL (trim)
 
 import System.Environment( getArgs )
 

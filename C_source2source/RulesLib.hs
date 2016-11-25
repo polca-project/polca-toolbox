@@ -530,9 +530,7 @@ substituteInPragmasExpr (CVar (Ident v1 _ _) _) new stmt =
 		prop = getAnnotation stmt
 	in 
 		case (prop^.polcaPragmas.value, prop^.allPragmas.value) of 
-			(Nothing, Nothing) -> 
-				[]
-			(Just pp, Just ap) ->
+			(Just pp, _) ->
 				let 
 					npp = changeInAnnPolcaPragmas v1 (prettyMyASTAnn new) pp
 					-- nap = changeInAnnSinglePragma v1 (prettyMyASTAnn new) ap
@@ -540,6 +538,8 @@ substituteInPragmasExpr (CVar (Ident v1 _ _) _) new stmt =
 					nprop = (polcaPragmas.value .~ (Just npp)) prop
 				in 
 					[(stmt, setAnnotation nprop stmt)]
+			(Nothing, _) -> 
+				[]
 substituteInPragmasExpr _ _ _ = 
 	[]
 

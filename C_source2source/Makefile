@@ -15,11 +15,12 @@ INIT = polca_init
 APPLY = polca_apply
 ROLLUP = polca_rollup
 PRETTY = polca_pretty
+ANNOTATOR = polca_annotate
 RAN_ORACLE = random_oracle
 FEAT_EXTR = polca_features
 CHANGES_EXTR = polca_changes
 
-FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README README.md LICENSE.txt AUTHORS.txt rules.c rules_nbody.c vec_mult.c dps.c Translator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs RandomOracle.hs FeaturesExtractor.hs ChangesExtractor.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs
+FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README README.md LICENSE.txt AUTHORS.txt rules.c rules_nbody.c vec_mult.c dps.c Translator.hs Annotator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs RandomOracle.hs FeaturesExtractor.hs ChangesExtractor.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs
 DEMOFILES = demo/rgb_filter_input.c demo/rgb_filter_input_maxjready.c demo/ppmImage.c demo/ppmImage.h demo/ppmImage.c demo/ppmImage.c demo/lodepng.h demo/lodepng.c 
 CETUSMODIFIED = ../cetus/src/cetus/analysis/CallGraph.java ../cetus/src/cetus/analysis/DDGraph.java ../cetus/src/cetus/analysis/LoopTools.java ../cetus/src/cetus/analysis/IPPointsToAnalysis.java ../cetus/src/cetus/exec/Driver.java ../cetus/src/cetus/hir/STMLAnnotation.java ../cetus/src/cetus/hir/AccessSymbol.java ../cetus/src/cetus/hir/TranslationUnit.java 
 CETUSFILES = ../cetus.tar.gz cetus/cetus.sh cetus/cetus_stml.sh cetus/options.cetus ../cetus/polca_changes.txt 
@@ -31,7 +32,7 @@ exe:
 	ghc -main-is Compilable Compilable.hs -o $(NAME) $(GHC_FLAGS)
 
 exe_ext: 
-	ghc -main-is CompilableExt CompilableExt.hs -o $(NAME_EXT) $(GHC_FLAGS)		
+	ghc -O3 -main-is CompilableExt CompilableExt.hs -o $(NAME_EXT) $(GHC_FLAGS)		
 
 all:
 	make exe
@@ -42,6 +43,7 @@ all:
 	make translator
 	make interface
 	make random_oracle
+	make annotator
 
 # compile rules using a given file
 # Usage: make rules FILE=rules_source_file.c
@@ -83,6 +85,10 @@ ast:
 # Build a executable that expands POLCA annotations
 expand_ann:
 	ghc -main-is Expander Expander.hs -o $(EXPANDER) $(GHC_FLAGS)
+
+# Build a executable that just annotate the code using Cetus
+annotator: 
+	ghc -main-is Annotator Annotator.hs -o $(ANNOTATOR) $(GHC_FLAGS)
 
 # Build the translator direct access application
 translator:
@@ -160,9 +166,11 @@ clean:
 	@rm -rf $(APPLY)
 	@rm -rf $(ROLLUP)
 	@rm -rf $(PRETTY)
+	@rm -rf $(ANNOTATOR)
 	@rm -rf $(RAN_ORACLE)
+	@rm -rf $(FEAT_EXTR)
+	@rm -rf $(CHANGES_EXTR)
 	@rm -rf *.hi
 	@rm -rf *.dyn_o
 	@rm -rf *.dyn_hi
-
 
