@@ -26,13 +26,14 @@ CETUSMODIFIED = ../cetus/src/cetus/analysis/CallGraph.java ../cetus/src/cetus/an
 CETUSFILES = ../cetus.tar.gz cetus/cetus.sh cetus/cetus_stml.sh cetus/options.cetus ../cetus/polca_changes.txt 
 
 GHC_FLAGS = -fno-warn-tabs -XFlexibleContexts
+GHC_OPT_FLAGS = -fforce-recomp -O2 -fvia-C -funbox-strict-fields -optc-O2 -fexcess-precision -optc-ffast-math -funfolding-keeness-factor=10
 
 # make executable (Default option)
 exe: 
-	ghc -main-is Compilable Compilable.hs -o $(NAME) $(GHC_FLAGS)
+	ghc -O2 -main-is Compilable Compilable.hs -o $(NAME) $(GHC_FLAGS)
 
 exe_ext: 
-	ghc -O3 -main-is CompilableExt CompilableExt.hs -o $(NAME_EXT) $(GHC_FLAGS)		
+	ghc -O2 -main-is CompilableExt CompilableExt.hs -o $(NAME_EXT) $(GHC_FLAGS)		
 
 all:
 	make exe
@@ -48,17 +49,17 @@ all:
 # compile rules using a given file
 # Usage: make rules FILE=rules_source_file.c
 rules: 
-	ghc -main-is CompileRules CompileRules.hs -o stml2has $(GHC_FLAGS)
+	ghc -O2 -main-is CompileRules CompileRules.hs -o stml2has $(GHC_FLAGS)
 	./stml2has $(FILE)
 
 # compile rules using defaul rules set, i.e. "rules.c"
 rules_def: 
-	ghc -main-is CompileRules CompileRules.hs -o stml2has $(GHC_FLAGS)
+	ghc -O2 -main-is CompileRules CompileRules.hs -o stml2has $(GHC_FLAGS)
 	./stml2has "rules"
 
 # make executable optimized
 exe_op: 
-	ghc -O2 -main-is Compilable Compilable.hs -o $(NAME) $(GHC_FLAGS)
+	ghc $(GHC_OPT_FLAGS) -main-is Compilable Compilable.hs -o $(NAME) $(GHC_FLAGS)
 
 # make executable with profiling
 exe_pro: 
@@ -76,43 +77,43 @@ pro:
 
 # Build a rules tester executable
 tester:
-	ghc -main-is TestRules TestRules.hs -o $(TESTER) $(GHC_FLAGS)
+	ghc -O2 -main-is TestRules TestRules.hs -o $(TESTER) $(GHC_FLAGS)
 
 # Build a executable that builds a file with the AST of a c file
 ast:
-	ghc -main-is Ast Ast.hs -o $(AST) $(GHC_FLAGS)
+	ghc -O2 -main-is Ast Ast.hs -o $(AST) $(GHC_FLAGS)
 
 # Build a executable that expands POLCA annotations
 expand_ann:
-	ghc -main-is Expander Expander.hs -o $(EXPANDER) $(GHC_FLAGS)
+	ghc -O2 -main-is Expander Expander.hs -o $(EXPANDER) $(GHC_FLAGS)
 
 # Build a executable that just annotate the code using Cetus
 annotator: 
-	ghc -main-is Annotator Annotator.hs -o $(ANNOTATOR) $(GHC_FLAGS)
+	ghc -O2 -main-is Annotator Annotator.hs -o $(ANNOTATOR) $(GHC_FLAGS)
 
 # Build the translator direct access application
 translator:
-	ghc -main-is TransExe TransExe.hs -o $(TRANS) $(GHC_FLAGS)
+	ghc -O2 -main-is TransExe TransExe.hs -o $(TRANS) $(GHC_FLAGS)
 
 # A random oracle to be used as a testing oracle
 random_oracle:
-	ghc -main-is RandomOracle RandomOracle.hs -o $(RAN_ORACLE) $(GHC_FLAGS)
+	ghc -O2 -main-is RandomOracle RandomOracle.hs -o $(RAN_ORACLE) $(GHC_FLAGS)
 
 # Build the interface for external tools
 interface:
 	# Build an executable that returns a JSON with the pragmas in a program
-	ghc -main-is PragmaPolcaReader PragmaPolcaReader.hs -o $(PRAGMA_READER) $(GHC_FLAGS)
+	ghc -O2 -main-is PragmaPolcaReader PragmaPolcaReader.hs -o $(PRAGMA_READER) $(GHC_FLAGS)
 	# Build an executable that returns 1/0 depending on whether the statements are rollable or not
-	ghc -main-is IsRollable IsRollable.hs -o $(ROLLUP) $(GHC_FLAGS)
+	ghc -O2 -main-is IsRollable IsRollable.hs -o $(ROLLUP) $(GHC_FLAGS)
 	# Executables to transform the program through external tools 
-	ghc -main-is InitTransformation InitTransformation.hs -o $(INIT) $(GHC_FLAGS)
-	ghc -main-is AppTransformation AppTransformation.hs -o $(APPLY) $(GHC_FLAGS)
+	ghc -O2 -main-is InitTransformation InitTransformation.hs -o $(INIT) $(GHC_FLAGS)
+	ghc -O2 -main-is AppTransformation AppTransformation.hs -o $(APPLY) $(GHC_FLAGS)
 	# Reformating of the input code
-	ghc -main-is PrettyPrinter PrettyPrinter.hs -o $(PRETTY) $(GHC_FLAGS)
+	ghc -O2 -main-is PrettyPrinter PrettyPrinter.hs -o $(PRETTY) $(GHC_FLAGS)
 	# Features extractor to be used by the machine learning component
-	ghc -main-is FeaturesExtractor FeaturesExtractor.hs -o $(FEAT_EXTR) $(GHC_FLAGS)
+	ghc -O2 -main-is FeaturesExtractor FeaturesExtractor.hs -o $(FEAT_EXTR) $(GHC_FLAGS)
 	# Changes extractor to be used by POGADE
-	ghc -main-is ChangesExtractor ChangesExtractor.hs -o $(CHANGES_EXTR) $(GHC_FLAGS)
+	ghc -O2 -main-is ChangesExtractor ChangesExtractor.hs -o $(CHANGES_EXTR) $(GHC_FLAGS)
 
 # Do all the previous configuration needed before to build the executables
 configure:
