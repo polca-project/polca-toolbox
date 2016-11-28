@@ -65,6 +65,7 @@ public:
   void processIOparamsScopes();
   void propagateMemoryInfo();
 
+  void clearRootMemory();
   std::vector<MemInfo> rootMemory();
   void addRootMemory(MemInfo mem);
   MemInfo* findMemory(QString name);
@@ -90,6 +91,7 @@ public:
 
   std::vector<PolcaTransformation*> transformationsLine(int line);
 
+  void clearASMCData();
   std::vector<ASMCData> getASMCData();
   void setASMCData(std::vector<ASMCData> data);
 

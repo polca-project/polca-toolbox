@@ -40,7 +40,8 @@ SOURCES += main.cpp\
     scopeneighbourinfo.cpp \
     pogadetransformationview.cpp \
     polcatransformation.cpp \
-    asmcountdata.cpp
+    asmcountdata.cpp \
+    maximaconector.cpp
 
 HEADERS  += pogademainwindow.h \
     pogadeproject.h \
@@ -66,7 +67,8 @@ HEADERS  += pogademainwindow.h \
     scopeneighbourinfo.h \
     pogadetransformationview.h \
     polcatransformation.h \
-    asmcountdata.h
+    asmcountdata.h \
+    maximaconector.h
 
 FORMS    += pogademainwindow.ui \
     newprojectdialog.ui \

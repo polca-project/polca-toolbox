@@ -126,42 +126,42 @@ void PogadeSourceCodeEditor::transformationClick(int margin, int line, Qt::Keybo
 
 
 void PogadeSourceCodeEditor::revisionSelectionChanged(int newSelection) {
-    if(_oldComboSelect == newSelection) {
-        return;
-    }
-    if(_oldComboSelect >= 0 && _currentChanged) {
-        QMessageBox msgBox;
-        msgBox.setText(tr("The File %1 revision %2 ( %3 ) has been modified").arg(sf->name()).arg(sf->getRevInUse()).arg(sf->getRevisionName(sf->getRevInUse())));
-        msgBox.setInformativeText(tr("Do you want to save your changes before changing revision?"));
-        msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-        msgBox.setDefaultButton(QMessageBox::Save);
-        int ret = msgBox.exec();
-        //Messsaged is shown here
-        switch (ret) {
-          case QMessageBox::Save:
-              saveFile();
-          case QMessageBox::Discard:
-              sf->setRevInUse(ui->comboRevisions->currentData().toInt());
-              se->setText(sf->codeRev(sf->getRevInUse()));
-              _currentChanged = false;
-              ui->buttonSave->setEnabled(false);
-              _oldComboSelect = newSelection;
-              break;
-          case QMessageBox::Cancel:
-              ui->comboRevisions->setCurrentIndex(_oldComboSelect);
-              break;
-          default:
-              // should never be reached
-              break;
-        }
-    }
-    else {
+  if(_oldComboSelect == newSelection) {
+    return;
+  }
+  if(_oldComboSelect >= 0 && _currentChanged) {
+    QMessageBox msgBox;
+    msgBox.setText(tr("The File %1 revision %2 ( %3 ) has been modified").arg(sf->name()).arg(sf->getRevInUse()).arg(sf->getRevisionName(sf->getRevInUse())));
+    msgBox.setInformativeText(tr("Do you want to save your changes before changing revision?"));
+    msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Save);
+    int ret = msgBox.exec();
+    //Messsaged is shown here
+    switch (ret) {
+      case QMessageBox::Save:
+        saveFile();
+      case QMessageBox::Discard:
         sf->setRevInUse(ui->comboRevisions->currentData().toInt());
         se->setText(sf->codeRev(sf->getRevInUse()));
         _currentChanged = false;
         ui->buttonSave->setEnabled(false);
         _oldComboSelect = newSelection;
+        break;
+      case QMessageBox::Cancel:
+        ui->comboRevisions->setCurrentIndex(_oldComboSelect);
+        break;
+      default:
+        // should never be reached
+        break;
     }
+  }
+  else {
+    sf->setRevInUse(ui->comboRevisions->currentData().toInt());
+    se->setText(sf->codeRev(sf->getRevInUse()));
+    _currentChanged = false;
+    ui->buttonSave->setEnabled(false);
+    _oldComboSelect = newSelection;
+  }
 }
 
 void PogadeSourceCodeEditor::setDock(QDockWidget * dock) {
@@ -259,6 +259,7 @@ PogadeProjectSourceFile* PogadeSourceCodeEditor::sourceFile() {
 
 void PogadeSourceCodeEditor::setTDir(QTemporaryDir *tDir) {
   _tDir = tDir;
+  PolcaScope::pogadeTDir = tDir;
 }
 
 void PogadeSourceCodeEditor::polcaProcessCodeScopes() {
@@ -344,8 +345,12 @@ void PogadeSourceCodeEditor::polcaProcessCodeTransformations() {
 }
 
 void PogadeSourceCodeEditor::polcaProcessCodeASMC() {
-  //Performance Code Evaluation
+  if(!sf) {
+    return;
+  }
+  sf->clearASMCData();
 
+  //Performance Code Evaluation
   QString _fileString = _tDir->path() + "/" + sf->name();
   // Write code in editor to file
   QFile file(_fileString);
@@ -431,6 +436,9 @@ void PogadeSourceCodeEditor::replaceCode(QString newTCode) {
 }
 
 void PogadeSourceCodeEditor::loadPolcaTransformationsData(QString data) {
+  if(!sf) {
+    return;
+  }
   sf->clearTransformations();
   QJsonDocument doc = QJsonDocument::fromJson(data.toLatin1());
   if(doc.isEmpty()) {
@@ -479,6 +487,11 @@ void PogadeSourceCodeEditor::showTransformations() {
 
 
 void PogadeSourceCodeEditor::loadPolcaProcessingData(QString data) {
+  if(!sf) {
+      return;
+  }
+  sf->clearScopes();
+  sf->clearRootMemory();
   QJsonDocument doc = QJsonDocument::fromJson(data.toLatin1());
   if(doc.isEmpty()) {
     ui->buttonViewGraph->setEnabled(false);
@@ -711,10 +724,6 @@ void PogadeSourceCodeEditor::selectedScope(PolcaScope ps) {
 }
 
 void PogadeSourceCodeEditor::selectedPragmaAndScope(PolcaScope ps, PolcaPragma pp) {
-  //qDebug() << "----------------------";
-  //qDebug() << pp.text();
-  //qDebug() << ps.name();
-
   // Remove all markers and add the new ones
   se->markerDeleteAll(SC_MARK_PSEL_LINE);
   se->markerDeleteAll(SC_MARK_PSEL_SYMB);

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <QString>
 #include <QTreeWidgetItem>
+#include <QTemporaryDir>
 
 #include "polcapragma.h"
 #include "scopeneighbourinfo.h"
@@ -146,13 +147,16 @@ public:
 
   void setASMWeightMine(int w);
   int  getASMWeightMine();
-  QString  getASMWeightTotal();
+  QString getASMWeightTotal();
+  QString getASMWeightTotalSimp();
 
   MemInfo getMemoryInfo();
 
   void matchMemInfoParPragma(std::vector<ParChild> *pvars);
   void setMemoryInfoFromParent();
   void analyzeRepetitions();
+
+  static QTemporaryDir *pogadeTDir;
 
 private:
   std::vector<PolcaPragma> _pragmas;

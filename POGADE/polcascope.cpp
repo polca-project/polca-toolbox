@@ -1,7 +1,10 @@
 #include "polcascope.h"
+#include "maximaconector.h"
+
 #include <QDebug>
 
 int PolcaScope::_idCount = 0;
+QTemporaryDir *PolcaScope::pogadeTDir = nullptr;
 
 PolcaScope::PolcaScope() {
   clearParent();
@@ -512,6 +515,54 @@ std::vector<ParPos> PolcaScope::processPragmaIO(int type, std::vector<QStringLis
       }
       break;
     case POLCA_ZIPWITH:
+      for(QString _l : l[2]) {
+        p = getParPosWithName(&_pars, _l);
+        if(p) {
+          p->posP.push_back(1);
+          p->input = true;
+        } else {
+          _p = new ParPos;
+          _p->var    = _l;
+          _p->posC   = _pars.size()+1;
+          _p->posP.push_back(1);
+          _p->input  = true;
+          _p->output = false;
+          _pars.push_back(*_p);
+        }
+      }
+
+      for(QString _l : l[3]) {
+        p = getParPosWithName(&_pars, _l);
+        if(p) {
+          p->posP.push_back(2);
+          p->input = true;
+        } else {
+          _p = new ParPos;
+          _p->var    = _l;
+          _p->posC   = _pars.size()+1;
+          _p->posP.push_back(2);
+          _p->input  = true;
+          _p->output = false;
+          _pars.push_back(*_p);
+        }
+      }
+
+      for(QString _l : l[4]) {
+        p = getParPosWithName(&_pars, _l);
+        if(p) {
+          p->posP.push_back(2);
+          p->output = true;
+        } else {
+          _p = new ParPos;
+          _p->var    = _l;
+          _p->posC   = _pars.size()+1;
+          _p->posP.push_back(3);
+          _p->input  = false;
+          _p->output = true;
+          _pars.push_back(*_p);
+        }
+      }
+      break;
     case POLCA_FOLDL:
       for(QString _l : l[2]) {
         p = getParPosWithName(&_pars, _l);
@@ -770,6 +821,22 @@ int PolcaScope::getASMWeightMine() {
 
     return 3;
   }
+}
+
+QString PolcaScope::getASMWeightTotalSimp() {
+  QString result;
+  QString ws = this->getASMWeightTotal();
+
+  result = ws;
+  if(ws != "") {
+    MaximaConector m(PolcaScope::pogadeTDir);
+    QString expS;
+    QStringList varsS;
+    if(m.simplifyExpression(ws, expS, varsS)) {
+      result = expS;
+    }
+  }
+  return result;
 }
 
 QString PolcaScope::getASMWeightTotal() {

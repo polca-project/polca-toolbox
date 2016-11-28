@@ -490,6 +490,10 @@ std::vector<PolcaTransformation> PogadeProjectSourceFile::getTransformations() {
   return _transformations;
 }
 
+void PogadeProjectSourceFile::clearRootMemory() {
+  _rootMemory.clear();
+}
+
 std::vector<MemInfo> PogadeProjectSourceFile::rootMemory() {
   return _rootMemory;
 }
@@ -522,6 +526,10 @@ void PogadeProjectSourceFile::setMemoryInScopes() {
       }
     }
   }
+}
+
+void PogadeProjectSourceFile::clearASMCData() {
+  _asmcData.clear();
 }
 
 std::vector<ASMCData> PogadeProjectSourceFile::getASMCData() {
