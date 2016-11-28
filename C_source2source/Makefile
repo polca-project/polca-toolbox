@@ -10,7 +10,8 @@ TESTER = rules_tester
 AST = ast
 EXPANDER = expand
 PRAGMA_READER = pragma_reader
-TRANS = polca_trans
+TRANS = polca_trans_int
+TRANS_CMD = polca_trans
 INIT = polca_init
 APPLY = polca_apply
 ROLLUP = polca_rollup
@@ -20,7 +21,7 @@ RAN_ORACLE = random_oracle
 FEAT_EXTR = polca_features
 CHANGES_EXTR = polca_changes
 
-FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README README.md LICENSE.txt AUTHORS.txt rules.c rules_nbody.c vec_mult.c dps.c Translator.hs Annotator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs RandomOracle.hs FeaturesExtractor.hs ChangesExtractor.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs
+FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README README.md LICENSE.txt AUTHORS.txt rules.c rules_nbody.c vec_mult.c dps.c Translator.hs Annotator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs RandomOracle.hs FeaturesExtractor.hs TransCommand.hs ChangesExtractor.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs
 DEMOFILES = demo/rgb_filter_input.c demo/rgb_filter_input_maxjready.c demo/ppmImage.c demo/ppmImage.h demo/ppmImage.c demo/ppmImage.c demo/lodepng.h demo/lodepng.c 
 CETUSMODIFIED = ../cetus/src/cetus/analysis/CallGraph.java ../cetus/src/cetus/analysis/DDGraph.java ../cetus/src/cetus/analysis/LoopTools.java ../cetus/src/cetus/analysis/IPPointsToAnalysis.java ../cetus/src/cetus/exec/Driver.java ../cetus/src/cetus/hir/STMLAnnotation.java ../cetus/src/cetus/hir/AccessSymbol.java ../cetus/src/cetus/hir/TranslationUnit.java 
 CETUSFILES = ../cetus.tar.gz cetus/cetus.sh cetus/cetus_stml.sh cetus/options.cetus ../cetus/polca_changes.txt 
@@ -114,6 +115,9 @@ interface:
 	ghc -O2 -main-is FeaturesExtractor FeaturesExtractor.hs -o $(FEAT_EXTR) $(GHC_FLAGS)
 	# Changes extractor to be used by POGADE
 	ghc -O2 -main-is ChangesExtractor ChangesExtractor.hs -o $(CHANGES_EXTR) $(GHC_FLAGS)
+	# Builds a command to directly obtain the code translated
+	ghc -O2 -main-is TransCommand TransCommand.hs -o $(TRANS_CMD) $(GHC_FLAGS)
+	
 
 # Do all the previous configuration needed before to build the executables
 configure:
@@ -171,6 +175,7 @@ clean:
 	@rm -rf $(RAN_ORACLE)
 	@rm -rf $(FEAT_EXTR)
 	@rm -rf $(CHANGES_EXTR)
+	@rm -rf $(TRANS_CMD)
 	@rm -rf *.hi
 	@rm -rf *.dyn_o
 	@rm -rf *.dyn_hi

@@ -291,6 +291,38 @@ only_translate name =
 			}
 		--writeFile (filename ++ "_transformed.c") (prettyMyASTIncludes ast)
 		to_platform name state
+
+translateWOUser name plat = 
+	do
+		(ast, linkedPolcaAnn,includesRead) <- readFileInfo True name True
+		let lastNode = getLastNode ast
+		let annAST = fmap (\nI -> Ann nI nodePropertiesDefault) ast
+		let changedAnnAST = changeAnnAST linkedPolcaAnn annAST
+		let state =
+			TransState 
+			{
+				free_node_id = lastNode + 1, 
+				--pragmas = linkedPolcaAnn,
+				-- TODO: remove asts from the process since ast is now in the state
+				--current_ast = ast1,
+				freeVar = 0,
+				includes = includesRead,
+				fun_defs = applyRulesGeneral searchFunDefsGeneral changedAnnAST,
+				no_fun_defs = applyRulesGeneral searchNoFunDefsGeneral changedAnnAST,
+				last_changed = "",
+				previous_changes = ([],[]),
+				applied_rules = [],
+				applicable_rules = Set.empty,
+				trans_with_anns = False,
+				ast_to_transform = Nothing,
+				print_id = 0,
+				seq_id = -1,
+				acc_steps = [],
+				oracle = "",
+				nameFile = name
+			}
+		--writeFile (filename ++ "_transformed.c") (prettyMyASTIncludes ast)
+		trans_platform_internal name plat (includes state) (rebuildAst state)
 		
 
 trans name mode iter = 
