@@ -967,11 +967,12 @@ inline state stmt =
 
 --inlineCall :: CStat -> [(String, (CTypeSpec, [CDecl], ([CDeclSpec], CDeclr, [CDecl], NodeInfo)), CStat)] -> (String, [CExpr], CExpr) -> TransState -> (CStat, TransState)
 inlineCall stmt defs (name, args, call) state =
-	case [(fun_params, fun_body) | item@(fun_name, ((CVoidType _), fun_params, _), fun_body) <- defs, fun_name == name] of 
-		((pars,body):_) ->
+	case [(fun_params, annFun, fun_body) | item@(fun_name, ((CVoidType _), fun_params, (_, _, _, annFun)), fun_body) <- defs, fun_name == name] of 
+		((pars, (Ann _ nP), body):_) ->
 			let
 				ncall0 = substituteParArgs body pars args 
-				ncall = substituteReturn (intConstant 0) ncall0
+				ncall1 = substituteReturn (intConstant 0) ncall0
+				ncall = setAnnotation nP ncall1
 				-- If we decide inlining should rename vars, uncomment these two lines
 				--varDecl = (applyRulesGeneral searchDeclr body)
 				--(nstmt, nstate) = foldl (\(nstmt,nstate) var -> renameVars var nstmt nstate) (body,state) varDecl

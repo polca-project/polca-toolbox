@@ -1242,6 +1242,27 @@ remove_block
     }
 }
 
+// // Removes a block with a single statement and introduces fresh variables to avoid clashes preserving the annotations. 
+// remove_block_single_stmt
+// {
+//     pattern:
+//     {
+//         cstmts(ini);
+//         #pragma polca def a
+//         {
+//             cstmt(block);
+//         }
+//         cstmts(fin);
+//     }
+//     generate:
+//     {
+//         cstmts(ini);
+//         #pragma polca same_properties a
+//         fresh(cstmt(block));
+//         cstmts(fin);
+//     }
+// }
+
 //Removes a useless if statement
 remove_empty_if
 {

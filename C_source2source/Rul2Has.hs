@@ -112,6 +112,7 @@ stml2Has name =
 		let annAST = fmap (\nI -> Ann nI nodePropertiesDefault) ast0
 		let ast = changeAnnAST linkedPolcaAnn annAST
 
+		-- trace (show linkedPolcaAnn) 
 		writeFile (name ++ ".ast") (Gr.groom ast)
 		--print linkedPolcaAnn
 		let ast_rules = applyRulesGeneral extract_ast_rules ast
@@ -825,7 +826,7 @@ printArrayDeclPat state0 e =
 		state1)
 
 
-printExprPat (state0@PrintState{currentFree = freeVar0}) (CCall (CVar (Ident name_fun _ _) _) args _) = 
+printExprPat (state0@PrintState{currentFree = freeVar0}) (CCall (CVar (Ident name_fun _ _) _) args nodeInfo) = 
 	case name_fun `elem` ["cstmts","cstmt","cexpr"] of 
 		True -> 
 			((buildVarName (extractVarName (args!!0)) freeVar0),
@@ -852,13 +853,15 @@ printExprPat (state0@PrintState{currentFree = freeVar0}) (CCall (CVar (Ident nam
 		False -> 
 			let 
 				(sargs,state1) = printPatList printExprPat state0 args
+				-- (newNodeInfo,state2) = (printNodePat state1 nodeInfo)
+				(newNodeInfo, state2) = ("_", state1)
 				scall = 
 					"(CCall (CVar (Ident " ++ name_fun
 					++ " _ _) _) [" ++ sargs
-					++ "] _)"
+					++ "] " ++ newNodeInfo ++ ")"
 			in
 				(scall,
-				state1)
+				state2)
 printExprPat state0 (CAssign op lhs rhs _) = 
 	let 
 		(slhs,state1) = (printExprPat state0 lhs) 
@@ -1005,21 +1008,26 @@ printStmtPat state0 (CCompound _ bi nodeInfo) =
 			let 
 				--(sbi,state1) = (printComBlockItemPatList state0 bi)
 				name = buildVarIntName (currentFree state0)
+				state1 = 
+					 state0
+					 {
+					 	currentFree = (currentFree state0) + 1,
+					 	dictInternals = 
+					 		insertInDictInternals (dictInternals state0)
+					 			DictInternalEntry
+					 			{
+					 				name = name,
+					 				node = nodeInfo,
+					 				asts = []
+					 			}
+					 }
+				-- TODO: Not sure if nodeInfo in dictInternals sould be the new one
+				-- (newNodeInfo,state2) = (printNodePat state1 nodeInfo)
+				(newNodeInfo,state2) = ("_", state1)
 			in
 				--("(CCompound _ [" ++ sbi ++ "] _)",state1)
-				("(CCompound _ "++ name ++ " _)",
-				 state0
-				 {
-				 	currentFree = (currentFree state0) + 1,
-				 	dictInternals = 
-				 		insertInDictInternals (dictInternals state0)
-				 			DictInternalEntry
-				 			{
-				 				name = name,
-				 				node = nodeInfo,
-				 				asts = []
-				 			}
-				 })
+				("(CCompound _ "++ name ++ " " ++ newNodeInfo ++ ")",
+				 state2)
 printStmtPat state0 (CIf cond then_ else_ _) =
 	let 
 		(scond,state1)  =  printExprPat state0 cond
@@ -1391,7 +1399,7 @@ printExprGen state0 (CConst (CFloatConst number _)) =
 	state0)
 
 
-printStmtGen state0@PrintState{dictVars = dict} (CExpr e _) =
+printStmtGen state0@PrintState{dictVars = dict} (CExpr e node) =
 	let 
 		prev@(se_, state1)  = 
 			case e of 

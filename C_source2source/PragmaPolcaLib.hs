@@ -167,7 +167,7 @@ printWithPragmasDef printPragmaFun fun@(CFDefExt (CFunDef _ _ _ body@(CCompound 
 			pre ++ bodyStr ++ post
 	in 
 		--(printUntilOpenCurvedBracket (lines (prettyMyASTAnn fun)))) ++ (concat (map (++"\n") bodyStr)) ++ "}\n"
-		strFun
+		strPragmas ++ strFun
 printWithPragmasDef printPragmaFun (decl@(CDeclExt (CDecl _ _ (Ann nI nP)))) = 
 --printWithPragmasDef pragmaInfo (decl@(CDeclExt (CDecl _ _ nI))) = 
 	let 
@@ -890,7 +890,7 @@ changeAnnAST_ anns ann@(Ann nI nP) =
 				--defaultAnn = [(head nP){specificInfo = AllPragmas pragmas}]
 				--otherAnn = create_properties_node pragmas
 				finalProperties = 
-					modifyPropertiesNode pragmas initialProperties
+					modifyPropertiesNode (reverse pragmas) initialProperties
 			in 
 				Ann nI finalProperties
 
@@ -935,11 +935,13 @@ modifyPropertiesNode (pragma:pragmas) properties
 		scalarDependencesPrefix = stripGivenPrefix "scalar_dependences"
 		polcaAnns = 
 			[
-				"map", "ZipWith", "fold", "zipWith",
+				"map", "ZipWith", "fold", "zipWith", "itn",
 				"init", "def", 
 				"io", "type_size", "total_size",
 				"kernel", "target", "adapt", 
-				"input", "output", "iteration_independent", 
+				"input", "output", "inout",
+				"iteration_independent", 
+				"memAlloc", "memFree",
 				-- Only to be used by the rules
 				"rolled-up", "same_properties"
 			]

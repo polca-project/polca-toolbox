@@ -1000,7 +1000,6 @@ initialStepsTransInt verbose name seqId printId runCetus =
 
 						let annAST = fmap (\nI -> Ann nI nodePropertiesDefault) ast0
 						let ast2 = changeAnnAST linkedPolcaAnn annAST
-						writeFile (name ++ ".ast") (Gr.groom ast2)
 						--writeFile (name ++ ".ast") (show ast2)
 						return (ast2, lastNode1)
 		-- let ast1 = ast2
@@ -1031,6 +1030,7 @@ initialStepsTransInt verbose name seqId printId runCetus =
 		--DBin.encodeFile "temp" initialState0
 		--initialState <- DBin.decodeFile "temp" 
 		--putStrLn (show initialState)
+		writeFile (name ++ ".ast") (Gr.groom ast1)
 		return initialState0
 
 getTrans name mode iter =
