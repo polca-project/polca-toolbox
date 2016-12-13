@@ -10,7 +10,7 @@
 from scipy import *
 import sys, time, re, os
 # import matplotlib.pyplot as plt
-import pylab
+# import pylab
 
 from pybrain.rl.learners.valuebased import ActionValueTable
 from pybrain.rl.agents import LearningAgent
