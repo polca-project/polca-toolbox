@@ -1,5 +1,5 @@
 CC = gcc
-FLAGS = -std=gnu99 -w -lm
+FLAGS = -std=gnu99 -w -lm -O2
 
 UTILSRC = util_src
 

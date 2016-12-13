@@ -8,10 +8,13 @@
 
 import json,sys,os
 import static_analyzer as sca
+# import static_analyzer_mod as sca
 import warnings
 warnings.filterwarnings("ignore")
 
-sys.path.extend(['../machine_learning/reinforcement_learning'])
+modPath = os.path.dirname(os.path.realpath(__file__))
+# sys.stderr.write(modPath+"\n")
+sys.path.extend([modPath+'/../machine_learning/reinforcement_learning'])
 import oracle
 
 
@@ -35,12 +38,13 @@ def convertAbsList2Key(abstraction):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) > 1:
+    targetPlatform = "none"
+    if len(sys.argv) < 4:
         # jsonStr  = sys.argv[1]
         # codeChanges = json.loads(jsonStr)
-        # sys.stderr.write("\n\n########"+sys.argv[1] + "\n\n")
-        # exit(0)
+
         codeChanges = json.loads(open(sys.argv[1]).read())
+        targetPlatform = sys.argv[2]
     else:
         codeChanges = json.loads(open('output_s2s.json').read())
         # print len(codeChanges['changes'])
@@ -49,7 +53,20 @@ if __name__ == "__main__":
 oldCode = prepareCode(codeChanges["code"])
 # sys.stderr.write(str(oldCode)+"\n")
 
-abstraction = sca.analyzeCodeFromStr(oldCode)
+fileDir = codeChanges["fileDir"]
+
+if fileDir[0] != '/':
+    cwd = os.getcwd()
+    fullPath = "%s/%s" % (cwd,fileDir)
+else:
+    fullPath = "%s" % (fileDir)
+# sys.stderr.write("################################\n")
+# sys.stderr.write("%s\n" % (fullPath))
+# sys.stderr.write("################################\n")
+
+
+abstraction = sca.analyzeCodeFromStr(oldCode,fileDir)
+
 
 # print oldCode
 # sys.stderr.write("#####################################################"+"\n")
@@ -65,23 +82,25 @@ for i in range(len(codeChanges['changes'])):
     ruleList.append(ruleName)
 
 
-nextStateAbs,ruleName = oracle.predict(abstraction[0],ruleList)
+nextStateAbs,ruleName = oracle.predict(abstraction[0],ruleList,targetPlatform)
 
 for i in range(len(codeChanges['changes'])):
-    sys.stderr.write(ruleName + " - " + str(codeChanges['changes'][i]['ruleName']) + "\n")
+    # sys.stderr.write(ruleName + " - " + str(codeChanges['changes'][i]['ruleName']) + "\n")
     if ruleName == str(codeChanges['changes'][i]['ruleName']):
         newCode = prepareCode(codeChanges['changes'][i]['newCodeAll'])
 
         # sys.stderr.write(str(codeChanges['changes'][i]["idChange"])+"\n")
         # sys.stderr.write(str(codeChanges['changes'][i]['ruleName'])+"\n")
 #        # sys.stderr.write(str(codeChanges['changes'][i]['newCode'])+"\n")
-#         sys.stderr.write(str(newCode)+"\n")
 
-        newCodeAbs = sca.analyzeCodeFromStr(newCode)
+        # if(nextStateAbs == "11100111020004012101003300"):
+        #     sys.stderr.write(str(newCode)+"\n")
 
-        sys.stderr.write(convertAbsList2Key(newCodeAbs[0]) + "\n")
-        sys.stderr.write(nextStateAbs + "\n")
-        sys.stderr.write("#####################################################\n")
+        newCodeAbs = sca.analyzeCodeFromStr(newCode,fileDir)
+
+        # sys.stderr.write(convertAbsList2Key(newCodeAbs[0]) + "\n")
+        # sys.stderr.write(nextStateAbs + "\n")
+        # sys.stderr.write("#####################################################\n")
         if convertAbsList2Key(newCodeAbs[0]) == nextStateAbs:
             rule2IdchangeDict[ruleName] = int(codeChanges['changes'][i]["idChange"])
             break

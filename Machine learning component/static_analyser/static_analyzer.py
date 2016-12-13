@@ -20,12 +20,12 @@ sys.path.extend(['.', '..'])
 from pycparser import c_parser, c_ast, parse_file, c_generator
 import re,os
 import subprocess
-#import feat_extractor_interface as featEx
+# import feat_extractor_interface as featEx
 
 
 # Global variables
 
-isRollableCmd = "../polca_s2s/polca_rollup"
+# isRollableCmd = "../polca_s2s/polca_rollup"
 # isRollableCmd = "../examples/C_haskell/polca_rollup"
 # isRollableCmd = "../static_analyser/stmtDiff.py"
 # isRollableCmd = "./stmtDiff.py"
@@ -135,6 +135,9 @@ varSetLValueOutsideLoop = []
 
 numStmtsRollUp           = 0
 
+numForPreambles          = 0
+numForPostambles         = 0
+
 # The following list are list of lists. Each sublist contains var IDs (RValue or LValue) that
 # appear in the different levels of a nested loop. Thus, the first sublist corresponds to the
 # outer most loop, the 2nd sublist to the first nested loop and so on. E.g.
@@ -166,12 +169,16 @@ numCompoundStmts         = 0
 numCompoundStmtsInBlock  = 0
 lineBeginCompounds       = []
 compoundBlockId2Analyze  = -1
-isWithinBlock2Analyze    = True
+isWithinBlock2Analyze    = False
 currentCompoundStmtId    = -1
 
 
 anyTernaryOp             = 0
 anyUselessStmt           = 0
+
+numStructVarDecl         = 0
+numEmptyIf               = 0
+
 
 def isPragmaLine(line):
         m1 = re.match("\s*#pragma\s+(.*)",line)
@@ -213,6 +220,7 @@ def readPragmas(filename):
         lineNum += 1
 
     f.close()
+    # print(pragmaDict)
 
 # Since Pycparser does not provide line numbers for Compound stmts we compute
 # it and store in a list. Later when traversin the AST, we count the number
@@ -231,19 +239,30 @@ def readCompound(filename):
     else:
         funcFound = True
 
+
+    # if blockToAnalyze != "*":
+    #     blockFound = False
+    # else:
+    #     blockFound = True
+
+
     lineNum = 1
     for line in content:
 
         m1 = re.match("(.*)\{(.*)",line)
         m2 = re.match("(.*)\s+(.*)\s*\((.*)",line)
+        # m3 = re.match("(.*)\s*#pragma\s+polca\s+def\s+(.*)",line)
         if m1 and (funcToAnalyze == "*" or funcFound):
-            # print("$$$$ Begining of Compound %s found at line %d !!!\n" % (m1.group(0),lineNum))
+        # if m1 and (funcToAnalyze == "*" or funcFound) and (blockToAnalyze == "*" or blockFound):
+        #     print("$$$$ Begining of Compound %s found at line %d !!!\n" % (m1.group(0),lineNum))
             lineBeginCompounds.append(lineNum)
         elif m2:
             if m2.group(2) == funcToAnalyze:
                 funcFound = True
                 # print("Yesssssssssss %s" % m2.group(2))
-
+        # elif m3:
+        #     if m3.group(2) == blockToAnalyze:
+        #         blockFound = True
         lineNum += 1
 
     f.close()
@@ -543,6 +562,12 @@ class ASTVisitor(c_ast.NodeVisitor):
     def visit_TypeDecl(self, node):
         global insideFuncDef, globalVarList,varSetLValueInsideLoop,insideStruct
 
+        if not isWithinBlock2Analyze:
+            if not insideFuncDef and not insideStruct: # definition of global var, save var id
+                # print('%s , %s : Global var %s decl at %s' % (node.type, node.quals,node.declname, node.coord))
+                globalVarList.append(node.declname)
+                return
+
         if not insideFuncDef and not insideStruct: # definition of global var, save var id
             # print('%s , %s : Global var %s decl at %s' % (node.type, node.quals,node.declname, node.coord))
             globalVarList.append(node.declname)
@@ -562,7 +587,11 @@ class ASTVisitor(c_ast.NodeVisitor):
 
 
     def visit_Struct(self,node):
-        global insideStruct
+        global insideStruct,numStructVarDecl
+
+        if not isWithinBlock2Analyze and insideFuncDef:
+            numStructVarDecl += 1
+            return
 
         insideStruct = 1
 
@@ -774,7 +803,7 @@ class ASTVisitor(c_ast.NodeVisitor):
         global anyFuncCall,insideFuncCall
         
         # print('%s at %s' % (node.name.name, node.coord))
-        anyFuncCall = 1
+        anyFuncCall += 1
         insideFuncCall = 1
 
         for c_name, c in node.children():
@@ -783,19 +812,24 @@ class ASTVisitor(c_ast.NodeVisitor):
         insideFuncCall = 0
 
     def visit_If(self, node):
-        global anyIfStmt
+        global anyIfStmt,numEmptyIf
+
+        ifBody = node.children()
+        if ifBody[1][1].__class__.__name__ == "Compound":
+            if ifBody[1][1].block_items == None:
+                numEmptyIf += 1
 
         # print('%s at %s' % (node.__class__.__name__, node.coord))
-        anyIfStmt = 1
+        anyIfStmt += 1
         for c_name, c in node.children():
             self.visit(c)
 
-    def computeLoopInvVar(self,setLValue,setRValue):
+    def computeLoopInvVar(self,setLValue,setRValue,loopIterVarId):
         global numLoopInvVar
 
         for rVar in setRValue:
-            if not rVar in setLValue:
-                # print("------- %s" % rVar)
+            if not rVar in setLValue:# and (not rVar in loopIterVarId):
+                # print("------- %s - %s" % (rVar,str(loopIterVarId)))
                 numLoopInvVar += 1
 
     def computeHoistedVarMod(self,outerSetLValue,innerSetLValue):
@@ -827,8 +861,9 @@ class ASTVisitor(c_ast.NodeVisitor):
 
         if lineNum in pragmaDict.keys():
             for pragma in pragmaDict[lineNum]:
-                m1 = re.match(".*def\s+(.*)",pragma)
+                m1 = re.match(".*def\s+(%s)" % (blockToAnalyze),pragma)
                 if m1:
+                    # print(str(lineNum) + " " + m1.group(0))
                     # print(m1.group(1))
                     return m1.group(1)
 
@@ -842,24 +877,36 @@ class ASTVisitor(c_ast.NodeVisitor):
 
 
         # print("%d - %s" % (numCompoundStmts,str(lineBeginCompounds)))
+        # print("%d - %d" % (numCompoundStmts,len(lineBeginCompounds)))
         # print('%s at %s (%s)' % (node.__class__.__name__, lineBeginCompounds[numCompoundStmts],node.coord))
+        # print("\t"+generator.visit(node.block_items[0]))
+        # print("---------------------------------------------------")
 
         scopeList.append([])
-
+        # print("Enter Compound %2d - %2d - %2d | %s" % (currentCompoundStmtId,numCompoundStmts,compoundBlockId2Analyze,generator.visit(node.block_items[0])))
         if self.getPOLCAblockName(lineBeginCompounds[numCompoundStmts]) == blockToAnalyze:
             # print("Init vars for BLOCK!!!!!")
             initVars(INIT_BLOCK)
-            compoundBlockId2Analyze = numCompoundStmts
+            compoundBlockId2Analyze = numCompoundStmts + 1
             isWithinBlock2Analyze   = True
 
             self.checkUselessStmt(node)
+            self.countForPreambles(node)
+            self.countForPostambles(node)
+        elif not isWithinBlock2Analyze and blockToAnalyze != "*":
+            numCompoundStmts+=1
+            scopeList.pop(len(scopeList)-1)
+            for c_name, c in node.children():
+                self.visit(c)
+            return
 
             # node.show(showcoord=True,nodenames=True,attrnames=True)
 
-        if isWithinBlock2Analyze:
+        if isWithinBlock2Analyze or blockToAnalyze == "*":
             numCompoundStmtsInBlock += 1
 
-        currentCompoundStmtId = numCompoundStmts
+        # currentCompoundStmtId = numCompoundStmts
+        currentCompoundStmtId += 1
         numCompoundStmts+=1
 
         # # blockToAnalyze
@@ -878,94 +925,97 @@ class ASTVisitor(c_ast.NodeVisitor):
 
         # print('%s at %s' % (node.__class__.__name__, node.coord))
 
-        c_name, prev_stmt = node.children()[0]
-        stmtsPairsRollUp = 0
-        foundRolledUpFor = 0
-        for i in range(1,len(node.children())):
-            pStmtStr = generator.visit(prev_stmt)
+        if len(node.children()) > 0:
+            c_name, prev_stmt = node.children()[0]
+            stmtsPairsRollUp = 0
+            foundRolledUpFor = 0
+            for i in range(1,len(node.children())):
+                pStmtStr = generator.visit(prev_stmt)
 
-            c_name, next_stmt = node.children()[i]
-            nStmtStr = generator.visit(next_stmt)
-            # We skip statements which are pragmas since they are not of interest for roll-up pattern
-            if "#pragma" in nStmtStr or "#pragma" in pStmtStr:
-                continue
-            # print("%s - %s" % (type(stmt),stmt))
+                c_name, next_stmt = node.children()[i]
+                nStmtStr = generator.visit(next_stmt)
+                # We skip statements which are pragmas since they are not of interest for roll-up pattern
+                if "#pragma" in nStmtStr or "#pragma" in pStmtStr:
+                    continue
+                # print("%s - %s" % (type(stmt),stmt))
 
-            # We limit the type of stmts to check for rollUp pattern to Assignment and both stmts
-            # that are compared must be same type of operator, i.e., '=', '+=', '-='
-            # We also include the case of rolled-up for, for detecting pending stmts to roll-up,
-            # but it is assumed that the rolled-up for cannot be in the 'next_stmt'
-            isRolledUpFor = self.isRolledUpFor(prev_stmt)
-            if ((prev_stmt.__class__.__name__ == next_stmt.__class__.__name__ == "Assignment") and \
-                (prev_stmt.op == next_stmt.op)) or \
-                (isRolledUpFor and next_stmt.__class__.__name__ == "Assignment"):
-                # print("##################################")
-                # print("%d: %s (%s)" % (i,pStmtStr,prev_stmt.__class__.__name__))
-                # print("----------")
-                # print("%d: %s (%s)" % (i+1,nStmtStr,next_stmt.__class__.__name__))
-                if not isRolledUpFor:
-                    # val = os.system('%s "%s" "%s"' % (isRollableCmd,pStmtStr,nStmtStr))
-                    cmd = '%s "%s" "%s"' % (isRollableCmd,pStmtStr,nStmtStr)
-                    # sys.stderr.write("\t%s\n" % (cmd))
-                    # p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)#, stderr=subprocess.STDOUT)
-                    # val = p.stdout.read()
-                    val = int(os.popen(cmd).read())
-                    # print("\tRead from the cmd: %d" % (val))
-                else:
-                    if prev_stmt.stmt.__class__.__name__ == "Compound":
-                        bodyStmtStr = generator.visit(prev_stmt.stmt.block_items[0])
+                # We limit the type of stmts to check for rollUp pattern to Assignment and both stmts
+                # that are compared must be same type of operator, i.e., '=', '+=', '-='
+                # We also include the case of rolled-up for, for detecting pending stmts to roll-up,
+                # but it is assumed that the rolled-up for cannot be in the 'next_stmt'
+                isRolledUpFor = self.isRolledUpFor(prev_stmt)
+                if ((prev_stmt.__class__.__name__ == next_stmt.__class__.__name__ == "Assignment") and \
+                    (prev_stmt.op == next_stmt.op)) or \
+                    (isRolledUpFor and next_stmt.__class__.__name__ == "Assignment"):
+                    # print("##################################")
+                    # print("%d: %s (%s)" % (i,pStmtStr,prev_stmt.__class__.__name__))
+                    # print("----------")
+                    # print("%d: %s (%s)" % (i+1,nStmtStr,next_stmt.__class__.__name__))
+                    if not isRolledUpFor:
+                        # val = os.system('%s "%s" "%s"' % (isRollableCmd,pStmtStr,nStmtStr))
+                        cmd = '%s "%s" "%s" %s' % (isRollableCmd,pStmtStr,nStmtStr,path4IsRollable)
+                        # sys.stderr.write("\t%s\n" % (cmd))
+                        # p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)#, stderr=subprocess.STDOUT)
+                        # val = p.stdout.read()
+                        val = int(os.popen(cmd).read())
+                        # print("\tRead from the cmd: %d" % (val))
                     else:
-                        bodyStmtStr = generator.visit(prev_stmt.stmt)
-                    # val = os.system('%s "%s" "%s"' % (isRollableCmd,bodyStmtStr,nStmtStr))
-                    cmd = '%s "%s" "%s"' % (isRollableCmd,bodyStmtStr,nStmtStr)
-                    # sys.stderr.write("\t%s\n" % (cmd))
-                    # p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)#, stderr=subprocess.STDOUT)
-                    # val = "0"#p.stdout.readline()
-                    val = int(os.popen(cmd).read())
-                    # print("\tRead from the cmd: %d" % (val))
+                        if prev_stmt.stmt.__class__.__name__ == "Compound":
+                            bodyStmtStr = generator.visit(prev_stmt.stmt.block_items[0])
+                        else:
+                            bodyStmtStr = generator.visit(prev_stmt.stmt)
+                        # val = os.system('%s "%s" "%s"' % (isRollableCmd,bodyStmtStr,nStmtStr))
+                        cmd = '%s "%s" "%s" %s' % (isRollableCmd,bodyStmtStr,nStmtStr,path4IsRollable)
+                        # sys.stderr.write("\t%s\n" % (cmd))
+                        # p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)#, stderr=subprocess.STDOUT)
+                        # val = "0"#p.stdout.readline()
+                        val = int(os.popen(cmd).read())
+                        # print("\tRead from the cmd: %d" % (val))
+
+                        if val != 0:
+                            foundRolledUpFor = 1
+                        else:
+                            foundRolledUpFor = 0
 
                     if val != 0:
-                        foundRolledUpFor = 1
+                        stmtsPairsRollUp += 1
                     else:
-                        foundRolledUpFor = 0
+                        if stmtsPairsRollUp != 0:
+                            # In case there is just one stmt that is rollable but due to a
+                            # rolledUpFor, then we do not add the 1 to compute correctly the
+                            # number of rollUp stmts. For example, in this case the rolled-up
+                            # for does not count, so rollUp stmts should be 1 and not 2:
+                            #             #pragma stml rolled-up
+                            #             for(int k=0;k<2;k++)
+                            #               F[k] = 0.0f;
+                            #             F[2] = 0.0f;
+                            numStmtsRollUp += stmtsPairsRollUp + (not foundRolledUpFor) * 1
+                            stmtsPairsRollUp = 0
+                            foundRolledUpFor = 0
+                    # print(val)
 
-                if val != 0:
-                    stmtsPairsRollUp += 1
-                else:
-                    if stmtsPairsRollUp != 0:
-                        # In case there is just one stmt that is rollable but due to a
-                        # rolledUpFor, then we do not add the 1 to compute correctly the
-                        # number of rollUp stmts. For example, in this case the rolled-up
-                        # for does not count, so rollUp stmts should be 1 and not 2:
-                        #             #pragma stml rolled-up
-                        #             for(int k=0;k<2;k++)
-                        #               F[k] = 0.0f;
-                        #             F[2] = 0.0f;
-                        numStmtsRollUp += stmtsPairsRollUp + (not foundRolledUpFor) * 1
-                        stmtsPairsRollUp = 0
-                        foundRolledUpFor = 0
-                # print(val)
+                # only update 'prev_stmt' if 'next_stmt' is an assignment, otherwise we fail to count
+                # correctly number of rollUp stmts since one condition to increment and reset is when
+                # a stmt is different with respect the next stmt
+                # We also include the case 'next_stmt' is a rolled-up for
+                if next_stmt.__class__.__name__ == "Assignment" or self.isRolledUpFor(next_stmt):
+                    prev_stmt = next_stmt
 
-            # only update 'prev_stmt' if 'next_stmt' is an assignment, otherwise we fail to count
-            # correctly number of rollUp stmts since one condition to increment and reset is when
-            # a stmt is different with respect the next stmt
-            # We also include the case 'next_stmt' is a rolled-up for
-            if next_stmt.__class__.__name__ == "Assignment" or self.isRolledUpFor(next_stmt):
-                prev_stmt = next_stmt
-
-        # In case we found at least one pair of stmts with rollUp pattern, then the number
-        # of stmts with rollUp pattern is the number of pairs + 1
-        if stmtsPairsRollUp != 0:
-            numStmtsRollUp += stmtsPairsRollUp + (not foundRolledUpFor) * 1
+            # In case we found at least one pair of stmts with rollUp pattern, then the number
+            # of stmts with rollUp pattern is the number of pairs + 1
+            if stmtsPairsRollUp != 0:
+                numStmtsRollUp += stmtsPairsRollUp + (not foundRolledUpFor) * 1
 
 
         for c_name, c in node.children():
             self.visit(c)
 
 
-        if isWithinBlock2Analyze and compoundBlockId2Analyze == currentCompoundStmtId:
+        if isWithinBlock2Analyze and currentCompoundStmtId == 0:
+            # print("End block")
             isWithinBlock2Analyze = False
 
+        # print("Exit  Compound %2d - %2d - %2d | %s" % (currentCompoundStmtId,numCompoundStmts,compoundBlockId2Analyze,generator.visit(node.block_items[0])))
         currentCompoundStmtId -= 1
 
 
@@ -991,7 +1041,6 @@ class ASTVisitor(c_ast.NodeVisitor):
         # For loop just contains one stmt without compound stmt
         currentScope += 1
         scopeList.append([])
-
 
         totalNumForLoops += 1
         # node.show()
@@ -1025,6 +1074,8 @@ class ASTVisitor(c_ast.NodeVisitor):
         scopeList.remove(scopeList[currentScope])
         currentScope -= 1
 
+        self.computeLoopInvVar(varSetLValueInsideLoop[curForStmtDepth],varSetRValueInsideLoop[curForStmtDepth],loopIterVarId)
+
         loopIterVarId.remove(loopIterVarId[len(loopIterVarId)-1])
 
         # If this for loop has the code properties from pragmas for being SIMD and it has
@@ -1050,7 +1101,6 @@ class ASTVisitor(c_ast.NodeVisitor):
         # for elem in varSetRValueInsideLoop[curForStmtDepth]:
         #     print("%s\t- %s" % (tabStr,elem))
 
-        self.computeLoopInvVar(varSetLValueInsideLoop[curForStmtDepth],varSetRValueInsideLoop[curForStmtDepth])
 
         # We want to count the number of variables modified inside the loop that are initialized outside this for
         # loop, i.e. in all the outer loops plus the function where the loop is
@@ -1106,7 +1156,7 @@ class ASTVisitor(c_ast.NodeVisitor):
     def visit_TernaryOp(self,node):
         global anyTernaryOp
 
-        anyTernaryOp = 1
+        anyTernaryOp += 1
 
         for c_name, c in node.children():
             self.visit(c)
@@ -1188,16 +1238,57 @@ class ASTVisitor(c_ast.NodeVisitor):
                     # c.show(showcoord=True)
                     anyUselessStmt = 1
 
+    def countForPreambles(self,node):
+        global numForPreambles
+
+        if node.__class__.__name__ == 'Compound':
+            numStmtsInPreamble = 0
+            for c_name, c in node.children():
+                if c.__class__.__name__ == 'For':
+                    # sys.stderr.write("For: %s | %d + %d\n" % (str(c.init.lvalue.name),numForPreambles,numStmtsInPreamble))
+                    numForPreambles += numStmtsInPreamble
+                # if c.__class__.__name__ == 'Compound':
+                    # sys.stderr.write("Compound: %d | %d + %d\n" % (lineBeginCompounds[numCompoundStmts],numForPreambles,numStmtsInPreamble))
+                    # c.show(showcoord=True)
+                if c.__class__.__name__ != 'Decl' and c.__class__.__name__ != 'Pragma':
+                    numStmtsInPreamble += 1
+            # print("-----------------------------------")
+
+    def countForPostambles(self,node):
+        global numForPostambles
+
+        if node.__class__.__name__ == 'Compound':
+            numStmtsInPostamble = 0
+            numForFound = 0
+            for c_name, c in node.children():
+                if c.__class__.__name__ != 'Decl' and c.__class__.__name__ != 'Pragma':
+                    numForPostambles += 1 * numForFound
+                    # sys.stderr.write("%s: %d %d \n" % (c.__class__.__name__,numForPostambles,numForFound))
+                if c.__class__.__name__ == 'For':
+                    numForFound += 1
+
+
     def visit(self, node):
         global isWithinBlock2Analyze,anyUselessStmt
 
-        if isWithinBlock2Analyze == True:
+        if isWithinBlock2Analyze == True or blockToAnalyze == "*":
             self.checkUselessStmt(node)
+            self.countForPreambles(node)
+            self.countForPostambles(node)
 
             method = 'visit_' + node.__class__.__name__
             visitor = getattr(self, method, self.generic_visit)
             return visitor(node)
+        elif node.__class__.__name__ == "Compound" \
+            or node.__class__.__name__ == "FuncDef" \
+            or node.__class__.__name__ == "TypeDecl" \
+            or node.__class__.__name__ == "Struct":
+            method = 'visit_' + node.__class__.__name__
+            visitor = getattr(self, method, self.generic_visit)
+            return visitor(node)
         else:
+            for c_name, c in node.children():
+                self.visit(c)
             return
 
     def generic_visit(self, node):
@@ -1344,6 +1435,8 @@ def initVars(initType):
     scopeList
     global numStmtsRollUp,lineBeginCompounds,numCompoundStmts,compoundBlockId2Analyze
     global isWithinBlock2Analyze,currentCompoundStmtId,numCompoundStmtsInBlock,anyTernaryOp,anyUselessStmt,insideStruct
+    global numForPreambles,numForPostambles,numStructVarDecl,numEmptyIf
+
 
     if(initType == INIT_AST):
         loopIterVarId            = []
@@ -1365,7 +1458,7 @@ def initVars(initType):
         numCompoundStmtsInBlock  = 0
         lineBeginCompounds       = []
         compoundBlockId2Analyze  = -1
-        isWithinBlock2Analyze    = True
+        isWithinBlock2Analyze    = False
         currentCompoundStmtId    = -1
 
 
@@ -1398,6 +1491,10 @@ def initVars(initType):
         varSetLValueInsideLoop  = []
         varSetRValueInsideLoop  = []
 
+        usesGlobalVars           = 0
+
+        numStructVarDecl         = 0
+
 
     ############################
 
@@ -1405,7 +1502,6 @@ def initVars(initType):
     anyFuncCall              = 0
     anyArrayWriteShifted     = 0
     numIrregularForLoops     = 0
-    usesGlobalVars           = 0
     anyIfStmt                = 0
     anyForLoopNonStaticLimit = 0
 
@@ -1430,16 +1526,25 @@ def initVars(initType):
     numNonNormalizedForLoops = 0
     numStmtsRollUp           = 0
 
+
     numCompoundStmtsInBlock  = 0
     compoundBlockId2Analyze  = -1
-    isWithinBlock2Analyze    = True
+    isWithinBlock2Analyze    = False
     currentCompoundStmtId    = -1
 
     anyTernaryOp             = 0
     anyUselessStmt           = 0
 
+    numForPreambles          = 0
+    numForPostambles         = 0
+    numEmptyIf               = 0
+
+
+
 
 def generateStats(featuresList):
+
+    l = 28
 
     statsStr = ""
     statsStr += "//# maxForStmtDepth:            %2d\n" % (maxForStmtDepth)
@@ -1460,9 +1565,15 @@ def generateStats(featuresList):
     statsStr += "//# numStmtsRollUp:             %2d\n" % (numStmtsRollUp)
     statsStr += "//# numCompoundStmts:           %2d\n" % (numCompoundStmtsInBlock)
     statsStr += "//# anyTernaryOp:               %2d\n" % (anyTernaryOp)
-    statsStr += "//# anyUselessStmt:             %2d\n"   % (anyUselessStmt)
+    statsStr += "//# anyUselessStmt:             %2d\n" % (anyUselessStmt)
+    statsStr += "//# numForPostambles:           %2d\n" % (numForPostambles)
+    statsStr += "//# numForPreambles:            %2d\n" % (numForPreambles)
+    statsStr += "//# numStructVarDecl:           %2d\n" % (numStructVarDecl)
+    statsStr += "//# numEmptyIf:                 %2d\n" % (numEmptyIf)
 
-    l = 28
+
+
+
 
     for feature in featuresList:
         spaces = ' ' * (l - len(rule2Desc_dict[feature[0]]))
@@ -1503,9 +1614,13 @@ def prepareCode(sourceFile,targetFile):
     fw.close()
 
 
-s2s_feature_dict = [['feat_move_inside_for_post', 'countNewCode'],
-                    ['feat_move_inside_for_pre' , 'countNewCode'],
+# s2s_feature_dict = [['feat_move_inside_for_post', 'countNewCode'],
+#                     ['feat_move_inside_for_pre' , 'countNewCode'],
+#                     ['subs_struct_by_fields'     , 'countChanges']]
+
+s2s_feature_dict = [
                     ['subs_struct_by_fields'     , 'countChanges']]
+
 
 rule2Desc_dict = { 'feat_move_inside_for_post' : 'numForPostamble',
                    'feat_move_inside_for_pre'  : 'numForPreamble',
@@ -1513,10 +1628,16 @@ rule2Desc_dict = { 'feat_move_inside_for_post' : 'numForPostamble',
 
 # s2s_feature_dict = [['subs_struct_by_fields'     , 'countChanges']]
 
-def analyzeCode(filename):
+def analyzeCode(filename,path="."):
+    global isRollableCmd,path4IsRollable
+
+    path4IsRollable = path
+    if isRollableCmd == "":
+        isRollableCmd = "../polca_s2s/polca_rollup"
+
 
     # tmpFileName = "./sca_tmp.c"
-    tmpFileName = "../static_analyser/sca_tmp.c"
+    tmpFileName = "%s/sca_tmp.c" % (path)
     prepareCode(filename,tmpFileName)
 
     initVars(INIT_AST)
@@ -1526,39 +1647,55 @@ def analyzeCode(filename):
     show_func_defs(tmpFileName)
 
 
-    featuresList = featEx.measureFeatures(tmpFileName,s2s_feature_dict,'BLOCK_ABS')
-
-    # for rule in featuresList:
-    #     print("%s : %s" % (rule[0],rule[1]))
+    if blockToAnalyze == "*":
+        blcName = ""
+    else:
+        blcName = blockToAnalyze
+    # print("Block: "+blcName)
+    # featuresList = featEx.measureFeatures(tmpFileName,s2s_feature_dict,blcName)
+    featuresList = []
 
     featureVector = [maxForStmtDepth,anyFuncCall,anyArrayWriteShifted,numIrregularForLoops,usesGlobalVars,
                      anyIfStmt,(int)(not anyForLoopNonStaticLimit),anySIMDloop,anyLoopSchedule,numLoopInvVar,
                      numLoopHoistedVarMods,numNon1Darray,numAuxVarArrayIndex,totalNumForLoops,numNonNormalizedForLoops,
                      numStmtsRollUp,numCompoundStmtsInBlock,anyTernaryOp,anyUselessStmt]
 
-    subl = [feat[1] for feat in featuresList]
-    featureVector += subl
+    # subl = [feat[1] for feat in featuresList]
+    # featureVector += subl
 
-    # print(featureVector)
-    # print("\n\n")
+    # featureVector.append(featuresList[0][1])
+    featureVector.append(numForPostambles)
+    featureVector.append(numForPreambles)
+    featureVector.append(numStructVarDecl)
+    featureVector.append(numEmptyIf)
+    # featureVector.append(featuresList[0][1])
 
+
+    # featuresList = []
     statsStr = generateStats(featuresList)
 
-    # print(featureVector)
+
 
     os.system("rm %s" % (tmpFileName))
     
     return [featureVector,statsStr]
 
-def analyzeCodeFromStr(strCode):
+path4IsRollable = ''
+isRollableCmd = ""
 
-    s2s_tmp_file = "s2s_code_tmp.c"
+def analyzeCodeFromStr(strCode,path="."):
+    global isRollableCmd
+
+    path4IsRollable = path
+    isRollableCmd = "%s/polca_rollup" % (os.getcwd())
+
+    s2s_tmp_file = "%s/s2s_code_tmp.c" % (path)
 
     text_file = open(s2s_tmp_file, "w")
     text_file.write(strCode)
     text_file.close()    
 
-    analysisTuple = analyzeCode(s2s_tmp_file)
+    analysisTuple = analyzeCode(s2s_tmp_file,path)
     
     # print("#########################################")
     # sys.stdout.write("%s\n" % generateStats())
@@ -1602,5 +1739,8 @@ if __name__ == "__main__":
 # it says numAuxVarArrayIndex = 0, but should it? Which
 # criteria to say that "width" is not aux variable?
 
+# Compute correctly:
+# - numLoopInvVar
+# - numLoopHoistedVarMods
 
 ######################################################

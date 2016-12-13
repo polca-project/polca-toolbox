@@ -1,5 +1,5 @@
-// FEAT_VECTOR: [1, 0, 0, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 6, 0, 0, 5, 0, 0, 3, 0, 0]
-// TEST_VECTOR: [1, 0, 0, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 6, 0, 0, 5, 0, 0, 3, 0, 0]
+// FEAT_VECTOR: [1, 0, 0, 2, 0, 2, 1, 0, 0, 0, 0, 0, 0, 6, 0, 0, 5, 0, 0, 6, 6, 0, 0]
+// TEST_VECTOR: [1, 0, 0, 2, 0, 2, 1, 0, 0, 0, 0, 0, 0, 6, 0, 0, 5, 0, 0, 6, 6, 0, 0]
 // TEST_LABEL: 0 (CPU)
 
 //# maxForStmtDepth:             1
@@ -7,7 +7,7 @@
 //# anyArrayWriteShifted:        0
 //# numIrregularForLoops:        2
 //# usesGlobalVars:              0
-//# anyIfStmt:                   1
+//# anyIfStmt:                   2
 //# allForLoopWithStaticLimit:   1
 //# anySIMDloop:                 0
 //# anyLoop_Schedule:            0
@@ -21,9 +21,10 @@
 //# numCompoundStmts:            5
 //# anyTernaryOp:                0
 //# anyUselessStmt:              0
-//# numForPostamble              3
-//# numForPreamble               0
-//# numStructVariables           0
+//# numForPostambles:            6
+//# numForPreambles:             6
+//# numStructVarDecl:            0
+//# numEmptyIf:                  0
 
 
 

@@ -54,6 +54,8 @@ def updateTrainTable(useCase):
                     if prevSeqId != -1 and prevSeqId != currSeqId:
                         # print("State %d is final" % (getStateId(abstraction)))
                         finalStates.append(getStateId(abstraction))
+                        prevStateId = -1
+                        ruleAppldId = -1
 
                 filename = "%s/%s" % (dirpath,file)
                 f = open(filename)
@@ -150,7 +152,7 @@ def readRulesList(rulesFile):
     global nameRules
 
     # Rules for nBody for POLCA demo
-    nameRules = ["normalize_iteration_step", "collapse_2_for_loops", "inlining", "remove_block", "remove_useless_statement", "subs_struct_by_fields", "roll_up_array_init", "roll_up_array", "move_inside_for_pre", "move_inside_for_post", "move_enclosing_if_inside_for", "if_2_assign_ternary", "for_loop_fusion", "feat_move_inside_for_pre", "feat_move_inside_for_post"]
+    nameRules = ["remove_ternary", "remove_empty_if", "normalize_iteration_step", "collapse_2_for_loops", "inlining", "remove_block", "remove_useless_statement", "subs_struct_by_fields", "roll_up_array_init", "roll_up_array", "move_inside_for_pre", "move_inside_for_post", "move_enclosing_if_inside_for", "if_2_assign_ternary", "for_loop_fusion", "contiguous_same_if", "divide_if"]
     # All rules
     # nameRules = ["remove_identity", "reduce_to_0", "undo_distributive", "sub_to_mult", "normalize_iteration_step", "loop_reversal_d2i", "loop_reversal_i2d", "loop_interchange", "loop_interchange_pragma", "for_chunk", "unrolling", "move_inside_for_pre", "move_inside_for_post", "move_enclosing_if_inside_for", "collapse_2_for_loops", "for_loop_fission", "for_loop_fusion_mapmap", "for_loop_fusion", "for_wo_block_2_for_w_block", "remove_empty_for", "for_to_while", "while_to_for", "if_wo_block_2_if_w_block", "if_wo_else_2_if_w_else", "split_addition_assign", "join_addition_assign", "mult_ternary_2_ternary", "sum_ternary_2_ternary", "assign_ternary_2_if_else", "if_else_2_assign_ternary", "if_2_assign_ternary", "empty_else", "remove_ternary", "remove_block", "remove_empty_if", "remove_useless_statement", "strength_reduction", "useless_assign", "replace_var_equal", "contiguous_same_if", "just_one_iteration_removal", "join_assignments", "propagate_assignment", "loop_inv_code_motion", "inlining", "inlining_assignment", "common_subexp_elimination", "introduce_aux_array", "flatten_float_array", "flatten_int_array", "subs_struct_by_fields", "roll_up_init", "roll_up", "roll_up_array_init", "roll_up_array", "feat_move_inside_for_pre", "feat_move_inside_for_post"]
     # nameRules = ["remove_identity", "reduce_to_0", "undo_distributive", "sub_to_mult", "normalize_iteration_step", "loop_reversal_d2i", "loop_reversal_i2d", "loop_interchange", "loop_interchange_pragma", "for_chunk", "unrolling", "move_inside_for_pre", "move_inside_for_post", "collapse_2_for_loops", "for_loop_fission", "for_loop_fusion_mapmap", "for_loop_fusion", "for_wo_block_2_for_w_block", "remove_empty_for", "for_to_while", "while_to_for", "if_wo_block_2_if_w_block", "if_wo_else_2_if_w_else", "split_addition_assign", "join_addition_assign", "mult_ternary_2_ternary", "sum_ternary_2_ternary", "assign_ternary_2_if_else", "if_else_2_assign_ternary", "if_2_assign_ternary", "empty_else", "remove_ternary", "remove_block", "remove_empty_if", "remove_useless_statement", "strength_reduction", "useless_assign", "replace_var_equal", "contiguous_same_if", "just_one_iteration_removal", "join_assignments", "propagate_assignment", "loop_inv_code_motion", "inlining", "inlining_assignment", "common_subexp_elimination", "introduce_aux_array", "flatten_float_array", "flatten_int_array", "subs_struct_by_fields", "roll_up_init", "roll_up", "roll_up_array_init", "roll_up_array"]
@@ -197,18 +199,24 @@ def printTrainDataToFile(trainDataFile):
 if __name__ == "__main__":
 
 
+    if len(sys.argv) < 2:
+        print("ERROR: usage -> %s <target_platform>" % (sys.argv[0]))
+        exit(0)
+    else:
+        targetPlatform = sys.argv[1]
+
     trainDataPath = '../machine_learning/reinforcement_learning/utils/'
     trainDataFile = 'trainingData.txt'
 
 
     # pathList = [["threshold0","./train_set/imageFilter/threshold/s2s_test"]
     #             ]
-
-    pathList = [["nbody","./train_set/hpcDwarfs/nBody/s2s_transformations/2arrays"]
-                ]
+    # pathList = [["nbody","./train_set/hpcDwarfs/nBody/s2s_transformations/2arrays"]]
 
     # pathList = [["nbody","./train_set/hpcDwarfs/nBody/oracle_test"]
     #             ]
+
+    pathList = [["nbody","./train_set/hpcDwarfs/nBody/s2s_transformations/merged"]]
 
 
     print("\n#####################################################\n")
@@ -227,5 +235,12 @@ if __name__ == "__main__":
     print("Final States: %s" % (finalStates))
 
     printTransitionTable()
+
+    defaultTarget = "maxj"
+    if targetPlatform == "none":
+        targetPlatform = defaultTarget
+
+    replaceStr = "_%s.txt" % (targetPlatform)
+    trainDataFile = trainDataFile.replace(".txt",replaceStr)
 
     printTrainDataToFile(trainDataPath+trainDataFile)

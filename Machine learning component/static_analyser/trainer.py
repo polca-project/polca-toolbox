@@ -16,6 +16,7 @@ sys.path.extend(['../machine_learning/classifier'])
 
 import classifier as clf
 import static_analyzer as sca
+# import static_analyzer_mod as sca
 
 def checkTestFiles(testsPath):
 
@@ -124,19 +125,19 @@ def updateTestFileHeader(analysisTuple,filename,featureKeepRange):
             # the same as the vector computed by SCA abstraction tool
             # if 'FEAT_VECTOR' present but obsolete, then only update the new features
             # indicated by 'featureKeepRange'
-            if not len(featureVector) == len(listVector) or (len(listVector) != (featureKeepRange[1]+1)):
-                handVector = []
-                for i in range(len(featureVector)):
-                    if i >= featureKeepRange[0] and i <= featureKeepRange[1]:
-                        handVector.append(listVector[i])
-                    else:
-                        handVector.append(featureVector[i])
-                # print("#### %s" % handVector)
-                fw.write("// FEAT_VECTOR: ")
-                fw.write("%s\n" % str(handVector))
+            # if not len(featureVector) == len(listVector) or (len(listVector) != (featureKeepRange[1]+1)):
+            handVector = []
+            for i in range(len(featureVector)):
+                if i >= featureKeepRange[0] and i <= featureKeepRange[1]:
+                    handVector.append(listVector[i])
+                else:
+                    handVector.append(featureVector[i])
+            # print("#### %s" % handVector)
+            fw.write("// FEAT_VECTOR: ")
+            fw.write("%s\n" % str(handVector))
 
-            else: # 'FEAT_VECTOR' present and not obsolete -> write it as it is
-                fw.write(line)
+            # else: # 'FEAT_VECTOR' present and not obsolete -> write it as it is
+            #     fw.write(line)
         elif m1:
             fw.write("// TEST_VECTOR: ")
             fw.write("%s\n" % str(featureVector))
@@ -368,9 +369,12 @@ if __name__ == "__main__":
 
     # pathList = ["./sca_test_files"]
     # pathList = ["./problematic_codes"]
+
     # pathList = ["./train_set/imageFilter/threshold/oracle_test","./predict_set/imageFilter/brightness/oracle_test"]
     # pathList = ["./train_set/hpcDwarfs/nBody/oracle_test"]
-    pathList = ["./train_set/hpcDwarfs/nBody/s2s_transformations/2arrays"]
+    # pathList = ["./train_set/hpcDwarfs/nBody/s2s_transformations/2arrays"]
+    # pathList = ["./train_set/hpcDwarfs/nBody/s2s_transformations/modified"]
+    pathList = ["./train_set/hpcDwarfs/nBody/s2s_transformations/merged"]
 
     print("\n#####################################################\n")
 
@@ -382,7 +386,9 @@ if __name__ == "__main__":
     # then FEAT_VECTOR is updated keeping the previous values specified
     # with the range in 'featureKeepRange'
 
-    featureKeepRange = [0,18]
+    # featureKeepRange = [1,21]
+    # featureKeepRange = [1,18]
+    featureKeepRange = [-1,-1]
 
     for path in pathList:
         check_SCA(path,featureKeepRange)

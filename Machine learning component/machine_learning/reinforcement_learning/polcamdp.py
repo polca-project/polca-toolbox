@@ -17,7 +17,7 @@ class MDPPolcaTask(Task):
         """ compute and return the current reward (i.e. corresponding to the last action performed) """
         # if self.env.goal == self.env.perseus:
         if self.env.perseus in self.env.goal:
-            reward = 100.
+            reward = 100000.
 
             # factor = 1.
             # reward = factor * (self.env.rewards[self.env.perseus])

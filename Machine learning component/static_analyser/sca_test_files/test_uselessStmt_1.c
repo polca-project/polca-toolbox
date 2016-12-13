@@ -1,6 +1,6 @@
 // FUNC_ANALYZ: main BLOCK_ABS
-// FEAT_VECTOR: [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 2, 0, 2, 0, 0, 5, 1, 1, 1, 0, 0]
-// TEST_VECTOR: [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 2, 0, 2, 0, 0, 5, 1, 1, 1, 0, 0]
+// FEAT_VECTOR: [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 2, 0, 2, 0, 0, 5, 1, 1, 1, 0, 0, 0]
+// TEST_VECTOR: [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 2, 0, 2, 0, 0, 5, 1, 1, 1, 0, 0, 0]
 // TEST_LABEL: 0 (CPU)
 
 //# maxForStmtDepth:             1
@@ -22,9 +22,10 @@
 //# numCompoundStmts:            5
 //# anyTernaryOp:                1
 //# anyUselessStmt:              1
-//# numForPostamble              1
-//# numForPreamble               0
-//# numStructVariables           0
+//# numForPostambles:            1
+//# numForPreambles:             0
+//# numStructVarDecl:            0
+//# numEmptyIf:                  0
 
 
 
@@ -54,9 +55,9 @@ int main()
     for (c = 0; c < N; c++)
         {
     {
-    int _ret_val_0;
-    _ret_val_0 = image[r][c] > thresholdValue ? 255 : 0;
-    aux = _ret_val_0;
+    int _ret_val_1;
+    _ret_val_1 = image[r][c] > thresholdValue ? 255 : 0;
+    aux = _ret_val_1;
     }
     result[r][c] = aux;
     }
@@ -66,7 +67,7 @@ int main()
     }
     sprintf(fileName, "%s/output.dsp", DATA_PATH);
     output_dsp_arg(fileName, result, N * N, 1);
-    _ret_val_0 = 0;
+    int _ret_val_0 = 0;
     return _ret_val_0;
     }
 

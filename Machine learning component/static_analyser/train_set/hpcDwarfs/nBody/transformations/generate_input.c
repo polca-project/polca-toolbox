@@ -50,8 +50,8 @@ int main(const int argc, const char** argv) {
   /* randomizeBodies(x,y,z,vx,vy,vx, nBodies); // Init pos / vel data */
   randomizeBodies(pos,vel, nBodies); // Init pos / vel data
 
-  output_arr_arg("../data/pos_input.dat",  pos, nBodies*DIM, 4);
-  output_arr_arg("../data/vel_input.dat",  vel, nBodies*DIM, 4);
+  output_arr_arg("../../data/pos_input.dat",  pos, nBodies*DIM, 4);
+  output_arr_arg("../../data/vel_input.dat",  vel, nBodies*DIM, 4);
 
   free(pos);
   free(vel);

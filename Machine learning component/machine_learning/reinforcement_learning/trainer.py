@@ -1,4 +1,5 @@
-#!/opt/local/bin/python
+#!/usr/bin/python
+# /opt/local/bin/python
 # /usr/bin/env python
 
 # Copyright (c) 2013-2016, The IMDEA Software Institute and
@@ -9,7 +10,7 @@
 
 from scipy import *
 import sys, time, re
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import pylab
 
 from pybrain.rl.learners.valuebased import ActionValueTable
@@ -107,6 +108,15 @@ def dumpActionValueTable(table,tableFile):
 
 ############################################################################
 
+if len(sys.argv) < 2:
+    print("ERROR: usage -> %s <target_platform>" % (sys.argv[0]))
+    exit(0)
+else:
+    targetPlatform = sys.argv[1]
+
+replaceStr = "_%s.txt" % (targetPlatform)
+trainDataFile = trainDataFile.replace(".txt",replaceStr)
+
 readTrainData(trainDataPath+trainDataFile)
 
 
@@ -185,8 +195,9 @@ experiment = Experiment(task, agent)
 
 # Learning phase
 # Num iterations used for PROHA Workshop perliminary evaluation
-numIterations   = 500
-numInteractions = 500
+# numIterations   = 1600
+numIterations   = 1500
+numInteractions = 600
 
 # Num iterations used for PROHA and PROLE slides
 # numIterations   = 10
@@ -213,6 +224,9 @@ for i in range(numIterations):
 # print table.params.reshape(numStates,numActions)
 
 print table.params
+
+replaceStr = "_%s.txt" % (targetPlatform)
+tableFile = tableFile.replace(".txt",replaceStr)
 
 dumpActionValueTable(table.params,trainDataPath+tableFile)
 

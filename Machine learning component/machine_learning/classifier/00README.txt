@@ -68,6 +68,18 @@
   - This feature cuantifies if there is some conditional in the form of ternary
     Ex. x = y == 5 ? 3 : 0;
 
+- 18: any useless Stmt?
+  - Currently stmt like '0;' is considered as useless statement (inserted by the tool)
+
+- 19: size of for postambles:
+  - In number of statements
+
+- 20: size of for preambles
+  - In number of statements
+
+- 21: num of declaration of Struct Vars
+
+- 22: Number of empty if stmts
 
 *********************************************************
 * Code transformations requiring new features to be added

@@ -1,5 +1,5 @@
-// FEAT_VECTOR: [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 9, 0, 0, 9, 9, 0, 4, 0, 0, 0, 0, 0]
-// TEST_VECTOR: [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 9, 0, 0, 9, 9, 0, 4, 0, 0, 0, 0, 0]
+// FEAT_VECTOR: [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 9, 0, 0, 9, 9, 0, 4, 0, 0, 36, 36, 0, 0]
+// TEST_VECTOR: [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 9, 0, 0, 9, 9, 0, 4, 0, 0, 36, 36, 0, 0]
 // TEST_LABEL: 0 (CPU)
 
 //# maxForStmtDepth:             0
@@ -21,9 +21,10 @@
 //# numCompoundStmts:            4
 //# anyTernaryOp:                0
 //# anyUselessStmt:              0
-//# numForPostamble              0
-//# numForPreamble               0
-//# numStructVariables           0
+//# numForPostambles:           36
+//# numForPreambles:            36
+//# numStructVarDecl:            0
+//# numEmptyIf:                  0
 
 
 

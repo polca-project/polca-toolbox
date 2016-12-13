@@ -1,6 +1,6 @@
 // FUNC_ANALYZ: main BLOCK_ABS
-// FEAT_VECTOR: [1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 2, 0, 2, 0, 0, 4, 0, 1, 1, 0, 0]
-// TEST_VECTOR: [1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 2, 0, 2, 0, 0, 4, 0, 1, 1, 0, 0]
+// FEAT_VECTOR: [1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 2, 0, 2, 0, 0, 4, 0, 1, 1, 0, 0, 0]
+// TEST_VECTOR: [1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 2, 0, 2, 0, 0, 4, 0, 1, 1, 0, 0, 0]
 // TEST_LABEL: 0 (CPU)
 
 //# maxForStmtDepth:             1
@@ -22,9 +22,10 @@
 //# numCompoundStmts:            4
 //# anyTernaryOp:                0
 //# anyUselessStmt:              1
-//# numForPostamble              1
-//# numForPreamble               0
-//# numStructVariables           0
+//# numForPostambles:            1
+//# numForPreambles:             0
+//# numStructVarDecl:            0
+//# numEmptyIf:                  0
 
 
 

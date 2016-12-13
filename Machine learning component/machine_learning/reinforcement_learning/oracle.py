@@ -1,4 +1,5 @@
-#!/opt/local/bin/python
+#!/usr/bin/python
+# /opt/local/bin/python
 # /usr/bin/env python
 
 # Copyright (c) 2013-2016, The IMDEA Software Institute and
@@ -8,7 +9,7 @@
 
 from scipy import *
 import sys, time, re, os
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import pylab
 
 from pybrain.rl.learners.valuebased import ActionValueTable
@@ -20,11 +21,16 @@ from pybrain.rl.environments import Task
 from polcamdp import MDPPolcaTask
 from PolcaEnv import PolcaEnv
 
-trainDataPath = '../machine_learning/reinforcement_learning/utils/'
+modPath = os.path.dirname(os.path.realpath(__file__))
+trainDataPath = modPath+'/utils/'
+# trainDataPath = '../machine_learning/reinforcement_learning/utils/'
 # trainDataPath = './utils/'
+
 trainDataFile = 'trainingData.txt'
 
 tableFile = 'actionValueTable.txt'
+
+supportedPlatforms = ["none","opencl", "maxj", "mpi", "openmp"]
 
 initStates       = None
 goalStates       = None
@@ -67,7 +73,7 @@ def parseList(listStr,dataType):
 def readTrainData(trainDataFile):
     global initStates,goalStates,transitionTable,ruleNames,abst2State
 
-    # print("Loading train data from file %s ..." % (trainDataFile))
+    # sys.stderr.write("Loading train data from file %s ...\n" % (trainDataFile))
     f = open(trainDataFile,'r')
 
     tableData = None
@@ -130,7 +136,7 @@ def readTrainData(trainDataFile):
 def readActionValueTable(tableFile):
     global actionValueTable
 
-    # print("Loading train data from file %s ..." % (tableFile))
+    # sys.stderr.write("Loading train data from file %s ...\n" % (tableFile))
     f = open(tableFile,'r')
 
     for line in f:
@@ -160,8 +166,25 @@ def getRuleName(ruleId):
 
     return ruleName
 
-def initData():
-    global numActions,numStates,table
+def initData(targetPlatform):
+    global numActions,numStates,table,trainDataFile,tableFile
+
+    if targetPlatform not in supportedPlatforms:
+        sys.stderr.write("------------------------------------------\n")
+        sys.stderr.write("ERROR: target platform '%s' not supported by RL in training set\n" % (targetPlatform))
+        sys.stderr.write("------------------------------------------\n")
+
+
+    # sys.stderr.write("\n\n%s\n\n" % targetPlatform)
+
+    defaultTarget = "maxj"
+
+    if targetPlatform == "none":
+        targetPlatform = defaultTarget
+
+    replaceStr = "_%s.txt" % (targetPlatform)
+    trainDataFile = trainDataFile.replace(".txt",replaceStr)
+    tableFile = tableFile.replace(".txt",replaceStr)
 
     readTrainData(trainDataPath+trainDataFile)
 
@@ -219,11 +242,11 @@ def testTransformationProcess():
                 state = newState
                 steps += 1
         except TypeError:
-            print"\nTypeError in returned action:"
-            print action
-            print values
+            print("\nTypeError in returned action:")
+            print(action)
+            print(values)
 
-        print "-------------------------------------------------"
+        print("-------------------------------------------------")
 
     return -1
 
@@ -264,7 +287,11 @@ def convertStr2IdList(ruleNameList):
 
 ############################################################################
 
-def predict(codeAbstraction,ruleNameList):
+dataInitialized = False
+
+def predict(codeAbstraction,ruleNameList,targetPlatform):
+    global dataInitialized
+
 
     if isinstance(codeAbstraction, (list)):
         aux = codeAbstraction
@@ -275,8 +302,11 @@ def predict(codeAbstraction,ruleNameList):
     #'-1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0'
     #ruleIdList = [0,4,6,41,45]
 
-
-    initData()
+    if not dataInitialized:
+        # sys.stderr.write("Loading ML data... ")
+        initData(targetPlatform)
+        dataInitialized = True
+        # sys.stderr.write("Done!\n")
 
     ruleId = -1
     newState = -1
@@ -288,8 +318,10 @@ def predict(codeAbstraction,ruleNameList):
 
 
     ruleName = getRuleName(ruleId)
-    abstraction = list(abst2State.keys())[list(abst2State.values()).index(newState)]
-    sys.stderr.write(str(newState) + " , " +abstraction + " : " + str(ruleName)+"\n")
+    abstraction = ""
+    if(newState != -1):
+        abstraction = list(abst2State.keys())[list(abst2State.values()).index(newState)]
+        # sys.stderr.write(str(newState) + " , " +abstraction + " : " + str(ruleName)+"\n")
 
     return abstraction,ruleName
 
@@ -301,13 +333,17 @@ if __name__ == "__main__":
     codeAbstraction = None
     ruleNameList    = None
 
-    if len(sys.argv) < 3:
-        print("ERROR: usage -> %s <code_abstraction> <rule_id_list>" % (sys.argv[0]))
+    targetPlatform = "none"
+    if len(sys.argv) < 2:
+        # print("ERROR: usage -> %s <code_abstraction> <rule_id_list>" % (sys.argv[0]))
+        print("ERROR: usage -> %s <target_platform>" % (sys.argv[0]))
+        exit(0)
         # codeAbstraction = sys.argv[1]
         # ruleNameList = parseList(sys.argv[2],2)
     else:
-        codeAbstraction = eval(sys.argv[1])
-        ruleNameList = parseList(sys.argv[2],2)
+        targetPlatform = sys.argv[1]
+        # codeAbstraction = eval(sys.argv[1])
+        # ruleNameList = parseList(sys.argv[2],2)
 
     cwd = os.getcwd()
     # print(cwd)
@@ -316,10 +352,12 @@ if __name__ == "__main__":
     if 'reinforcement_learning' in cwd:
         trainDataPath = './utils/'
     else:
+        # modPath = os.path.dirname(os.path.realpath(__file__))
+        # trainDataPath = modPath+'/utils/'
         trainDataPath = '../machine_learning/reinforcement_learning/utils/'
 
     # print   type(codeAbstraction)
-    abs,ruleName = predict(codeAbstraction,ruleNameList)
+    abs,ruleName = predict(codeAbstraction,ruleNameList,targetPlatform)
 
     sys.exit(ruleName)
 
