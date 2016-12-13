@@ -1,3 +1,4 @@
+#!/bin/bash
 
 echo -e '#####################################################'
 echo This installer has been checked for the following OS:

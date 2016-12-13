@@ -9,11 +9,16 @@ The machine learning module has been contributed by the
 Installation
 ------------
 
+A script is provided for installing the required dependencies of the Machine Learning Module. Simply run from the command line:
+
+```
+$ ./install.sh
+$
+```
+
 The Machine Learning Module requires the following python modules to work:
 
-* SciPy: this library is one of the core packages that make up the SciPy stack. It provides many user-friendly and efficient numerical routines such as routines for numerical integration and optimization. It is required by Scikit-learn and PyBrain. Installation can be done as a standard Python installation through pip command. For more details please visit:
-
-https://www.scipy.org/install.html
+* SciPy: this library is one of the core packages that make up the SciPy stack. It provides many user-friendly and efficient numerical routines such as routines for numerical integration and optimization. It is required by Scikit-learn and PyBrain. Installation can be done as a standard Python installation through pip command. For more details please visit: https://www.scipy.org/install.html
 
 * Scikit-learn: This library implements several machine learning methods for different purposes like data mining and data analysis. It is an open source project with an ample development community and rich documentation. Installation can be done as a standard Python installation through pip command. For more details please visit:
 http://scikit-learn.org/stable/install.html
