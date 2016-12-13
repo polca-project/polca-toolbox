@@ -20,7 +20,7 @@ sys.path.extend(['.', '..'])
 from pycparser import c_parser, c_ast, parse_file, c_generator
 import re,os
 import subprocess
-import feat_extractor_interface as featEx
+#import feat_extractor_interface as featEx
 
 
 # Global variables
