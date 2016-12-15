@@ -22,7 +22,10 @@ FEAT_EXTR = polca_features
 CHANGES_EXTR = polca_changes
 
 FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README README.md LICENSE.txt AUTHORS.txt rules.c rules_nbody.c vec_mult.c dps.c Translator.hs Annotator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs RandomOracle.hs FeaturesExtractor.hs TransCommand.hs ChangesExtractor.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs
-DEMOFILES = demo/rgb_filter_input.c demo/rgb_filter_input_maxjready.c demo/ppmImage.c demo/ppmImage.h demo/ppmImage.c demo/ppmImage.c demo/lodepng.h demo/lodepng.c 
+DEMOFILES = demo/rgb_filter/rgb_filter_input.c demo/rgb_filter/rgb_filter_input_maxjready.c demo/rgb_filter/ppmImage.c demo/rgb_filter/ppmImage.h demo/rgb_filter/ppmImage.c demo/rgb_filter/ppmImage.c demo/rgb_filter/lodepng.h demo/rgb_filter/lodepng.c 
+DEMONBODYMAXJFILES = demo/nbody/2arrays_maxj/nbody.c demo/nbody/2arrays_maxj/params.h
+DEMONBODYOMPFILES = demo/nbody/2arrays_openmp/nbody.c demo/nbody/2arrays_openmp/params.h
+DEMONBODYOPENCLFILES = demo/nbody/2arrays_opencl/nbody.c demo/nbody/2arrays_opencl/params.h
 CETUSMODIFIED = ../cetus/src/cetus/analysis/CallGraph.java ../cetus/src/cetus/analysis/DDGraph.java ../cetus/src/cetus/analysis/LoopTools.java ../cetus/src/cetus/analysis/IPPointsToAnalysis.java ../cetus/src/cetus/exec/Driver.java ../cetus/src/cetus/hir/STMLAnnotation.java ../cetus/src/cetus/hir/AccessSymbol.java ../cetus/src/cetus/hir/TranslationUnit.java 
 CETUSFILES = ../cetus.tar.gz cetus/cetus.sh cetus/cetus_stml.sh cetus/options.cetus ../cetus/polca_changes.txt 
 
@@ -155,7 +158,15 @@ tar:
 	cp $(CETUSMODIFIED) $(NAME)/cetus/mod/
 	mv $(NAME)/RulesEmpty.hs $(NAME)/Rules.hs
 	mkdir $(NAME)/demo
-	cp $(DEMOFILES) $(NAME)/demo/
+	mkdir $(NAME)/demo/rgb_filter
+	mkdir $(NAME)/demo/nbody
+	mkdir $(NAME)/demo/nbody/2arrays_maxj
+	mkdir $(NAME)/demo/nbody/2arrays_opencl
+	mkdir $(NAME)/demo/nbody/2arrays_openmp
+	cp $(DEMOFILES) $(NAME)/demo/rgb_filter/
+	cp $(DEMONBODYMAXJFILES)  $(NAME)/demo/nbody/2arrays_maxj/
+	cp $(DEMONBODYOMPFILES)  $(NAME)/demo/nbody/2arrays_openmp/
+	cp $(DEMONBODYOPENCLFILES)  $(NAME)/demo/nbody/2arrays_opencl/
 	tar cfz $(NAME).tgz $(NAME)
 	rm -rf $(NAME)
 
