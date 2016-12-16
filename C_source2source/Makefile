@@ -21,7 +21,7 @@ RAN_ORACLE = random_oracle
 FEAT_EXTR = polca_features
 CHANGES_EXTR = polca_changes
 
-FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README README.md LICENSE.txt AUTHORS.txt rules.c rules_nbody.c vec_mult.c dps.c Translator.hs Annotator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs RandomOracle.hs FeaturesExtractor.hs TransCommand.hs ChangesExtractor.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs
+FILES = Makefile Main.hs Rul2Has.hs RulesLib.hs RulesEmpty.hs README README.md LICENSE.txt AUTHORS.txt rules.c rules_nbody.c vec_mult.c dps.c Translator.hs Annotator.hs PragmaPolcaLib.hs Compilable.hs CompilableExt.hs CompileRules.hs RandomOracle.hs FeaturesExtractor.hs TransCommand.hs ChangesExtractor.hs TestRules.hs TransExe.hs InitTransformation.hs AppTransformation.hs IsRollable.hs PragmaPolcaReader.hs PrettyPrinter.hs Ast.hs Expander.hs polcas2s.cabal Setup.hs opencl_main_funs run_demo_opencl.sh run_demo_omp.sh run_demo_maxj.sh
 DEMOFILES = demo/rgb_filter/rgb_filter_input.c demo/rgb_filter/rgb_filter_input_maxjready.c demo/rgb_filter/ppmImage.c demo/rgb_filter/ppmImage.h demo/rgb_filter/ppmImage.c demo/rgb_filter/ppmImage.c demo/rgb_filter/lodepng.h demo/rgb_filter/lodepng.c 
 DEMONBODYMAXJFILES = demo/nbody/2arrays_maxj/nbody.c demo/nbody/2arrays_maxj/params.h
 DEMONBODYOMPFILES = demo/nbody/2arrays_openmp/nbody.c demo/nbody/2arrays_openmp/params.h
@@ -102,6 +102,14 @@ translator:
 # A random oracle to be used as a testing oracle
 random_oracle:
 	ghc -O2 -main-is RandomOracle RandomOracle.hs -o $(RAN_ORACLE) $(GHC_FLAGS)
+
+# Build an executable that returns 1/0 depending on whether the statements are rollable or not
+is_rollable:
+	ghc -O2 -main-is IsRollable IsRollable.hs -o $(ROLLUP) $(GHC_FLAGS)
+
+# Features extractor to be used by the machine learning component
+features_ext:
+	ghc -O2 -main-is FeaturesExtractor FeaturesExtractor.hs -o $(FEAT_EXTR) $(GHC_FLAGS)
 
 # Build the interface for external tools
 interface:
