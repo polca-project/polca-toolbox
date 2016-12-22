@@ -24,7 +24,7 @@ EMOHH is based on libEMOHH, is provided and allows to measure and create detaile
 libEMOHH
 --------
 
-The Energy Monitoring for Hazel Hen HPC system (libEMOHH) uses energy reporting hardware of each node to create reports of the memory usage on the system. POLCA tools can use this library to asses the performance and detailed energy usage and drive the code transformations. 
+The Energy Monitoring for Hazel Hen HPC system (Cray XC40 cluster) uses energy reporting hardware of each node to create reports of the memory usage on the system. POLCA tools can use this library to asses the performance and detailed energy usage and drive the code transformations. 
 
 libEMOXU3
 --------
