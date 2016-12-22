@@ -22,6 +22,8 @@ $ make all
 
 Further information at [the C source to source transformation tool's page](https://github.com/polca-project/polca-toolbox/tree/master/C_source2source).
 
+Alternativelly, the [instalation script used by POGADE](https://github.com/polca-project/polca-toolbox/blob/master/installation_scripts/s2s_install_pogade.sh) could be adapted and used to install the tool. 
+
 
 The machine learning module
 ------------
