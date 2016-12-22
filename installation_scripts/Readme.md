@@ -31,3 +31,26 @@ A script is provided for installing the required dependencies of the Machine Lea
 ```
 $ ./install.sh
 ```
+
+ClaSH
+------------
+
+ClaSH is written in Haskell and depends on the [GHC] Haskell compiler (http://haskell.org/ghc) and requires [Cabal](http://www.haskell.org/cabal/download.html). If these have been installed, you can install ClaSH simply by running
+
+for i386 Linux:
+```
+cabal install clash-ghc --enable-documentation --enable-executable-dynamic
+```
+
+others:
+```
+cabal install clash-ghc --enable-documentation
+```
+
+Please refer to [ClaSH Setup](http://www.clash-lang.org/#details) for a detailed instruction on how to install GHC and Cabal.
+  
+
+Maxeler DFE Platform and FlexAware
+------------
+
+The [Maxeler DFE Platform](https://www.maxeler.com/products/software/) and [FlexAware](http://www.flexaware.net/what/sde/) are commercial tools available through [MAXELER Technologies](https://www.maxeler.com) and [RECORE Systems](http://recoresystems.com), respectively. For installation and usage instructions, please refer to the respective provider's website.
