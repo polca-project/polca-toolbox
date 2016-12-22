@@ -49,6 +49,11 @@ cabal install clash-ghc --enable-documentation
 
 Please refer to [ClaSH Setup](http://www.clash-lang.org/#details) for a detailed instruction on how to install GHC and Cabal.
   
+SmartDriver
+------------
+
+[SmartDriver](https://github.com/polca-project/polca-toolbox/tree/master/SmartDriver) is composed by different components.  Some are libraries that have to be used within the source code (to use it is just needed to download it, make the desired calls to the interface of the library and compile), others are scripts that will run if python is installed and, finally, others just need to be compiled with a generic C compiler not needing any special dependencies to be installed.  Visit the description page of it component for their installation details and usage.
+
 
 Maxeler DFE Platform and FlexAware
 ------------
