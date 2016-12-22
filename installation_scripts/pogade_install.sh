@@ -28,12 +28,14 @@ sudo make install
 cd ..
 
 svn co https://github.com/polca-project/polca-toolbox/trunk/POGADE
-mkdir build
+mkdir -p build
 cd build
 qmake ../POGADE/pogade.pro
 make -j4
 cd ..
-cp build/pogade pogade
+mkdir -p bin
+cp build/pogade bin/pogade
+
 
 rm -rf OGDF
 rm -rf QScintilla_gpl-2.9.3*
