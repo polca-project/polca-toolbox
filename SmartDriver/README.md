@@ -9,17 +9,17 @@ to assist and asses the impact of the POLCA transformations on the applications.
 ASMCount 
 --------
 
-ASMCount statically analyzes the binary code generated for the compiler and predicts the computational cost of the different POLCA scopes in the code. The output is a JSON file that can be used by other tools to determine the code transformations to perform or visualization tools such as SDFpy and POGADE.
+ASMCount statically analyzes the binary code generated for the compiler and predicts the computational cost of the different POLCA scopes in the code. The output is a JSON file that can be used by other tools to determine the code transformations to perform or visualization tools such as SDFpy and POGADE. The executable requires GCC and python 2.7 installed in the system to run.
 
 EMOXU3
 --------
 
-EMOXU-3, based on libEMOXU-3, is provided and allows to measure and create detailed reports of performance and energy usage of executable files and scripts.
+EMOXU-3, based on libEMOXU-3, is provided and allows to measure and create detailed reports of performance and energy usage of executable files and scripts. It only requires a C compiler to build the application.
 
 EMOhh
 --------
 
-EMOHH is based on libEMOHH, is provided and allows to measure and create detailed reports of performance and energy usage of executable files and scripts on Hazel Hen nodes.
+EMOHH is based on libEMOHH, is provided and allows to measure and create detailed reports of performance and energy usage of executable files and scripts on Hazel Hen nodes. It only requires a C compiler to build the application.
 
 libEMOHH
 --------
